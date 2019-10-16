@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F10X_HD,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\USER;..\CORE;..\STM32F10x_FWLib\inc;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart</IncludePath>
+              <IncludePath>..\USER;..\CORE;..\STM32F10x_FWLib\inc;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER\CSP</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -551,6 +551,21 @@
               <FileName>stm32f10x_wwdg.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\STM32F10x_FWLib\src\stm32f10x_wwdg.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>CSP</GroupName>
+          <Files>
+            <File>
+              <FileName>csp_gpio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\CSP\csp_gpio.c</FilePath>
+            </File>
+            <File>
+              <FileName>csp_pwm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\CSP\csp_pwm.c</FilePath>
             </File>
           </Files>
         </Group>
