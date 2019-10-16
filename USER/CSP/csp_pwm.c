@@ -1,5 +1,8 @@
+#include <stdbool.h>
 #include "csp_pwm.h"
+#include "csp_timer.h"
 #include "sys.h"
+
 
 #define TIMER_PERIOD 8999
 void csp_pwm_init(void)
@@ -118,9 +121,23 @@ void csp_pwm_init(void)
     TIM_Cmd(TIM4, ENABLE); //
 }
 
+static uint16_t pwm_maker_percent[]={0,0,0,0,0,0,0,0,0,0};
+static void set_pwm_maker_percent(uint8_t id , uint16_t percent){
+    pwm_maker_percent[id % 10] = percent;
+}
+static uint16_t get_pwm_maker_percent(uint8_t id){
+    return pwm_maker_percent[id % 10];
+}
 
+
+static uint16_t pwm_maker_period_tick_ms=0;
 void csp_pwm_handle(void)
 {
+    if(_PLUSE_MAKER_FLAG == false)
+        return ;
+    
+    _PLUSE_MAKER_FLAG = false;
+    
 }
 
 
@@ -137,4 +154,25 @@ void set_pwm(uint8_t pwm_id , float percent){
         case 4:TIM_SetCompare4(TIM4,pwm);break;
         default : break;
     }
+}
+
+//待示波器测试，不输出脉冲的时候最好保持低电平
+void close_pwm(uint8_t pwm_id){
+    switch(pwm_id){
+        case 0:TIM_SetCompare2(TIM3,0);break;
+        case 1:TIM_SetCompare2(TIM2,0);break;
+        case 2:TIM_SetCompare1(TIM4,0);break;
+        case 3:TIM_SetCompare2(TIM4,0);break;
+        case 4:TIM_SetCompare4(TIM4,0);break;
+        default : break;
+    }    
+}
+
+bool set_software_pwm(uint8_t pwm_id , uint16_t percent){
+    set_pwm_maker_percent(pwm_id,percent % 1000);
+    return true;
+}
+
+void close_software_pwm(uint8_t pwm_id){
+    set_pwm_maker_percent(pwm_id,0);
 }

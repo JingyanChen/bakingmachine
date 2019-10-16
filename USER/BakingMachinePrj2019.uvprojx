@@ -388,11 +388,6 @@
               <FilePath>.\main.c</FilePath>
             </File>
             <File>
-              <FileName>stm32f10x_it.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\stm32f10x_it.c</FilePath>
-            </File>
-            <File>
               <FileName>system_stm32f10x.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\system_stm32f10x.c</FilePath>
@@ -411,11 +406,6 @@
               <FileName>sys.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\SYSTEM\sys\sys.c</FilePath>
-            </File>
-            <File>
-              <FileName>usart.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\SYSTEM\usart\usart.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -566,6 +556,16 @@
               <FileName>csp_pwm.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\CSP\csp_pwm.c</FilePath>
+            </File>
+            <File>
+              <FileName>csp_timer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\CSP\csp_timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>csp_uart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\CSP\csp_uart.c</FilePath>
             </File>
           </Files>
         </Group>
