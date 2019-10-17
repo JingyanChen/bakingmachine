@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "csp_timer.h": "c",
-        "csp_gpio.h": "c"
+        "csp_gpio.h": "c",
+        "sys.h": "c"
     }
 }

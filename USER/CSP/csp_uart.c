@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include "csp_timer.h"
+#include "csp_gpio.h"
 
 static uint8_t  debug_uart_rx_buf[DEBUG_UART_MAX_LEN];
 static uint8_t  debug_uart_tx_buf[DEBUG_UART_MAX_LEN];
@@ -113,16 +114,13 @@ void csp_uart_init(void)
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;  
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;  
     GPIO_Init(GPIOB, &GPIO_InitStructure);  
-
-    //????  
+ 
     USART_InitStructure.USART_BaudRate = 115200;  
     USART_InitStructure.USART_WordLength = USART_WordLength_8b;  
     USART_InitStructure.USART_StopBits = USART_StopBits_1;  
     USART_InitStructure.USART_Parity = USART_Parity_No;  
     USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;  
     USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;  
-
-
 
     USART_Init(USART3, &USART_InitStructure);
     USART_ITConfig(USART3, USART_IT_RXNE, ENABLE);  
@@ -135,7 +133,9 @@ void csp_uart_init(void)
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;       
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;  
     NVIC_Init(&NVIC_InitStructure); 
-            
+    
+    //rs485 EN 0 rx 1 tx  default is rx
+    rs485_enbale_control(false);
 }
 
 //DEBUG UART API
@@ -211,6 +211,8 @@ void pt100_sender(uint8_t * sender , uint16_t len){
     pt100_uart_tx_len = len;
     pt100_uart_tx_tick =0;
 
+    rs485_enbale_control(true); // set rs485 as tx
+
     USART_ITConfig(USART2, USART_IT_TXE, ENABLE);
 }
 
@@ -225,13 +227,15 @@ void USART2_IRQHandler(void)
 
      if(USART_GetITStatus(USART2, USART_IT_TXE) != RESET)
      {
-
          USART_SendData(USART2, pt100_uart_tx_buf[pt100_uart_tx_tick % PT100_UART_MAX_LEN]);
          pt100_uart_tx_tick++;
 
          if(pt100_uart_tx_tick > pt100_uart_tx_len - 1){
+
             USART_ITConfig(USART2, USART_IT_TXE, DISABLE);
             pt100_uart_tx_tick =0;
+
+            rs485_enbale_control(false); // set rs485 as rx
          }
      }
 }

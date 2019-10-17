@@ -75,7 +75,7 @@ static void csp_100_ms_handle(void){
     _100ms_tick = 0;
 
     // 100 ms code
-
+    _UPDATE_ADC_DATA_FLAG = true;
     //
 
     _1000ms_tick ++;

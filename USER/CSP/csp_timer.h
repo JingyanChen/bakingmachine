@@ -33,6 +33,7 @@ extern bakingMachine_t  bakingMachine_flag;
 #define _PLUSE_MAKER_FLAG bakingMachine_flag.timer_flag.se1
 #define _UART_PT100_10MS_FLAG bakingMachine_flag.timer_flag.se2
 #define _UART_LCD_10MS_FLAG bakingMachine_flag.timer_flag.se3
+#define _UPDATE_ADC_DATA_FLAG bakingMachine_flag.timer_flag.se4
 
 void csp_timer_init(void);
 void csp_timer_handle(void);

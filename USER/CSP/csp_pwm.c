@@ -1,12 +1,42 @@
 #include <stdbool.h>
 #include "csp_pwm.h"
 #include "csp_timer.h"
+#include "csp_gpio.h"
 #include "sys.h"
+
+
+
+GPIO_TypeDef *PWM_PORT_LIST[]={
+        PWM_CONTROL_PORT_0,
+        PWM_CONTROL_PORT_1,
+        PWM_CONTROL_PORT_2,
+        PWM_CONTROL_PORT_3,
+        PWM_CONTROL_PORT_4,
+        PWM_CONTROL_PORT_5,
+        PWM_CONTROL_PORT_6,
+        PWM_CONTROL_PORT_7,
+        PWM_CONTROL_PORT_8,
+        PWM_CONTROL_PORT_9,
+};
+
+uint16_t PWM_PIN_LIST[]={
+        PWM_CONTROL_PIN_0 ,
+        PWM_CONTROL_PIN_1 ,  
+        PWM_CONTROL_PIN_2 ,  
+        PWM_CONTROL_PIN_3 , 
+        PWM_CONTROL_PIN_4 ,    
+        PWM_CONTROL_PIN_5 ,  
+        PWM_CONTROL_PIN_6 ,     
+        PWM_CONTROL_PIN_7 ,
+        PWM_CONTROL_PIN_8 ,
+        PWM_CONTROL_PIN_9 ,
+};
 
 
 #define TIMER_PERIOD 8999
 void csp_pwm_init(void)
 {
+		uint8_t i=0;
     GPIO_InitTypeDef GPIO_InitStructure;
     TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
     TIM_OCInitTypeDef TIM_OCInitStructure;
@@ -119,8 +149,26 @@ void csp_pwm_init(void)
     TIM_OC4PreloadConfig(TIM4, TIM_OCPreload_Enable); //
     TIM_ARRPreloadConfig(TIM4, ENABLE); //
     TIM_Cmd(TIM4, ENABLE); //
-}
 
+
+    //软件PWM GPIO CONFIG
+
+    for (i = 0; i < sizeof(PWM_PORT_LIST) / sizeof(GPIO_TypeDef); i++)
+    {
+
+        GPIO_InitStructure.GPIO_Pin = PWM_PIN_LIST[i];
+        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+        GPIO_Init(PWM_PORT_LIST[i], &GPIO_InitStructure);
+        GPIO_ResetBits(PWM_PORT_LIST[i], PWM_PIN_LIST[i]);
+    }    
+
+}
+/*
+ * percent 是0-1000的数字，如果500，则意味着一个周期内500ms高电平500ms低电平
+ * 周期默认是1000ms也就是1S的时间，十路同时计数，计数到对应percent，变为低电平
+ * 如果percent为0，则不打开pluse maker状态机
+ */
 static uint16_t pwm_maker_percent[]={0,0,0,0,0,0,0,0,0,0};
 static void set_pwm_maker_percent(uint8_t id , uint16_t percent){
     pwm_maker_percent[id % 10] = percent;
@@ -130,14 +178,40 @@ static uint16_t get_pwm_maker_percent(uint8_t id){
 }
 
 
+static void access_pwm_gpio_v(uint8_t id , bool sw){
+    if(sw){
+        GPIO_SetBits(PWM_PORT_LIST[id % 10] , PWM_PIN_LIST[id % 10]);
+    }else{
+        GPIO_ResetBits(PWM_PORT_LIST[id % 10 ] , PWM_PIN_LIST[id % 10]);
+    }
+} 
+
+//per 1ms make once pluses
 static uint16_t pwm_maker_period_tick_ms=0;
 void csp_pwm_handle(void)
 {
+    uint8_t i=0;
+
     if(_PLUSE_MAKER_FLAG == false)
         return ;
     
     _PLUSE_MAKER_FLAG = false;
     
+    for(i=0;i<10;i++){
+        if(pwm_maker_percent[i] != 0){
+            if(pwm_maker_period_tick_ms < get_pwm_maker_percent(i))
+                access_pwm_gpio_v(i,true);
+            else
+                access_pwm_gpio_v(i,false);
+        }
+    }
+
+    pwm_maker_period_tick_ms++;
+
+    if(pwm_maker_period_tick_ms > pwm_maker_period_ms){
+        pwm_maker_period_tick_ms = 0;
+    }
+
 }
 
 

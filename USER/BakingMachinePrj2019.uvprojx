@@ -567,6 +567,11 @@
               <FileType>1</FileType>
               <FilePath>.\CSP\csp_uart.c</FilePath>
             </File>
+            <File>
+              <FileName>csp_adc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\CSP\csp_adc.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>
