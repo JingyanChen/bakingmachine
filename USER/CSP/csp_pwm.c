@@ -60,7 +60,7 @@ void csp_pwm_init(void)
 
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM2;
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low;
     TIM_OC2Init(TIM3, &TIM_OCInitStructure);
 
     TIM_OC2PreloadConfig(TIM3, TIM_OCPreload_Enable);
@@ -84,7 +84,7 @@ void csp_pwm_init(void)
 
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM2;
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low;
     TIM_OC2Init(TIM2, &TIM_OCInitStructure);
 
     TIM_OC2PreloadConfig(TIM2, TIM_OCPreload_Enable); //??TIM2?CCR2????????
@@ -138,7 +138,7 @@ void csp_pwm_init(void)
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1; //
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable; //
     TIM_OCInitStructure.TIM_Pulse = 0; //
-    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High; //
+    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low; //
 
     TIM_OC4Init(TIM4, &TIM_OCInitStructure); //
 
@@ -150,10 +150,14 @@ void csp_pwm_init(void)
     TIM_ARRPreloadConfig(TIM4, ENABLE); //
     TIM_Cmd(TIM4, ENABLE); //
 
+    for (i = 0; i < 5; i++)
+    {
+        set_pwm(0,0);
+    }
 
     //软件PWM GPIO CONFIG
 
-    for (i = 0; i < sizeof(PWM_PORT_LIST) / sizeof(GPIO_TypeDef); i++)
+    for (i = 0; i < 10; i++)
     {
 
         GPIO_InitStructure.GPIO_Pin = PWM_PIN_LIST[i];

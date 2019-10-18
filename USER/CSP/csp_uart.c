@@ -5,23 +5,25 @@
 #include "csp_timer.h"
 #include "csp_gpio.h"
 
-static uint8_t  debug_uart_rx_buf[DEBUG_UART_MAX_LEN];
+uint8_t  debug_uart_rx_buf[DEBUG_UART_MAX_LEN];
+uint16_t debug_uart_rec_len=0;
+uint8_t  pt100_uart_rx_buf[PT100_UART_MAX_LEN];
+uint16_t pt100_uart_rx_index=0;
+uint8_t  lcd_uart_rx_buf[LCD_UART_MAX_LEN];
+uint16_t lcd_uart_rx_index=0;
+
 static uint8_t  debug_uart_tx_buf[DEBUG_UART_MAX_LEN];
-static uint16_t debug_uart_rec_len=0;
 static uint16_t debug_uart_tx_len=0;
 static uint16_t debug_uart_tx_tick=0;
 
-static uint8_t  pt100_uart_rx_buf[PT100_UART_MAX_LEN];
 static uint8_t  pt100_uart_tx_buf[PT100_UART_MAX_LEN];
-static uint16_t pt100_uart_rx_index=0;
 static uint16_t pt100_uart_rx_old=0;
 static uint16_t pt100_uart_rx_index_no_change_tick=0;
 static uint16_t pt100_uart_tx_len=0;
 static uint16_t pt100_uart_tx_tick=0;
 
-static uint8_t  lcd_uart_rx_buf[LCD_UART_MAX_LEN];
+
 static uint8_t  lcd_uart_tx_buf[LCD_UART_MAX_LEN];
-static uint16_t lcd_uart_rx_index=0;
 static uint16_t lcd_uart_rx_old=0;
 static uint16_t lcd_uart_rx_index_no_change_tick=0;
 static uint16_t lcd_uart_tx_len=0;
@@ -136,6 +138,10 @@ void csp_uart_init(void)
     
     //rs485 EN 0 rx 1 tx  default is rx
     rs485_enbale_control(false);
+
+    //debug welcome ui
+    debug_sender_str("welcome to comegene instruction system\r\n");
+    debug_sender_str("input '?' to get help \r\n");
 }
 
 //DEBUG UART API
@@ -180,14 +186,18 @@ bool debug_buf_is_ready_check(void){
     if(debug_uart_rec_len == 0)
         return false;
 
-    if(debug_uart_rx_buf[debug_uart_rec_len-1] == 0x0D){
+    if(debug_uart_rx_buf[debug_uart_rec_len-2] == 0x0D && debug_uart_rx_buf[debug_uart_rec_len-1] == 0x0A){
+			
         return true;
     }else{
         return false;
     }
 
 }
-
+void clear_debug_uart(void){
+    memset(debug_uart_rx_buf,0,debug_uart_rec_len);
+    debug_uart_rec_len = 0;
+}
 void debug_uart_self_test_handle(void){
     if(debug_buf_is_ready_check()){
         //data is in debug_uart_rx_buf
@@ -195,10 +205,8 @@ void debug_uart_self_test_handle(void){
         debug_sender(debug_uart_rx_buf,debug_uart_rec_len);
 
         //after used we must clear rx
-
-        memset(debug_uart_rx_buf,0,debug_uart_rec_len);
-        debug_uart_rec_len = 0;
-    }
+        clear_debug_uart();
+    }   
 }
 
 //PT100 UART API
@@ -266,6 +274,11 @@ bool pt100_buf_is_ready_check(void){
 		return false;
 }
 
+void clear_pt100_uart(void){
+        memset(pt100_uart_rx_buf,0,pt100_uart_rx_index);
+        pt100_uart_rx_index = 0;
+        pt100_uart_rx_index_no_change_tick = 0;
+}
 void pt100_uart_self_test_handle(void){
     if(pt100_buf_is_ready_check() == true){
         //data is in pt100_uart_rx_buf
@@ -273,10 +286,7 @@ void pt100_uart_self_test_handle(void){
         pt100_sender(pt100_uart_rx_buf,pt100_uart_rx_index);
 
         //clear 
-        memset(pt100_uart_rx_buf,0,pt100_uart_rx_index);
-        pt100_uart_rx_index = 0;
-        pt100_uart_rx_index_no_change_tick = 0;
-
+        clear_pt100_uart();
     }
 }
 
@@ -339,6 +349,11 @@ bool lcd_buf_is_ready_check(void){
     }
 		return false;
 }
+void clear_lcd_uart(void){
+    memset(lcd_uart_rx_buf,0,lcd_uart_rx_index);
+    lcd_uart_rx_index = 0;
+    lcd_uart_rx_index_no_change_tick = 0;
+}
 void lcd_uart_self_test_handle(void){
     if(lcd_buf_is_ready_check() == true){
         //data is in lcd_uart_rx_buf
@@ -346,15 +361,13 @@ void lcd_uart_self_test_handle(void){
         lcd_sender(lcd_uart_rx_buf,lcd_uart_rx_index);
 
         //clear 
-        memset(lcd_uart_rx_buf,0,lcd_uart_rx_index);
-        lcd_uart_rx_index = 0;
-        lcd_uart_rx_index_no_change_tick = 0;
+        clear_lcd_uart();
 
     }
 }
 void csp_uart_handle(void)
 {
-    debug_uart_self_test_handle();
+    //debug_uart_self_test_handle();
     pt100_uart_self_test_handle();
     lcd_uart_self_test_handle();
 }

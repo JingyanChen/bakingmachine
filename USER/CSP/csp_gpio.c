@@ -123,7 +123,7 @@ void csp_gpio_init(void){
 
     //output set
 
-    for (i = 0; i < sizeof(OUTPUT_PORT_LIST) / sizeof(GPIO_TypeDef); i++)
+    for (i = 0; i < 21; i++)
     {
 
         GPIO_InitStructure.GPIO_Pin = OUTPUT_PIN_LIST[i];
@@ -135,7 +135,7 @@ void csp_gpio_init(void){
 
     //input set
 
-    for (i = 0; i < sizeof(INPUT_PORT_LIST) / sizeof(GPIO_TypeDef); i++)
+    for (i = 0; i < 21; i++)
     {
 
         GPIO_InitStructure.GPIO_Pin = INPUT_PIN_LIST[i];

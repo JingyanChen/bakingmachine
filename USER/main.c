@@ -6,6 +6,8 @@
 #include "csp_gpio.h"
 #include "csp_uart.h"
 #include "csp_adc.h"
+#include "csp_uart.h"
+#include "arg_debug_pro.h"
 
 int main(void)
 {
@@ -17,10 +19,13 @@ int main(void)
 	csp_uart_init();
 	csp_adc_init();
 
+	arg_debug_pro_init();
 	while (1)
 	{
 		csp_timer_handle();
 		csp_uart_handle();
 		csp_adc_handle();
+		csp_pwm_handle();
+		arg_debug_pro_handle();
 	}
 }

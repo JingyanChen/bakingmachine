@@ -89,7 +89,7 @@
         <sRfunc>1</sRfunc>
         <sRbox>1</sRbox>
         <tLdApp>1</tLdApp>
-        <tGomain>1</tGomain>
+        <tGomain>0</tGomain>
         <tRbreak>1</tRbreak>
         <tRwatch>1</tRwatch>
         <tRmem>1</tRmem>
@@ -140,7 +140,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>ST-LINKIII-KEIL_SWO</Key>
-          <Name>-U36FF72064D58303756381843 -O206 -SF1000 -C0 -A0 -I0 -HNlocalhost -HP7184 -P1 -N00("ARM CoreSight SW-DP") -D00(1BA01477) -L00(0) -TO18 -TC10000000 -TP21 -TDS8007 -TDT0 -TDC1F -TIEFFFFFFFF -TIP8 -FO15 -FD20000000 -FC1000 -FN1 -FF0STM32F10x_512.FLM -FS08000000 -FL080000 -FP0($$Device:STM32F103ZE$Flash\STM32F10x_512.FLM)</Name>
+          <Name>-U36FF72064D58303756381843 -O206 -SF1000 -C0 -A0 -I0 -HNlocalhost -HP7184 -P1 -N00("ARM CoreSight SW-DP") -D00(1BA01477) -L00(0) -TO18 -TC10000000 -TP21 -TDS8007 -TDT0 -TDC1F -TIEFFFFFFFF -TIP8 -FO7 -FD20000000 -FC1000 -FN1 -FF0STM32F10x_512.FLM -FS08000000 -FL080000 -FP0($$Device:STM32F103ZE$Flash\STM32F10x_512.FLM)</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -148,42 +148,90 @@
           <Name>UL2CM3(-S0 -C0 -P0  -FN1 -FC1000 -FD20000000 -FF0STM32F10x_512 -FL080000 -FS08000000 -FP0($$Device:STM32F103ZE$Flash\STM32F10x_512.FLM)</Name>
         </SetRegEntry>
       </TargetDriverDllRegistry>
-      <Breakpoint/>
+      <Breakpoint>
+        <Bp>
+          <Number>0</Number>
+          <Type>0</Type>
+          <LineNumber>159</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>134227922</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>.\ARG\arg_debug_pro.c</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\Template\ARG/arg_debug_pro.c\159</Expression>
+        </Bp>
+        <Bp>
+          <Number>1</Number>
+          <Type>0</Type>
+          <LineNumber>162</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>0</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>0</BreakIfRCount>
+          <Filename>.\ARG\arg_debug_pro.c</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression></Expression>
+        </Bp>
+      </Breakpoint>
       <WatchWindow2>
         <Ww>
           <count>0</count>
           <WinNumber>2</WinNumber>
-          <ItemText>((USART_TypeDef *) ((((uint32_t)0x40000000) + 0x10000) + 0x3800))</ItemText>
+          <ItemText>debug_uart_rx_buf</ItemText>
         </Ww>
         <Ww>
           <count>1</count>
           <WinNumber>2</WinNumber>
-          <ItemText>debug_uart_rx_buf</ItemText>
+          <ItemText>debug_uart_rec_len</ItemText>
         </Ww>
         <Ww>
           <count>2</count>
           <WinNumber>2</WinNumber>
-          <ItemText>debug_uart_rx_buf</ItemText>
+          <ItemText>cmd_buf</ItemText>
         </Ww>
         <Ww>
           <count>3</count>
           <WinNumber>2</WinNumber>
-          <ItemText>((USART_TypeDef *) (((uint32_t)0x40000000) + 0x4400))</ItemText>
+          <ItemText>k_pos</ItemText>
         </Ww>
         <Ww>
           <count>4</count>
           <WinNumber>2</WinNumber>
-          <ItemText>debug_uart_rx_buf</ItemText>
+          <ItemText>pra_str2</ItemText>
         </Ww>
         <Ww>
           <count>5</count>
           <WinNumber>2</WinNumber>
-          <ItemText>adc_result</ItemText>
+          <ItemText>pra_str2</ItemText>
         </Ww>
         <Ww>
           <count>6</count>
           <WinNumber>2</WinNumber>
-          <ItemText>adc_mv_data</ItemText>
+          <ItemText>pra_str1</ItemText>
+        </Ww>
+        <Ww>
+          <count>7</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>get_pwm_maker_percent</ItemText>
+        </Ww>
+        <Ww>
+          <count>8</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>pwm_maker_percent</ItemText>
+        </Ww>
+        <Ww>
+          <count>9</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>pra_str1</ItemText>
         </Ww>
       </WatchWindow2>
       <Tracepoint>
@@ -240,7 +288,7 @@
 
   <Group>
     <GroupName>USER</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -272,7 +320,7 @@
 
   <Group>
     <GroupName>SYSTEM</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -304,7 +352,7 @@
 
   <Group>
     <GroupName>CORE</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -620,7 +668,7 @@
 
   <Group>
     <GroupName>CSP</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -681,6 +729,26 @@
       <bDave2>0</bDave2>
       <PathWithFileName>.\CSP\csp_adc.c</PathWithFileName>
       <FilenameWithoutPath>csp_adc.c</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+  </Group>
+
+  <Group>
+    <GroupName>ARG</GroupName>
+    <tvExp>1</tvExp>
+    <tvExpOptDlg>0</tvExpOptDlg>
+    <cbSel>0</cbSel>
+    <RteFlg>0</RteFlg>
+    <File>
+      <GroupNumber>6</GroupNumber>
+      <FileNumber>35</FileNumber>
+      <FileType>1</FileType>
+      <tvExp>0</tvExp>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>.\ARG\arg_debug_pro.c</PathWithFileName>
+      <FilenameWithoutPath>arg_debug_pro.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>

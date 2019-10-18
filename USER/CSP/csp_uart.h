@@ -38,7 +38,8 @@ void debug_sender_str(uint8_t * str);
 
 //外部文件判断DEBUG数据包是否完整的方法
 bool debug_buf_is_ready_check(void);
-
+//clear uart buf
+void clear_debug_uart(void);
 
 /*
  * 利用200ms超时机制来判断包是否结束，给出了示例使用方法
@@ -53,7 +54,7 @@ void pt100_sender(uint8_t * sender , uint16_t len);
 
 //外部文件判断PT100数据包是否完整的方法
 bool pt100_buf_is_ready_check(void);
-
+void clear_pt100_uart(void);
 
 
 /*
@@ -69,6 +70,18 @@ void lcd_sender(uint8_t * sender , uint16_t len);
 
 //外部文件判断PT100数据包是否完整的方法
 bool lcd_buf_is_ready_check(void);
+void clear_lcd_uart(void);
 
+
+//为了减少对战调用，把UART的私有变量对外公开，外部文件谨慎使用
+
+extern uint8_t  debug_uart_rx_buf[DEBUG_UART_MAX_LEN];
+extern uint16_t debug_uart_rec_len;
+
+extern uint8_t  pt100_uart_rx_buf[PT100_UART_MAX_LEN];
+extern uint16_t pt100_uart_rx_index;
+
+extern uint8_t  lcd_uart_rx_buf[LCD_UART_MAX_LEN];
+extern uint16_t lcd_uart_rx_index;
 
 #endif
