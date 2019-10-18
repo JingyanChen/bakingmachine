@@ -157,7 +157,7 @@ void csp_adc_handle(void)
 
     for(i=0;i<ADC_CHANNEL_NUM;i++){
         adc_mv_data[i] = get_adc_v(i,DEFAULT_REF_MV);
-        //adc_temp_data[i] = adc_mv_data[i] * a + b;
+        adc_temp_data[i] = adc_mv_data[i];
     }
 }
 

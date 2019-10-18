@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "csp_adc.h"
 #include "csp_uart.h"
+#include "csp_gpio.h"
 #include "arg_debug_pro.h"
 #include "delay.h"
 #include "csp_pwm.h"
@@ -13,7 +14,20 @@ void arg_debug_pro_init(void){
 
 
 static void help(void){
-    debug_sender_str(" get_csp_adc\r\n set_warm_pwm\r\n set_motor_pwm\r\n");   
+    debug_sender_str("\r\n\r\n\r\n csp test cmd list >>>>>>>\r\n");delay_ms(10);
+    debug_sender_str(" 1 get_csp_adc\r\n");delay_ms(10);
+    debug_sender_str(" 2 set_warm_pwm id percent Note id : 0-9 percent 0-1000 \r\n");delay_ms(10); 
+    debug_sender_str(" 3 set_motor_pwm id percent Note id : 0-4 percent 0-1000 \r\n");delay_ms(10); 
+
+    debug_sender_str("\r\n\r\n\r\n periph test cmd list >>>>>>>\r\n");delay_ms(10); 
+    debug_sender_str(" 1 water_cool_pump_con id sw Note id: 0-4 sw 0/1\r\n");delay_ms(10); 
+    debug_sender_str(" 2 water_cool_vavle_con id sw Note id 0-6 sw 0/1\r\n");delay_ms(10);
+    debug_sender_str(" 3 get_liquid_feedback\r\n");delay_ms(10);
+    debug_sender_str(" 4 humidity_con id sw Note id:0-1 sw 0/1\r\n");delay_ms(10);
+    debug_sender_str(" 5 get_motor_limit\r\n");delay_ms(10);
+    debug_sender_str(" 6 get_key_in\r\n");delay_ms(10);
+    debug_sender_str(" 7 fan_con id sw Note id 0-4 sw 0/1\r\n");delay_ms(10);
+    debug_sender_str(" 8 led_con id sw Note id 0 sw 0/1\r\n");delay_ms(10);
 }
 
 static void get_csp_adc(void){
@@ -154,7 +168,7 @@ static void set_motor_pwm(void){
     pra2 = atoi((const char *)pra_str2);
 
     if(pra1 > 4){
-        debug_sender_str("id pra error ,please input 0-5");
+        debug_sender_str("id pra error ,please input 0-4");
         return ;
     }
         
@@ -169,11 +183,411 @@ static void set_motor_pwm(void){
     debug_sender_str(send_buf);
 }
 
+static void water_cool_pump_con(void){
+    //获得 set_motor_pwm 1 200 0x0d 0x0a 解析出 1 200这两个数据出来
+    uint8_t i=0;
+    uint8_t k_pos[10];
+    uint8_t k=0;
+    uint8_t j=0;
+
+    uint8_t pra_str1[20];
+    uint8_t pra_str2[20];
+
+    uint8_t send_buf[100];
+    uint16_t pra1=0,pra2=0;
+
+    //确定空格符号的位置
+    for(i=0;i<debug_uart_rec_len;i++){
+        if(debug_uart_rx_buf[i] == ' '){
+            k_pos[k] = i;
+            k++;
+        }
+    }
+
+    if(k != 2){
+        debug_sender_str("command error\r\n");
+        return ;
+    }
+        
+    
+    for(i=k_pos[0]+1;i<k_pos[1];i++){
+        pra_str1[j] = debug_uart_rx_buf[i];
+        if(pra_str1[j] <'0' || pra_str1[j] >'9'){
+            debug_sender_str("command error\r\n");
+            return ;            
+        }
+        j++;
+    }
+		pra_str1[j] = '\0';
+    j=0;
+
+    for(i=k_pos[1]+1;i<debug_uart_rec_len-2;i++){
+        pra_str2[j] = debug_uart_rx_buf[i];
+        if(pra_str2[j] <'0' || pra_str2[j] >'9'){
+            debug_sender_str("command error\r\n");
+            return ;            
+        }        
+        j++;
+    }    
+		pra_str2[j] = '\0';
+		
+    pra1 = atoi((const char *)pra_str1);
+    pra2 = atoi((const char *)pra_str2);
+
+    if(pra1 > 4){
+        debug_sender_str("id pra error ,please input 0-4");
+        return ;
+    }
+        
+
+    if(pra2 !=1 && pra2 !=0 ){
+        debug_sender_str("sw pra error ,please input 0/1");
+        return ;        
+    }
+
+    water_cool_pump_control(pra1,pra2);
+
+    sprintf((char *)send_buf,"set pump con %d as %d success\r\n",pra1,pra2);
+
+    debug_sender_str(send_buf);
+}
+static void water_cool_vavle_con(void){
+//继续分析数据包，debug_uart_rx_buf,debug_uart_rec_len
+    //获得 set_motor_pwm 1 200 0x0d 0x0a 解析出 1 200这两个数据出来
+    uint8_t i=0;
+    uint8_t k_pos[10];
+    uint8_t k=0;
+    uint8_t j=0;
+
+    uint8_t pra_str1[20];
+    uint8_t pra_str2[20];
+
+    uint8_t send_buf[100];
+    uint16_t pra1=0,pra2=0;
+
+    //确定空格符号的位置
+    for(i=0;i<debug_uart_rec_len;i++){
+        if(debug_uart_rx_buf[i] == ' '){
+            k_pos[k] = i;
+            k++;
+        }
+    }
+
+    if(k != 2){
+        debug_sender_str("command error\r\n");
+        return ;
+    }
+        
+    
+    for(i=k_pos[0]+1;i<k_pos[1];i++){
+        pra_str1[j] = debug_uart_rx_buf[i];
+        if(pra_str1[j] <'0' || pra_str1[j] >'9'){
+            debug_sender_str("command error\r\n");
+            return ;            
+        }
+        j++;
+    }
+		pra_str1[j] = '\0';
+    j=0;
+
+    for(i=k_pos[1]+1;i<debug_uart_rec_len-2;i++){
+        pra_str2[j] = debug_uart_rx_buf[i];
+        if(pra_str2[j] <'0' || pra_str2[j] >'9'){
+            debug_sender_str("command error\r\n");
+            return ;            
+        }        
+        j++;
+    }    
+		pra_str2[j] = '\0';
+		
+    pra1 = atoi((const char *)pra_str1);
+    pra2 = atoi((const char *)pra_str2);
+
+    if(pra1 > 6){
+        debug_sender_str("id pra error ,please input 0-6");
+        return ;
+    }
+        
+
+    if(pra2 !=1 && pra2 !=0 ){
+        debug_sender_str("sw pra error ,please input 0/1");
+        return ;        
+    }
+
+    water_cool_vavle_control(pra1,pra2);
+
+    sprintf((char *)send_buf,"set vavle con %d as %d success\r\n",pra1,pra2);
+    
+    debug_sender_str(send_buf);
+}
+static void get_liquid_feedback(void){
+    uint8_t sender_buf[100];
+    uint8_t i=0;
+    uint16_t sw = 0;
+
+    for(i=0;i<10;i++){
+        sw = get_liquid_feedback_v(i);
+        if(sw)
+            sprintf((char *)sender_buf,">>> liquid %d voltage is true \r\n" , i);
+        else
+            sprintf((char *)sender_buf,">>> liquid %d voltage is false \r\n" , i);
+        debug_sender_str(sender_buf);
+        delay_ms(10);
+    }
+}
+static void humidity_con(void){
+//获得 set_motor_pwm 1 200 0x0d 0x0a 解析出 1 200这两个数据出来
+    uint8_t i=0;
+    uint8_t k_pos[10];
+    uint8_t k=0;
+    uint8_t j=0;
+
+    uint8_t pra_str1[20];
+    uint8_t pra_str2[20];
+
+    uint8_t send_buf[100];
+    uint16_t pra1=0,pra2=0;
+
+    //确定空格符号的位置
+    for(i=0;i<debug_uart_rec_len;i++){
+        if(debug_uart_rx_buf[i] == ' '){
+            k_pos[k] = i;
+            k++;
+        }
+    }
+
+    if(k != 2){
+        debug_sender_str("command error\r\n");
+        return ;
+    }
+        
+    
+    for(i=k_pos[0]+1;i<k_pos[1];i++){
+        pra_str1[j] = debug_uart_rx_buf[i];
+        if(pra_str1[j] <'0' || pra_str1[j] >'9'){
+            debug_sender_str("command error\r\n");
+            return ;            
+        }
+        j++;
+    }
+		pra_str1[j] = '\0';
+    j=0;
+
+    for(i=k_pos[1]+1;i<debug_uart_rec_len-2;i++){
+        pra_str2[j] = debug_uart_rx_buf[i];
+        if(pra_str2[j] <'0' || pra_str2[j] >'9'){
+            debug_sender_str("command error\r\n");
+            return ;            
+        }        
+        j++;
+    }    
+		pra_str2[j] = '\0';
+		
+    pra1 = atoi((const char *)pra_str1);
+    pra2 = atoi((const char *)pra_str2);
+
+    if(pra1 > 1){
+        debug_sender_str("id pra error ,please input 0-1");
+        return ;
+    }
+        
+
+    if(pra2 !=1 && pra2 !=0 ){
+        debug_sender_str("sw pra error ,please input 0/1");
+        return ;        
+    }
+
+    humidity_control(pra1,pra2);
+
+    sprintf((char *)send_buf,"set humidity con %d as %d success\r\n",pra1,pra2);
+
+    debug_sender_str(send_buf);
+}
+static void get_motor_limit(void){
+    uint8_t sender_buf[100];
+    uint8_t i=0;
+    uint16_t sw = 0;
+
+    for(i=0;i<10;i++){
+        sw = get_motor_limit_v(i);
+        if(sw)
+            sprintf((char *)sender_buf,">>> motor limit %d voltage is true \r\n" , i);
+        else
+            sprintf((char *)sender_buf,">>> motor limit %d voltage is false \r\n" , i);
+        debug_sender_str(sender_buf);
+        delay_ms(10);
+    }
+}
+static void get_key_in(void){
+    uint8_t sender_buf[100];
+    uint8_t i=0;
+    uint16_t sw = 0;
+
+    for(i=0;i<6;i++){
+        sw = get_key_in_v(i);
+        if(sw)
+            sprintf((char *)sender_buf,">>> key %d voltage is true \r\n" , i);
+        else
+            sprintf((char *)sender_buf,">>> key limit %d voltage is false \r\n" , i);
+        debug_sender_str(sender_buf);
+        delay_ms(10);
+    }
+}
+static void fan_con(void){
+    //获得 set_motor_pwm 1 200 0x0d 0x0a 解析出 1 200这两个数据出来
+    uint8_t i=0;
+    uint8_t k_pos[10];
+    uint8_t k=0;
+    uint8_t j=0;
+
+    uint8_t pra_str1[20];
+    uint8_t pra_str2[20];
+
+    uint8_t send_buf[100];
+    uint16_t pra1=0,pra2=0;
+
+    //确定空格符号的位置
+    for(i=0;i<debug_uart_rec_len;i++){
+        if(debug_uart_rx_buf[i] == ' '){
+            k_pos[k] = i;
+            k++;
+        }
+    }
+
+    if(k != 2){
+        debug_sender_str("command error\r\n");
+        return ;
+    }
+        
+    
+    for(i=k_pos[0]+1;i<k_pos[1];i++){
+        pra_str1[j] = debug_uart_rx_buf[i];
+        if(pra_str1[j] <'0' || pra_str1[j] >'9'){
+            debug_sender_str("command error\r\n");
+            return ;            
+        }
+        j++;
+    }
+		pra_str1[j] = '\0';
+    j=0;
+
+    for(i=k_pos[1]+1;i<debug_uart_rec_len-2;i++){
+        pra_str2[j] = debug_uart_rx_buf[i];
+        if(pra_str2[j] <'0' || pra_str2[j] >'9'){
+            debug_sender_str("command error\r\n");
+            return ;            
+        }        
+        j++;
+    }    
+		pra_str2[j] = '\0';
+		
+    pra1 = atoi((const char *)pra_str1);
+    pra2 = atoi((const char *)pra_str2);
+
+    if(pra1 > 4){
+        debug_sender_str("id pra error ,please input 0-4");
+        return ;
+    }
+        
+
+    if(pra2 !=1 && pra2 !=0 ){
+        debug_sender_str("sw pra error ,please input 0/1");
+        return ;        
+    }
+
+    fan_control(pra1,pra2);
+
+    sprintf((char *)send_buf,"set fan con %d as %d success\r\n",pra1,pra2);
+
+    debug_sender_str(send_buf);
+}
+static void led_con(void){
+    //获得 set_motor_pwm 1 200 0x0d 0x0a 解析出 1 200这两个数据出来
+    uint8_t i=0;
+    uint8_t k_pos[10];
+    uint8_t k=0;
+    uint8_t j=0;
+
+    uint8_t pra_str1[20];
+    uint8_t pra_str2[20];
+
+    uint8_t send_buf[100];
+    uint16_t pra1=0,pra2=0;
+
+    //确定空格符号的位置
+    for(i=0;i<debug_uart_rec_len;i++){
+        if(debug_uart_rx_buf[i] == ' '){
+            k_pos[k] = i;
+            k++;
+        }
+    }
+
+    if(k != 2){
+        debug_sender_str("command error\r\n");
+        return ;
+    }
+        
+    
+    for(i=k_pos[0]+1;i<k_pos[1];i++){
+        pra_str1[j] = debug_uart_rx_buf[i];
+        if(pra_str1[j] <'0' || pra_str1[j] >'9'){
+            debug_sender_str("command error\r\n");
+            return ;            
+        }
+        j++;
+    }
+		pra_str1[j] = '\0';
+    j=0;
+
+    for(i=k_pos[1]+1;i<debug_uart_rec_len-2;i++){
+        pra_str2[j] = debug_uart_rx_buf[i];
+        if(pra_str2[j] <'0' || pra_str2[j] >'9'){
+            debug_sender_str("command error\r\n");
+            return ;            
+        }        
+        j++;
+    }    
+		pra_str2[j] = '\0';
+		
+    pra1 = atoi((const char *)pra_str1);
+    pra2 = atoi((const char *)pra_str2);
+
+    if(pra1 > 0){
+        debug_sender_str("id pra error ,please input 0");
+        return ;
+    }
+        
+
+    if(pra2 !=1 && pra2 !=0 ){
+        debug_sender_str("sw pra error ,please input 0/1");
+        return ;        
+    }
+    if(pra2 == 1)
+        power_led_control(true);
+    else
+        power_led_control(false);
+
+    sprintf((char *)send_buf,"set led %d as %d success\r\n",pra1,pra2);
+
+    debug_sender_str(send_buf);
+}
 debug_func_list_t debug_func_list[] = {
+
     {help,"help"},
+
     {get_csp_adc,"get_csp_adc"},
     {set_warm_pwm,"set_warm_pwm"},
     {set_motor_pwm,"set_motor_pwm"},
+
+    {water_cool_pump_con,"water_cool_pump_con"},
+    {water_cool_vavle_con,"water_cool_vavle_con"},
+    {get_liquid_feedback,"get_liquid_feedback"},
+    {humidity_con,"humidity_con"},
+    {get_motor_limit,"get_motor_limit"},
+    {get_key_in,"get_key_in"},
+    {fan_con,"fan_con"},
+    {led_con,"led_con"},
+
 };
 
 

@@ -582,6 +582,11 @@
               <FileType>1</FileType>
               <FilePath>.\ARG\arg_debug_pro.c</FilePath>
             </File>
+            <File>
+              <FileName>arg_pid.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\ARG\arg_pid.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>
