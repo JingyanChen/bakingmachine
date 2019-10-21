@@ -143,6 +143,14 @@ void csp_gpio_init(void){
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
         GPIO_Init(INPUT_PORT_LIST[i], &GPIO_InitStructure);
     }
+
+    //pump defualt v = 1
+
+    for(i=0;i<5;i++){
+        water_cool_pump_control(i,true);
+    }
+
+
 }
 
 void csp_gpio_handle(void){

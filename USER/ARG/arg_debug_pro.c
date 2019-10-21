@@ -8,6 +8,7 @@
 #include "csp_pwm.h"
 #include <stdbool.h>
 #include <stdlib.h>
+#include "arg_pid.h"
 
 void arg_debug_pro_init(void){
 }
@@ -28,6 +29,12 @@ static void help(void){
     debug_sender_str(" 6 get_key_in\r\n");delay_ms(10);
     debug_sender_str(" 7 fan_con id sw Note id 0-4 sw 0/1\r\n");delay_ms(10);
     debug_sender_str(" 8 led_con id sw Note id 0 sw 0/1\r\n");delay_ms(10);
+
+    debug_sender_str("\r\n\r\n\r\n app test cmd list >>>>>>>\r\n");delay_ms(10);  
+    debug_sender_str("1 get_temp\r\n");delay_ms(10);     
+    debug_sender_str("2 get_pid_sw\r\n");delay_ms(10);   
+    debug_sender_str("3 start_pid id taget_temp Note id 0-9 target_temp 25 - 100");delay_ms(10);  
+
 }
 
 static void get_csp_adc(void){
@@ -42,7 +49,18 @@ static void get_csp_adc(void){
         delay_ms(10);
     }
 }
+static void get_temp(void){
+    uint8_t sender_buf[100];
+    uint8_t i=0;
+    uint16_t mv = 0;
 
+    for(i=0;i<10;i++){
+        mv = adc_temp_data[i];
+        sprintf((char *)sender_buf,">>> temp  %d is %d  / 0.1 degree centigrade \r\n" , i,mv);
+        debug_sender_str(sender_buf);
+        delay_ms(10);
+    }
+}
 static void set_warm_pwm(void){
     //继续分析数据包，debug_uart_rx_buf,debug_uart_rec_len
     //获得 set_warm_pwm 1 200 0x0d 0x0a 解析出 1 200这两个数据出来
@@ -114,7 +132,6 @@ static void set_warm_pwm(void){
     sprintf((char *)send_buf,"set warmer %d as %d / 1000 PWM success\r\n",pra1,pra2);
     debug_sender_str(send_buf);
 }
-
 static void set_motor_pwm(void){
     //继续分析数据包，debug_uart_rx_buf,debug_uart_rec_len
     //获得 set_motor_pwm 1 200 0x0d 0x0a 解析出 1 200这两个数据出来
@@ -571,6 +588,92 @@ static void led_con(void){
 
     debug_sender_str(send_buf);
 }
+static void get_pid_sw(void){
+    uint8_t sender_buf[100];
+    uint8_t i=0;
+
+    for(i=0;i<10;i++){
+        if(get_pid_con_sw(i))
+            sprintf((char *)sender_buf,">>> pid controller %d is on \r\n" , i);
+        else
+            sprintf((char *)sender_buf,">>> pid controller %d is off \r\n" ,  i);
+        debug_sender_str(sender_buf);
+        delay_ms(10);
+    }    
+}
+static void start_pid(void){
+    //继续分析数据包，debug_uart_rx_buf,debug_uart_rec_len
+    //获得 set_warm_pwm 1 200 0x0d 0x0a 解析出 1 200这两个数据出来
+    uint8_t i=0;
+    uint8_t k_pos[10];
+    uint8_t k=0;
+    uint8_t j=0;
+
+    uint8_t pra_str1[20];
+    uint8_t pra_str2[20];
+
+    uint8_t send_buf[100];
+    uint16_t pra1=0,pra2=0;
+
+    //确定空格符号的位置
+    for(i=0;i<debug_uart_rec_len;i++){
+        if(debug_uart_rx_buf[i] == ' '){
+            k_pos[k] = i;
+            k++;
+        }
+    }
+
+    if(k != 2){
+        debug_sender_str("command error\r\n");
+        return ;
+    }
+        
+    
+    for(i=k_pos[0]+1;i<k_pos[1];i++){
+        pra_str1[j] = debug_uart_rx_buf[i];
+        if(pra_str1[j] <'0' || pra_str1[j] >'9'){
+            debug_sender_str("command error\r\n");
+            return ;            
+        }
+        j++;
+    }
+		pra_str1[j] = '\0';
+		
+    j=0;
+
+    for(i=k_pos[1]+1;i<debug_uart_rec_len-2;i++){
+        pra_str2[j] = debug_uart_rx_buf[i];
+        if(pra_str2[j] <'0' || pra_str2[j] >'9'){
+            debug_sender_str("command error\r\n");
+            return ;            
+        }        
+        j++;
+    }    
+		pra_str1[j] = '\0';
+		
+    pra1 = atoi((const char *)pra_str1);
+    pra2 = atoi((const char *)pra_str2);
+
+    //pra check 
+
+    if(pra1 > 9){
+        debug_sender_str("id pra error ,please input 0-9");
+        return ;
+    }
+        
+    //todo
+    if(pra2 > 1000 || pra2 < 250){
+        debug_sender_str("taget temp error. vaild temp is 25-100");
+        return ;        
+    }
+
+    //打开PID 算法
+
+    start_pid_controller_as_target_temp(pra1,pra2);
+
+    sprintf((char *)send_buf,"start pid controller %d target %d is success\r\n",pra1,pra2);
+    debug_sender_str(send_buf);    
+}
 debug_func_list_t debug_func_list[] = {
 
     {help,"help"},
@@ -587,6 +690,10 @@ debug_func_list_t debug_func_list[] = {
     {get_key_in,"get_key_in"},
     {fan_con,"fan_con"},
     {led_con,"led_con"},
+
+    {get_temp,"get_temp"},
+    {get_pid_sw,"get_pid_sw"},
+    {start_pid,"start_pid"}
 
 };
 

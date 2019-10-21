@@ -11,18 +11,20 @@
  * pid算法仅在升温的时候有效，降温的时候做一些动作来快速降温
  */
 
-
-//打开此宏定义，PID的计算过程将会每一步都展现在DEBUG串口中
-#define PID_DEBUG_LOG_SW 
 #define PID_CONTORLLER_NUM 10
+#define DEBUG_PID_SW 
 
 
-#define P 0.002
-#define D 0.001
+
+#define P 35.0
+#define D -5.0
 
 void arg_pid_init(void);
 void arg_pid_handle(void);
 
 
+bool get_pid_con_sw(uint8_t id);
+void set_pid_con_sw(uint8_t id , bool sw);
+void start_pid_controller_as_target_temp(uint8_t id , uint16_t target_temp);
 
 #endif

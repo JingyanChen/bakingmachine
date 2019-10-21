@@ -33,7 +33,8 @@ uint16_t PWM_PIN_LIST[]={
 };
 
 
-#define TIMER_PERIOD 8999
+#define TIMER_PERIOD 899
+//#define TIMER_PERIOD 65534
 void csp_pwm_init(void)
 {
 		uint8_t i=0;
@@ -207,7 +208,9 @@ void csp_pwm_handle(void)
                 access_pwm_gpio_v(i,true);
             else
                 access_pwm_gpio_v(i,false);
-        }
+        }else{
+					      access_pwm_gpio_v(i,false);
+				}
     }
 
     pwm_maker_period_tick_ms++;
@@ -247,7 +250,7 @@ void close_pwm(uint8_t pwm_id){
 }
 
 bool set_software_pwm(uint8_t pwm_id , uint16_t percent){
-    set_pwm_maker_percent(pwm_id,percent % 1000);
+    set_pwm_maker_percent(pwm_id,percent % 1001);
     return true;
 }
 

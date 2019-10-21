@@ -28,7 +28,7 @@ uint16_t ADC_PIN_LIST[] = {
     ADC_INPUT_PIN_8,
     ADC_INPUT_PIN_9,
 };
-#define ADC_AVERAGE_NUM 50
+#define ADC_AVERAGE_NUM 100
 #define ADC_CHANNEL_NUM 10
 
 uint16_t adc_result[ADC_AVERAGE_NUM][ADC_CHANNEL_NUM];
@@ -157,7 +157,14 @@ void csp_adc_handle(void)
 
     for(i=0;i<ADC_CHANNEL_NUM;i++){
         adc_mv_data[i] = get_adc_v(i,DEFAULT_REF_MV);
-        adc_temp_data[i] = adc_mv_data[i];
+        /*
+         * 目前的计算方法，标定法,50欧姆
+         * 源端108欧姆 对应389mV
+         * 4mA - 0摄氏度 20mA -100摄氏度
+         * 4mA - 200mv   20mA - 1000mV
+         * 0摄氏度 - 200mV   100摄氏度 - 1000mV
+         */
+        adc_temp_data[i] = (uint16_t)((float)( (float)adc_mv_data[i] - (float)200 ) / 0.8);
     }
 }
 
