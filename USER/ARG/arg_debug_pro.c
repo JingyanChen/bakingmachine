@@ -3,6 +3,7 @@
 #include "csp_adc.h"
 #include "csp_uart.h"
 #include "csp_gpio.h"
+#include "csp_timer.h"
 #include "arg_debug_pro.h"
 #include "delay.h"
 #include "csp_pwm.h"
@@ -11,7 +12,10 @@
 #include "arg_pid.h"
 #include "periph_motor.h"
 
+static bool temp_gui_upload_sw=false;
+
 void arg_debug_pro_init(void){
+    temp_gui_upload_sw = false;
 }
 
 
@@ -39,7 +43,8 @@ static void help(void){
     debug_sender_str("\r\n\r\n\r\n app test cmd list >>>>>>>\r\n");delay_ms(10);  
     debug_sender_str(" 1 get_temp\r\n");delay_ms(10);     
     debug_sender_str(" 2 get_pid_sw\r\n");delay_ms(10);   
-    debug_sender_str(" 3 start_pid id taget_temp Note id 0-9 target_temp 25 - 100");delay_ms(10);  
+    debug_sender_str(" 3 start_pid id taget_temp Note id 0-9 target_temp 25 - 100\r\n");delay_ms(10);  
+    debug_sender_str(" 4 open_temp_gui open_temp_gui Note pree Enter to Stop\r\n");delay_ms(10);
 
 }
 
@@ -856,6 +861,13 @@ static void set_acc_motor(void){
     sprintf((char *)send_buf,"set motor acc %d dir %d tim %d ms success\r\n",pra1,pra2,pra3);
     debug_sender_str(send_buf);    
 }
+
+
+//源源不断的发送十个温度片的数据
+static void open_temp_gui(void){
+    temp_gui_upload_sw = true;
+    debug_sender_str("temp gui is start...\r\n");
+}
 debug_func_list_t debug_func_list[] = {
 
     {help,"help"},
@@ -878,7 +890,8 @@ debug_func_list_t debug_func_list[] = {
 
     {get_temp,"get_temp"},
     {get_pid_sw,"get_pid_sw"},
-    {start_pid,"start_pid"}
+    {start_pid,"start_pid"},
+    {open_temp_gui,"open_temp_gui"},
 
 };
 
@@ -892,6 +905,7 @@ static void arg_debug_packet_decode(uint8_t * buf , uint16_t len){
 
     if(len ==  2 && buf[0] == 0x0d && buf[1] == 0x0a){
         debug_sender_str("comegene command:");
+        temp_gui_upload_sw = false;//回车关闭一直上报
         return ;
     }
 
@@ -921,6 +935,12 @@ static void arg_debug_packet_decode(uint8_t * buf , uint16_t len){
 }
 
 void arg_debug_pro_handle(void){
+    uint8_t sender_buf[200];
+    if(_UPLOAD_TEMP_GUI_FLAG == false)
+        return;
+    _UPLOAD_TEMP_GUI_FLAG = false;
+
+
     if(debug_buf_is_ready_check()){
         //data is in debug_uart_rx_buf
         //len is debug_uart_rec_len - 1
@@ -928,5 +948,12 @@ void arg_debug_pro_handle(void){
         arg_debug_packet_decode(debug_uart_rx_buf,debug_uart_rec_len);
         //after used we must clear rx
         clear_debug_uart();
-    }       
+    } 
+
+    if(temp_gui_upload_sw){
+        //根据实际需要，上报浮点数，画曲线。
+        sprintf((char *)sender_buf,"temp1,%f;\n",(float)adc_temp_data[0]);
+        //sprintf((char *)sender_buf,"temp1,%f;temp2,%f;temp3,%f;temp4,%f;\n",(float)adc_temp_data[0],(float)adc_temp_data[1],(float)adc_temp_data[2],(float)adc_temp_data[3]);
+        debug_sender_str(sender_buf);
+    }  
 }

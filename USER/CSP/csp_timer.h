@@ -36,6 +36,7 @@ extern bakingMachine_t  bakingMachine_flag;
 #define _UPDATE_ADC_DATA_FLAG bakingMachine_flag.timer_flag.se4
 #define _PID_CONTROL_UP_FALG bakingMachine_flag.timer_flag.se5
 #define _MOTOR_ACC_CON_FLAG bakingMachine_flag.timer_flag.se6
+#define _UPLOAD_TEMP_GUI_FLAG bakingMachine_flag.timer_flag.se7
 
 void csp_timer_init(void);
 void csp_timer_handle(void);

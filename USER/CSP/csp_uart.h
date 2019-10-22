@@ -17,7 +17,7 @@
  */
 
 
-#define DEBUG_UART_MAX_LEN 100
+#define DEBUG_UART_MAX_LEN 200
 #define PT100_UART_MAX_LEN 100
 #define LCD_UART_MAX_LEN   100
 
