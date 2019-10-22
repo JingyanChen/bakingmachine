@@ -125,44 +125,55 @@
 #define MOTOR_LIMIT_PIN_9   GPIO_Pin_13
 
 
+#define MOTOR_DIR_PORT_0    GPIOF
+#define MOTOR_DIR_PIN_0     GPIO_Pin_14
+#define MOTOR_DIR_PORT_1    GPIOF
+#define MOTOR_DIR_PIN_1     GPIO_Pin_15
+#define MOTOR_DIR_PORT_2    GPIOD
+#define MOTOR_DIR_PIN_2     GPIO_Pin_10
+#define MOTOR_DIR_PORT_3    GPIOD
+#define MOTOR_DIR_PIN_3     GPIO_Pin_11
+#define MOTOR_DIR_PORT_4    GPIOD
+#define MOTOR_DIR_PIN_4     GPIO_Pin_12
+
 //key system
 
-#define KEY_IN_PORT_0   GPIOF
-#define KEY_IN_PIN_0    GPIO_Pin_14
-#define KEY_IN_PORT_1   GPIOF
-#define KEY_IN_PIN_1    GPIO_Pin_15
+#define KEY_IN_PORT_0   GPIOD
+#define KEY_IN_PIN_0    GPIO_Pin_13
+#define KEY_IN_PORT_1   GPIOD
+#define KEY_IN_PIN_1    GPIO_Pin_14
 #define KEY_IN_PORT_2   GPIOD
-#define KEY_IN_PIN_2    GPIO_Pin_10
-#define KEY_IN_PORT_3   GPIOD
-#define KEY_IN_PIN_3    GPIO_Pin_11
-#define KEY_IN_PORT_4   GPIOD
-#define KEY_IN_PIN_4    GPIO_Pin_12
-#define KEY_POWER_PORT  GPIOD
+#define KEY_IN_PIN_2    GPIO_Pin_15
+#define KEY_IN_PORT_3   GPIOC
+#define KEY_IN_PIN_3    GPIO_Pin_15
+#define KEY_IN_PORT_4   GPIOC
+#define KEY_IN_PIN_4    GPIO_Pin_14
+#define KEY_POWER_PORT  GPIOC
 #define KEY_POWER_PIN   GPIO_Pin_13
 
 
 //fan system
 
-#define FAN_SYSTEM_CONTROL_PORT_0   GPIOD
-#define FAN_SYSTEM_CONTROL_PIN_0    GPIO_Pin_14
-#define FAN_SYSTEM_CONTROL_PORT_1   GPIOD
-#define FAN_SYSTEM_CONTROL_PIN_1    GPIO_Pin_15
+#define FAN_SYSTEM_CONTROL_PORT_0   GPIOC
+#define FAN_SYSTEM_CONTROL_PIN_0    GPIO_Pin_12
+#define FAN_SYSTEM_CONTROL_PORT_1   GPIOC
+#define FAN_SYSTEM_CONTROL_PIN_1    GPIO_Pin_11
 #define FAN_SYSTEM_CONTROL_PORT_2   GPIOC
-#define FAN_SYSTEM_CONTROL_PIN_2    GPIO_Pin_15
+#define FAN_SYSTEM_CONTROL_PIN_2    GPIO_Pin_9
 #define FAN_SYSTEM_CONTROL_PORT_3   GPIOC
-#define FAN_SYSTEM_CONTROL_PIN_3    GPIO_Pin_14
+#define FAN_SYSTEM_CONTROL_PIN_3    GPIO_Pin_8
 #define FAN_SYSTEM_CONTROL_PORT_4   GPIOC
-#define FAN_SYSTEM_CONTROL_PIN_4    GPIO_Pin_13
+#define FAN_SYSTEM_CONTROL_PIN_4    GPIO_Pin_7
 
 //RS485 system
 
-#define RS485_EN_PORT   GPIOD
-#define RS485_EN_PIN    GPIO_Pin_7
+#define RS485_EN_PORT   GPIOC
+#define RS485_EN_PIN    GPIO_Pin_6
 
 //LED 
 
 #define LED_PORT   GPIOC
-#define LED_PIN    GPIO_Pin_10
+#define LED_PIN    GPIO_Pin_5
 
 
 
@@ -216,4 +227,8 @@ bool get_key_in_v(uint8_t id);
  * get power key in
  */
 bool get_power_key_in(void);
+/*
+ * set motor dir
+ */
+void motor_dir_set(uint8_t id , bool sw);
 #endif

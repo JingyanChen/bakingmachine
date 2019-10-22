@@ -2,6 +2,7 @@
     "files.associations": {
         "csp_timer.h": "c",
         "csp_gpio.h": "c",
-        "sys.h": "c"
+        "sys.h": "c",
+        "periph_motor.h": "c"
     }
 }

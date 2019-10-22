@@ -63,6 +63,7 @@ static void csp_10_ms_handle(void){
     // 10 ms code
     _UART_PT100_10MS_FLAG = true;
     _UART_LCD_10MS_FLAG = true;
+    _MOTOR_ACC_CON_FLAG = true;
     //
 
     _100ms_tick ++;

@@ -30,6 +30,11 @@ GPIO_TypeDef *OUTPUT_PORT_LIST[] = {
 
     LED_PORT,
 
+    MOTOR_DIR_PORT_0,
+    MOTOR_DIR_PORT_1,
+    MOTOR_DIR_PORT_2,
+    MOTOR_DIR_PORT_3,
+    MOTOR_DIR_PORT_4,
 };
 
 uint16_t OUTPUT_PIN_LIST[] = {
@@ -59,6 +64,12 @@ uint16_t OUTPUT_PIN_LIST[] = {
     RS485_EN_PIN,
 
     LED_PIN,
+
+    MOTOR_DIR_PIN_0,
+    MOTOR_DIR_PIN_1,
+    MOTOR_DIR_PIN_2,
+    MOTOR_DIR_PIN_3,
+    MOTOR_DIR_PIN_4,
 };
 
 GPIO_TypeDef *INPUT_PORT_LIST[] = {
@@ -123,7 +134,7 @@ void csp_gpio_init(void){
 
     //output set
 
-    for (i = 0; i < 21; i++)
+    for (i = 0; i < 26; i++)
     {
 
         GPIO_InitStructure.GPIO_Pin = OUTPUT_PIN_LIST[i];
@@ -209,6 +220,15 @@ void power_led_control(bool sw){
     }else{
         GPIO_ResetBits(LED_PORT , LED_PIN);
     }      
+}
+
+#define MOTOR_DIR_CONTROL_OFFSET 21
+void motor_dir_set(uint8_t id , bool sw){
+    if(sw){
+        GPIO_SetBits(OUTPUT_PORT_LIST[MOTOR_DIR_CONTROL_OFFSET + id ] , OUTPUT_PIN_LIST[MOTOR_DIR_CONTROL_OFFSET+ id ]);
+    }else{
+        GPIO_ResetBits(OUTPUT_PORT_LIST[MOTOR_DIR_CONTROL_OFFSET + id ] , OUTPUT_PIN_LIST[MOTOR_DIR_CONTROL_OFFSET+ id ]);
+    }        
 }
 
 #define LIQUID_FEEDBACK_OFFSET 0

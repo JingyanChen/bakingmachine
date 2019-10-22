@@ -33,7 +33,7 @@ uint16_t PWM_PIN_LIST[]={
 };
 
 
-#define TIMER_PERIOD 899
+#define TIMER_PERIOD 8999
 //#define TIMER_PERIOD 65534
 void csp_pwm_init(void)
 {

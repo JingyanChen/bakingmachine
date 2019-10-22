@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F10X_HD,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\USER;..\CORE;..\STM32F10x_FWLib\inc;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER\CSP;..\USER\ARG</IncludePath>
+              <IncludePath>..\USER;..\CORE;..\STM32F10x_FWLib\inc;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER\CSP;..\USER\ARG;..\USER\Periph</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -586,6 +586,16 @@
               <FileName>arg_pid.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\ARG\arg_pid.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>PERIPH</GroupName>
+          <Files>
+            <File>
+              <FileName>periph_motor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Periph\periph_motor.c</FilePath>
             </File>
           </Files>
         </Group>

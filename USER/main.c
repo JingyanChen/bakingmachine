@@ -9,7 +9,7 @@
 #include "csp_uart.h"
 #include "arg_debug_pro.h"
 #include "arg_pid.h"
-
+#include "periph_motor.h"
 int main(void)
 {
 	delay_init();
@@ -20,6 +20,8 @@ int main(void)
 	csp_uart_init();
 	csp_adc_init();
 
+	periph_motor_init();
+	
 	arg_debug_pro_init();
 	arg_pid_init();
 
@@ -29,6 +31,9 @@ int main(void)
 		csp_uart_handle();
 		csp_adc_handle();
 		csp_pwm_handle();
+
+		periph_motor_handle();
+		
 		arg_debug_pro_handle();
 		arg_pid_handle();
 	}
