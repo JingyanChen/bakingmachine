@@ -25,6 +25,7 @@ uint8_t se7 :1;
 
 typedef struct {
 SE timer_flag;
+SE timer_flag_2;
 }bakingMachine_t;
 
 extern bakingMachine_t  bakingMachine_flag;
@@ -37,6 +38,8 @@ extern bakingMachine_t  bakingMachine_flag;
 #define _PID_CONTROL_UP_FALG bakingMachine_flag.timer_flag.se5
 #define _MOTOR_ACC_CON_FLAG bakingMachine_flag.timer_flag.se6
 #define _UPLOAD_TEMP_GUI_FLAG bakingMachine_flag.timer_flag.se7
+
+#define _KEY_EVENT_CHECK_FLAG bakingMachine_flag.timer_flag_2.se0
 
 void csp_timer_init(void);
 void csp_timer_handle(void);

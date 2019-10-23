@@ -152,25 +152,25 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>955</LineNumber>
+          <LineNumber>173</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134228084</Address>
+          <Address>134226562</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>.\ARG\arg_debug_pro.c</Filename>
+          <Filename>.\CSP\csp_uart.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\Template\ARG/arg_debug_pro.c\955</Expression>
+          <Expression>\\Template\CSP/csp_uart.c\173</Expression>
         </Bp>
         <Bp>
           <Number>1</Number>
           <Type>0</Type>
           <LineNumber>141</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134238788</Address>
+          <Address>134238648</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -186,7 +186,7 @@
           <Type>0</Type>
           <LineNumber>147</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134228510</Address>
+          <Address>134228378</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -196,22 +196,6 @@
           <Filename>.\ARG\arg_pid.c</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\Template\ARG/arg_pid.c\147</Expression>
-        </Bp>
-        <Bp>
-          <Number>3</Number>
-          <Type>0</Type>
-          <LineNumber>953</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134227828</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>.\ARG\arg_debug_pro.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\Template\ARG/arg_debug_pro.c\953</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow2>
@@ -314,6 +298,11 @@
           <count>19</count>
           <WinNumber>2</WinNumber>
           <ItemText>sender_buf</ItemText>
+        </Ww>
+        <Ww>
+          <count>20</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>debug_uart_rx_buf</ItemText>
         </Ww>
       </WatchWindow2>
       <Tracepoint>
@@ -863,6 +852,18 @@
       <bDave2>0</bDave2>
       <PathWithFileName>.\Periph\periph_motor.c</PathWithFileName>
       <FilenameWithoutPath>periph_motor.c</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+    <File>
+      <GroupNumber>7</GroupNumber>
+      <FileNumber>38</FileNumber>
+      <FileType>1</FileType>
+      <tvExp>0</tvExp>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>.\Periph\periph_key.c</PathWithFileName>
+      <FilenameWithoutPath>periph_key.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>

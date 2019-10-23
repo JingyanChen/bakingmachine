@@ -64,6 +64,7 @@ static void csp_10_ms_handle(void){
     _UART_PT100_10MS_FLAG = true;
     _UART_LCD_10MS_FLAG = true;
     _MOTOR_ACC_CON_FLAG = true;
+    _KEY_EVENT_CHECK_FLAG = true;
     //
 
     _100ms_tick ++;
@@ -78,7 +79,7 @@ static void csp_100_ms_handle(void){
     // 100 ms code
     _UPDATE_ADC_DATA_FLAG = true; 
     _PID_CONTROL_UP_FALG = true;  
- 	  _UPLOAD_TEMP_GUI_FLAG = true;  	
+ 	_UPLOAD_TEMP_GUI_FLAG = true;  	
     //
 
     _1000ms_tick ++;

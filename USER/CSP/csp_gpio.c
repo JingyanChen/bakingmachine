@@ -147,10 +147,15 @@ void csp_gpio_init(void){
     //input set
 
     for (i = 0; i < 21; i++)
-    {
-
+    {   
+        
         GPIO_InitStructure.GPIO_Pin = INPUT_PIN_LIST[i];
-        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+
+        if(i>14 && i< 20){
+            GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;//经过测试，按键需要下拉输入才可以正确工作
+        }else{
+            GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;//限位引脚和其他按键输入，默认采用上拉输入
+        }
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
         GPIO_Init(INPUT_PORT_LIST[i], &GPIO_InitStructure);
     }

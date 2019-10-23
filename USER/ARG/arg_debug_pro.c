@@ -456,7 +456,7 @@ static void get_key_in(void){
         if(sw)
             sprintf((char *)sender_buf,">>> key %d voltage is true \r\n" , i);
         else
-            sprintf((char *)sender_buf,">>> key limit %d voltage is false \r\n" , i);
+            sprintf((char *)sender_buf,">>> key %d voltage is false  \r\n" , i);
         debug_sender_str(sender_buf);
         delay_ms(10);
     }
