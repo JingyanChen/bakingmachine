@@ -3,6 +3,7 @@
 #include "csp_timer.h"
 #include "csp_pwm.h"
 #include "csp_uart.h"
+#include "csp_gpio.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
@@ -170,9 +171,9 @@ void arg_pid_handle(void)
                      * 如果同一个盒子出现了一个需要水冷的条件一个不需要，出现矛盾
                      * 那么不需要水冷的pid控制器要将就需要水冷的控制器，导致控制时间延长，但是不影响整体逻辑
                      */
-                    water_cool_pump_control(running_pid_id[0] % 10] / 2 , 0);
+                    water_cool_pump_control(running_pid_id[0]  / 2 , 0);
                 }else{
-                    water_cool_pump_control(running_pid_id[0] % 10] / 2 , 1);
+                    water_cool_pump_control(running_pid_id[0]  / 2 , 1);
                     //关闭水冷泵 降温结束
                 }
             }
@@ -221,9 +222,9 @@ void arg_pid_handle(void)
                      * 如果同一个盒子出现了一个需要水冷的条件一个不需要，出现矛盾
                      * 那么不需要水冷的pid控制器要将就需要水冷的控制器，导致控制时间延长，但是不影响整体逻辑
                      */
-                    water_cool_pump_control(running_pid_id[0] % 10] / 2 , 0);
+                    water_cool_pump_control(running_pid_id[0] / 2 , 0);
                 }else{
-                    water_cool_pump_control(running_pid_id[0] % 10] / 2 , 1);
+                    water_cool_pump_control(running_pid_id[0] / 2 , 1);
                     //关闭水冷泵 降温结束
                 }
             }
@@ -259,9 +260,9 @@ void arg_pid_handle(void)
                      * 如果同一个盒子出现了一个需要水冷的条件一个不需要，出现矛盾
                      * 那么不需要水冷的pid控制器要将就需要水冷的控制器，导致控制时间延长，但是不影响整体逻辑
                      */
-                    water_cool_pump_control(running_pid_id[1] % 10] / 2 , 0);
+                    water_cool_pump_control(running_pid_id[1] / 2 , 0);
                 }else{
-                    water_cool_pump_control(running_pid_id[1] % 10] / 2 , 1);
+                    water_cool_pump_control(running_pid_id[1] / 2 , 1);
                     //关闭水冷泵 降温结束
                 }                
             }
