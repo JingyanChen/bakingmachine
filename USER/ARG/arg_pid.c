@@ -158,6 +158,23 @@ void arg_pid_handle(void)
             }else{
                 pwm_out1 = 0;
                 set_software_pwm(running_pid_id[0], pwm_out1);
+
+                //触发水冷系统
+                if(pid_temp_error[running_pid_id[0] % 10] < - 10){
+                    //打开对应的水冷泵
+                    // 0 - 1 对应 泵0
+                    // 2 - 3 对应 泵1
+                    //..
+                    //这里存在一个逻辑问题，会影响设备性能
+                    /*
+                     * 如果同一个盒子出现了一个需要水冷的条件一个不需要，出现矛盾
+                     * 那么不需要水冷的pid控制器要将就需要水冷的控制器，导致控制时间延长，但是不影响整体逻辑
+                     */
+                    water_cool_pump_control(running_pid_id[0] % 10] / 2 , 0);
+                }else{
+                    water_cool_pump_control(running_pid_id[0] % 10] / 2 , 1);
+                    //关闭水冷泵 降温结束
+                }
             }
         #ifdef DEBUG_PID_SW
        // sprintf((char *)debug_sender_buf,"pid running controller num is %d\r\n,id is %d ,now temp = %d,target_temp = %d,control pwm = %d\r\n",pid_running_num,running_pid_id[0],pid_now_temp[running_pid_id[0]],pid_target_temp[running_pid_id[0]],pwm_out1);
@@ -189,6 +206,26 @@ void arg_pid_handle(void)
                     pwm_out1 = 1000;
 
                 set_software_pwm(running_pid_id[0], pwm_out1);
+            }else{
+                pwm_out1 = 0;
+                set_software_pwm(running_pid_id[0], pwm_out1);
+
+                //触发水冷系统
+                if(pid_temp_error[running_pid_id[0] % 10] < - 10){
+                    //打开对应的水冷泵
+                    // 0 - 1 对应 泵0
+                    // 2 - 3 对应 泵1
+                    //..
+                    //这里存在一个逻辑问题，会影响设备性能
+                    /*
+                     * 如果同一个盒子出现了一个需要水冷的条件一个不需要，出现矛盾
+                     * 那么不需要水冷的pid控制器要将就需要水冷的控制器，导致控制时间延长，但是不影响整体逻辑
+                     */
+                    water_cool_pump_control(running_pid_id[0] % 10] / 2 , 0);
+                }else{
+                    water_cool_pump_control(running_pid_id[0] % 10] / 2 , 1);
+                    //关闭水冷泵 降温结束
+                }
             }
         }
 
@@ -207,6 +244,26 @@ void arg_pid_handle(void)
                     pwm_out2 = 1000;
 
                 set_software_pwm(running_pid_id[1], pwm_out2);
+            }else{
+                pwm_out2 = 0;
+                set_software_pwm(running_pid_id[1], pwm_out2);
+
+                //触发水冷系统
+                if(pid_temp_error[running_pid_id[1] % 10] < - 10){
+                    //打开对应的水冷泵
+                    // 0 - 1 对应 泵0
+                    // 2 - 3 对应 泵1
+                    //..
+                    //这里存在一个逻辑问题，会影响设备性能
+                    /*
+                     * 如果同一个盒子出现了一个需要水冷的条件一个不需要，出现矛盾
+                     * 那么不需要水冷的pid控制器要将就需要水冷的控制器，导致控制时间延长，但是不影响整体逻辑
+                     */
+                    water_cool_pump_control(running_pid_id[1] % 10] / 2 , 0);
+                }else{
+                    water_cool_pump_control(running_pid_id[1] % 10] / 2 , 1);
+                    //关闭水冷泵 降温结束
+                }                
             }
         }
         #ifdef DEBUG_PID_SW

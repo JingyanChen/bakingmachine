@@ -32,6 +32,8 @@ static bool check_box_restart_ok(void){
 
     return true;
 }
+
+//考虑匀速退回的时候按下是否可以迅速弹出
 static void key_box_logic(uint8_t box_id){
     if(box_status[box_id] == box_off && get_motor_status(box_id) == no_running){
         //盒子处于关闭状态，且不处于运动状态
