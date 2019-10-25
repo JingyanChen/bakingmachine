@@ -150,3 +150,8 @@ void close_motor(uint8_t id){
     set_pwm(id % 5 , 0);
     motor_status[id % 5] = no_running;
 }
+
+
+motor_status_t get_motor_status(uint8_t motor_id){
+    return motor_status[motor_id % 5];
+}

@@ -32,6 +32,7 @@ void register_key_press_event(uint8_t key_id , key_event_t key_event);
 typedef enum{
     postive=0,
     negative,
+    both,
 }event_type_t;
 
 #endif

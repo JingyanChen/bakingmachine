@@ -40,6 +40,7 @@ extern bakingMachine_t  bakingMachine_flag;
 #define _UPLOAD_TEMP_GUI_FLAG bakingMachine_flag.timer_flag.se7
 
 #define _KEY_EVENT_CHECK_FLAG bakingMachine_flag.timer_flag_2.se0
+#define _APP_UPDATE_FLAG  bakingMachine_flag.timer_flag_2.se1
 
 void csp_timer_init(void);
 void csp_timer_handle(void);

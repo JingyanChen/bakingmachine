@@ -21,11 +21,11 @@ static key_event_t key_event_func[KEY_NUM]={
 };
 
 static event_type_t key_event_v[KEY_NUM]={
-    postive,
-    postive,
-    postive,
-    postive,
-    postive,
+    both,
+    both,
+    both,
+    both,
+    both,
     negative,
 };
 
@@ -56,11 +56,22 @@ void periph_key_handle(void){
                 key_event_func[i]();
             }
 
+        }else if(key_event_v[i] == negative){
+
+            if(last_key_v[i] == true && get_key_in_v(i % 6) == false){
+                key_event_func[i]();
+            } 
+                       
         }else{
 
             if(last_key_v[i] == true && get_key_in_v(i % 6) == false){
                 key_event_func[i]();
-            }            
+            } 
+
+            if(last_key_v[i] == false && get_key_in_v(i % 6) == true){
+                key_event_func[i]();
+            }
+                
         }
 
         last_key_v[i] = get_key_in_v(i % 6);

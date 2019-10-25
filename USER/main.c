@@ -11,6 +11,7 @@
 #include "arg_pid.h"
 #include "periph_motor.h"
 #include "periph_key.h"
+#include "app.h"
 
 int main(void)
 {
@@ -27,7 +28,9 @@ int main(void)
 
 	arg_debug_pro_init();
 	arg_pid_init();
-
+	
+	arg_app_init();
+	
 	while (1)
 	{
 		csp_timer_handle();
@@ -40,5 +43,7 @@ int main(void)
 		
 		arg_debug_pro_handle();
 		arg_pid_handle();
+		
+		arg_app_hanlde();
 	}
 }

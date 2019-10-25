@@ -73,5 +73,8 @@ void start_motor_acc_arg(uint8_t motor_id , dir_t dir  , uint16_t run_tim);
 
 //清空加减速状态机
 void clear_motor_acc_arg(uint8_t motor_id);
+
+//获得电机当前的运动状态
+motor_status_t get_motor_status(uint8_t motor_id);
 #endif
 

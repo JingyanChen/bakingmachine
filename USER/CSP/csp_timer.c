@@ -80,6 +80,7 @@ static void csp_100_ms_handle(void){
     _UPDATE_ADC_DATA_FLAG = true; 
     _PID_CONTROL_UP_FALG = true;  
  	_UPLOAD_TEMP_GUI_FLAG = true;  	
+    _APP_UPDATE_FLAG = true;
     //
 
     _1000ms_tick ++;
