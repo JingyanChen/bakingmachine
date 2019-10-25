@@ -163,6 +163,17 @@ static void arg_box_push_pop_handle(void){
 
 }
 
+
+//温度控制算法
+static void arg_temp_control_init(void){
+
+}
+
+static void arg_temp_control_handle(void){
+
+}
+
+
 void arg_app_init(void){
     arg_box_push_pop_init();
 }
@@ -176,3 +187,5 @@ void arg_app_hanlde(void){
     
 	arg_box_push_pop_handle();
 }
+
+

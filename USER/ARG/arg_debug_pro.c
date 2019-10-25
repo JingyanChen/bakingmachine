@@ -964,7 +964,7 @@ void arg_debug_pro_handle(void){
 
 
     if(debug_buf_is_ready_check()){
-        //data is in debug_uart_rx_buf
+        //data is in debug_uart_rx_buf.
         //len is debug_uart_rec_len - 1
         //debug_sender(debug_uart_rx_buf,debug_uart_rec_len);
         arg_debug_packet_decode(debug_uart_rx_buf,debug_uart_rec_len);
@@ -974,7 +974,7 @@ void arg_debug_pro_handle(void){
 
     if(temp_gui_upload_sw){
         //根据实际需要，上报浮点数，画曲线。
-        sprintf((char *)sender_buf,"temp1,%f;\n",(float)adc_temp_data[0]);
+        sprintf((char *)sender_buf,"temp1,%f;temp2,%f;\n",(float)adc_temp_data[0],(float)adc_temp_data[1]);
         //sprintf((char *)sender_buf,"temp1,%f;temp2,%f;temp3,%f;temp4,%f;\n",(float)adc_temp_data[0],(float)adc_temp_data[1],(float)adc_temp_data[2],(float)adc_temp_data[3]);
         debug_sender_str(sender_buf);
     }  

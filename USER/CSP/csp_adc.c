@@ -158,13 +158,13 @@ void csp_adc_handle(void)
     for(i=0;i<ADC_CHANNEL_NUM;i++){
         adc_mv_data[i] = get_adc_v(i,DEFAULT_REF_MV);
         /*
-         * 目前的计算方法，标定法,50欧姆
+         * 目前的计算方法，标定法,120欧姆 
          * 源端108欧姆 对应389mV
          * 4mA - 0摄氏度 20mA -100摄氏度
-         * 4mA - 200mv   20mA - 1000mV
-         * 0摄氏度 - 200mV   100摄氏度 - 1000mV
+         * 4mA - 480mv   20mA - 24000mV
+         * 0摄氏度 - 480mV   100摄氏度 - 2400mV
          */
-        adc_temp_data[i] = (uint16_t)((float)( (float)adc_mv_data[i] - (float)200 ) / 0.8);
+        adc_temp_data[i] = (uint16_t)((float)( (float)adc_mv_data[i] - (float)480 ) / 1.92);
     }
 }
 

@@ -8,7 +8,7 @@
  * 
  * 包含如下功能
  *      1 按键弹出盒子/按键收回盒子 任务
- *      2 温度控制算法
+ *      2 温度控制算法任务 包括温度控制，控温之前换水
  *      
  */
 
@@ -24,7 +24,7 @@ typedef enum{
 
 #define BOX_FORWARD_DIR   CW
 #define BOX_BACKWARD_DIR  CCW
-#define BOX_RUNNING_TIM 5000
+#define BOX_RUNNING_TIM 6000
 
 // 0 - 4 阻止 CW 方向
 // 5 - 9 阻止 CCW 方向
