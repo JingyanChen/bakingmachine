@@ -11,7 +11,9 @@
 #include "arg_pid.h"
 #include "periph_motor.h"
 #include "periph_key.h"
+#include "periph_humidity_sys.h"
 #include "app.h"
+
 
 int main(void)
 {
@@ -25,7 +27,8 @@ int main(void)
 
 	periph_motor_init();
 	periph_key_init();
-
+	periph_humidity_sys_init();
+	
 	arg_debug_pro_init();
 	arg_pid_init();
 	
@@ -40,6 +43,7 @@ int main(void)
 
 		periph_motor_handle();
 		periph_key_handle();
+		periph_humidity_sys_handle();
 		
 		arg_debug_pro_handle();
 		arg_pid_handle();

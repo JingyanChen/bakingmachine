@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include "arg_pid.h"
 #include "periph_motor.h"
+#include "periph_humidity_sys.h"
 
 static bool temp_gui_upload_sw=false;
 
@@ -39,6 +40,7 @@ static void help(void){
     debug_sender_str("\r\n\r\n\r\n periph test cmd list >>>>>>>\r\n");delay_ms(10);
     debug_sender_str(" 1 set_motor id dir speed Note id 0-4 dir 0/1 speed 0-1000\r\n");delay_ms(10);     
     debug_sender_str(" 2 set_acc_motor id dir t Note id 0-4 dir 0/1 t 2000-65535\r\n");delay_ms(10);  
+    debug_sender_str(" 3 set_humidity Note Change water for all roads\r\n");delay_ms(10); 
 
     debug_sender_str("\r\n\r\n\r\n app test cmd list >>>>>>>\r\n");delay_ms(10);  
     debug_sender_str(" 1 get_temp\r\n");delay_ms(10);     
@@ -868,6 +870,13 @@ static void open_temp_gui(void){
     temp_gui_upload_sw = true;
     debug_sender_str("temp gui is start...\r\n");
 }
+
+//为五路湿度系统换水
+static void set_humidity(void){
+    periph_water_injection(true,true,true,true,true);
+    debug_sender_str("start 5 roads change water\r\n");
+}
+
 debug_func_list_t debug_func_list[] = {
 
     {help,"help"},
@@ -887,6 +896,7 @@ debug_func_list_t debug_func_list[] = {
 
     {set_motor,"set_motor"},
     {set_acc_motor,"set_acc_motor"},
+    {set_humidity,"set_humidity"},
 
     {get_temp,"get_temp"},
     {get_pid_sw,"get_pid_sw"},

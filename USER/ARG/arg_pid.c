@@ -278,7 +278,4 @@ void arg_pid_handle(void)
         debug_sender_str(debug_sender_buf);
         #endif                 
     }
-
-
-  
 }

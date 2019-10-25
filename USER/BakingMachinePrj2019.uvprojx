@@ -607,6 +607,11 @@
               <FileType>1</FileType>
               <FilePath>.\Periph\periph_key.c</FilePath>
             </File>
+            <File>
+              <FileName>periph_humidity_sys.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Periph\periph_humidity_sys.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>

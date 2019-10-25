@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "arg_pid.h": "c"
+        "arg_pid.h": "c",
+        "periph_humidity_sys.h": "c",
+        "csp_gpio.h": "c",
+        "csp_timer.h": "c"
     }
 }
