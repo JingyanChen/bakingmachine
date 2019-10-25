@@ -592,6 +592,11 @@
               <FileType>1</FileType>
               <FilePath>.\ARG\app.c</FilePath>
             </File>
+            <File>
+              <FileName>arg_version.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\ARG\arg_version.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

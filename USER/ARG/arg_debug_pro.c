@@ -12,6 +12,7 @@
 #include "arg_pid.h"
 #include "periph_motor.h"
 #include "periph_humidity_sys.h"
+#include "arg_version.h"
 
 static bool temp_gui_upload_sw=false;
 
@@ -47,7 +48,7 @@ static void help(void){
     debug_sender_str(" 2 get_pid_sw\r\n");delay_ms(10);   
     debug_sender_str(" 3 start_pid id taget_temp Note id 0-9 target_temp 25 - 100\r\n");delay_ms(10);  
     debug_sender_str(" 4 open_temp_gui open_temp_gui Note pree Enter to Stop\r\n");delay_ms(10);
-
+    debug_sender_str(" 5 version\r\n");delay_ms(10);
 }
 
 static void get_csp_adc(void){
@@ -877,6 +878,16 @@ static void set_humidity(void){
     debug_sender_str("start 5 roads change water\r\n");
 }
 
+static void version(void){
+    uint8_t version_buf[150];
+
+    if(IS_RELEASE == 0)
+        sprintf((char*)version_buf,"V%d.%d make_time:%s_%s Debug Verion By Comegene Jingyan Chen",MAIN_VERSION,SECOND_VERSION, __DATE__, __TIME__);
+    else
+        sprintf((char*)version_buf,"V%d.%d make_time:%s_%s release Verion By Comegene Jingyan Chen",MAIN_VERSION,SECOND_VERSION, __DATE__, __TIME__);
+
+    debug_sender_str(version_buf);
+}
 debug_func_list_t debug_func_list[] = {
 
     {help,"help"},
@@ -902,6 +913,7 @@ debug_func_list_t debug_func_list[] = {
     {get_pid_sw,"get_pid_sw"},
     {start_pid,"start_pid"},
     {open_temp_gui,"open_temp_gui"},
+    {version,"version"},
 
 };
 
