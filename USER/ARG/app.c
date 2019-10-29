@@ -1,5 +1,8 @@
 #include "app.h"
 #include <stdint.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdbool.h>
 
 #include "csp_timer.h"
 #include "csp_gpio.h"
@@ -7,6 +10,9 @@
 
 #include "periph_motor.h"
 #include "periph_key.h"
+#include "periph_humidity_sys.h"
+
+#include "arg_pid.h"
 
 //APP TASK 1
 /*
@@ -163,19 +169,112 @@ static void arg_box_push_pop_handle(void){
 
 }
 
+static temp_control_t tc;
+static bool arg_temp_config_done=false;
 
-//温度控制算法
+//提供给与TFT屏交互的通讯代码，访问整体的温控/湿控模块功能
+//输入参数填满 temp_contorl_t 类型
+void config_temp_control_machine(temp_control_t * temp_control){
+    
+    uint8_t i=0;
+    bool change_water_bool[5];
+
+    //将几路温度保存，不使用的PID控制器完全关闭
+    //也就是说此函数也是关闭函数
+
+    //赋值给全局变量tc
+
+    tc.control_num = temp_control->control_num;
+    memcpy(tc.control_sw,temp_control->control_sw,10);
+    memcpy(tc.control_temp,temp_control->control_temp,10);
+
+    //关闭没用到的PID控制器
+
+    for(i=0;i<CONTROL_TEMP_NUM;i++){
+        if(tc.control_sw[i] == false){
+            set_pid_con_sw(i,false);
+        }
+    }
+
+    //打开换水进程
+    //TODO 思考是否每次都要打开换水进程
+    //换水 0-1 为一组，只要有一个需要控温，那么就需要换水
+    for(i=0;i<5;i++){
+        if(tc.control_sw[i * 2] == true || tc.control_sw[i * 2 +1] == true){
+            change_water_bool[i] = true;
+        }else{
+            change_water_bool[i] = false;
+        }
+    }
+
+    periph_water_injection(change_water_bool[0],change_water_bool[1],change_water_bool[2],change_water_bool[3],change_water_bool[4]);
+
+    arg_temp_config_done = false;
+
+    //配置完成，进程委托给handle 函数，等待换水完成开始PID控温
+}
+
+void close_all_temp_controller(void){
+    temp_control_t tempctl;
+
+    tempctl.control_num = 0;
+    memset(tempctl.control_sw,false,10);
+    memset(tempctl.control_temp,0xffff,10);
+
+    config_temp_control_machine(&tempctl);
+}
+
+
+temp_control_t get_temp_control_machine_status(void){
+    return tc;
+}
+
+//温度控制算法，自动水阀控制，控温之前自动加湿状态机
 static void arg_temp_control_init(void){
-
+    close_all_temp_controller();
+    arg_temp_config_done = true;
 }
 
 static void arg_temp_control_handle(void){
+    
+    uint8_t i=0;
+
+    if(arg_temp_config_done == true)
+        return ;
+
+    //判断换水是否完成，如果完成了则可以开始所有pid控温
+    //先判断有没有换水控温的任务
+
+    for(i=0;i<10;i++){
+        if(tc.control_sw[i] == true)
+            goto VAILD_TASK_PRA;
+    }
+
+    return ;
+
+    VAILD_TASK_PRA:
+
+    if(get_water_injection_status() == injection_done){
+        //换水完毕
+        periph_humidity_sys_init();//初始化一下，使得此if仅进入一次
+        //if 进入一次的好处在于，条件成立的次数与调用periph_water_injection一致
+
+
+        //配置一次PID控制器
+
+        for(i=0;i<10;i++){
+            if(tc.control_sw[i] == true)
+                start_pid_controller_as_target_temp(i,tc.control_temp[i]);                
+        }
+
+        arg_temp_config_done = true;
+    }
 
 }
 
-
 void arg_app_init(void){
     arg_box_push_pop_init();
+    arg_temp_control_init();
 }
 
 
@@ -186,6 +285,7 @@ void arg_app_hanlde(void){
     _APP_UPDATE_FLAG = false;
     
 	arg_box_push_pop_handle();
+    arg_temp_control_handle();
 }
 
 

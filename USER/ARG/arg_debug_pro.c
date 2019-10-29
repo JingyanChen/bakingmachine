@@ -37,11 +37,14 @@ static void help(void){
     debug_sender_str(" 6 get_key_in\r\n");delay_ms(10);
     debug_sender_str(" 7 fan_con id sw Note id 0-4 sw 0/1\r\n");delay_ms(10);
     debug_sender_str(" 8 led_con id sw Note id 0 sw 0/1\r\n");delay_ms(10);
+    debug_sender_str(" 9 open_all_vavle Note open all vavle\r\n");delay_ms(10);
 
     debug_sender_str("\r\n\r\n\r\n periph test cmd list >>>>>>>\r\n");delay_ms(10);
     debug_sender_str(" 1 set_motor id dir speed Note id 0-4 dir 0/1 speed 0-1000\r\n");delay_ms(10);     
     debug_sender_str(" 2 set_acc_motor id dir t Note id 0-4 dir 0/1 t 2000-65535\r\n");delay_ms(10);  
-    debug_sender_str(" 3 set_humidity Note Change water for all roads\r\n");delay_ms(10); 
+    debug_sender_str(" 3 set_humidity x unused Note Change water for x roads\r\n");delay_ms(10); 
+    debug_sender_str(" 4 set_humidity_all x Note Change water for all roads\r\n");delay_ms(10);
+    debug_sender_str(" 5 get_humidity_status Note get humidity status");
 
     debug_sender_str("\r\n\r\n\r\n app test cmd list >>>>>>>\r\n");delay_ms(10);  
     debug_sender_str(" 1 get_temp\r\n");delay_ms(10);     
@@ -874,10 +877,106 @@ static void open_temp_gui(void){
 
 //为五路湿度系统换水
 static void set_humidity(void){
+//继续分析数据包，debug_uart_rx_buf,debug_uart_rec_len
+    //获得 set_warm_pwm 1 200 0x0d 0x0a 解析出 1 200这两个数据出来
+    uint8_t i=0;
+    uint8_t k_pos[10];
+    uint8_t k=0;
+    uint8_t j=0;
+
+    uint8_t pra_str1[20];
+    uint8_t pra_str2[20];
+
+    uint8_t send_buf[100];
+    uint16_t pra1=0,pra2=0;
+
+    //确定空格符号的位置
+    for(i=0;i<debug_uart_rec_len;i++){
+        if(debug_uart_rx_buf[i] == ' '){
+            k_pos[k] = i;
+            k++;
+        }
+    }
+
+    if(k != 2){
+        debug_sender_str("command error\r\n");
+        return ;
+    }
+        
+    
+    for(i=k_pos[0]+1;i<k_pos[1];i++){
+        pra_str1[j] = debug_uart_rx_buf[i];
+        if(pra_str1[j] <'0' || pra_str1[j] >'9'){
+            debug_sender_str("command error\r\n");
+            return ;            
+        }
+        j++;
+    }
+		pra_str1[j] = '\0';
+		
+    j=0;
+
+    for(i=k_pos[1]+1;i<debug_uart_rec_len-2;i++){
+        pra_str2[j] = debug_uart_rx_buf[i];
+        if(pra_str2[j] <'0' || pra_str2[j] >'9'){
+            debug_sender_str("command error\r\n");
+            return ;            
+        }        
+        j++;
+    }    
+		pra_str1[j] = '\0';
+		
+    pra1 = atoi((const char *)pra_str1);
+    pra2 = atoi((const char *)pra_str2);
+
+    //pra check 
+
+    if(pra1 > 4){
+        debug_sender_str("id pra error ,please input 0-4");
+        return ;
+    }
+        
+
+    if(pra2 != 0 && pra2 !=1){
+        debug_sender_str(" pra error ,please input 0/1");
+        return ;        
+    }
+
+    //打开换水
+    if(pra1 == 0)
+        periph_water_injection(true,false,false,false,false);
+    if(pra1 == 1)
+        periph_water_injection(false,true,false,false,false);
+    if(pra1 == 2)
+        periph_water_injection(false,false,true,false,false);
+    if(pra1 == 3)
+        periph_water_injection(false,false,false,true,false);
+    if(pra1 == 4)
+        periph_water_injection(false,false,false,false,true);
+
+    sprintf((char *)send_buf,"change %d humidity is success\r\n",pra1);
+    debug_sender_str(send_buf);   
+
+
+
+
+}
+static void set_humidity_all(void){
     periph_water_injection(true,true,true,true,true);
     debug_sender_str("start 5 roads change water\r\n");
 }
 
+static void get_humidity_status(void){
+
+    switch(get_water_injection_status()){
+       case no_injection_task :   debug_sender_str("Now status : no_injection_task\r\n");break;
+       case injection_out_water:  debug_sender_str("Now status : injection_out_water\r\n");break;
+       case injection_in_water:   debug_sender_str("Now status : injection_in_water\r\n");break;
+       case injection_done:       debug_sender_str("Now status : injection_done\r\n");break;
+       default : break;
+    }
+
+}
 static void version(void){
     uint8_t version_buf[150];
 
@@ -887,6 +986,12 @@ static void version(void){
         sprintf((char*)version_buf,"V%d.%d make_time:%s_%s release Verion By Comegene Jingyan Chen",MAIN_VERSION,SECOND_VERSION, __DATE__, __TIME__);
 
     debug_sender_str(version_buf);
+}
+static void open_all_vavle(void){
+    uint8_t i=0;
+    for(i=0;i<7;i++){
+        water_cool_vavle_control(i,false);
+    }
 }
 debug_func_list_t debug_func_list[] = {
 
@@ -904,10 +1009,13 @@ debug_func_list_t debug_func_list[] = {
     {get_key_in,"get_key_in"},
     {fan_con,"fan_con"},
     {led_con,"led_con"},
+    {open_all_vavle,"open_all_vavle"},
 
     {set_motor,"set_motor"},
     {set_acc_motor,"set_acc_motor"},
     {set_humidity,"set_humidity"},
+    {set_humidity_all,"set_humidity_all"},
+    {get_humidity_status ,"get_humidity_status"},
 
     {get_temp,"get_temp"},
     {get_pid_sw,"get_pid_sw"},

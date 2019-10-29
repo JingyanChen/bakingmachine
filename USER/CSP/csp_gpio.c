@@ -153,6 +153,8 @@ void csp_gpio_init(void){
 
         if(i>14 && i< 20){
             GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;//经过测试，按键需要下拉输入才可以正确工作
+        }else if( i< 5 ){
+            GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
         }else{
             GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;//限位引脚和其他按键输入，默认采用上拉输入
         }
@@ -164,6 +166,10 @@ void csp_gpio_init(void){
 
     for(i=0;i<5;i++){
         water_cool_pump_control(i,true);
+    }
+
+    for(i=0;i<2;i++){
+        humidity_control(0,false);
     }
 
 
