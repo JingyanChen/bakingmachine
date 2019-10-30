@@ -4,46 +4,58 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+
 /*
- * 本驱动旨在对湿度系统进行一个系统的封装
- * 湿度系统，旨在为第x路 x 属于 0-4 注满水
- * 确定需要哪路动作了之后，做如下操作
+ * 本驱动基于最新的注水/出水策略，对功能进行函数级的封装
  * 
- * 液位传感器的使用逻辑如下
+ * 目前的注水/出水策略 -- 无液位传感器的策略
  * 
- * 液位传感器只能识别管道里有没有水
- * 如果有水 返回电平 LIQUID_HAS_WATER_V
- * 如果无水 返回电平 LIQUID_HAS_NO_WATER_V
+ * 开始实验之前，需要做一个换水操作，也就是抽完水之后，再重新注水
+ * 
+ * 做完实验之后，需要抽水
+ * 
+ * 所以本驱动提供两个上级函数
+ * 
+ * change_water(uint8_t liquid_road_list)
+ * out_water(uint8_t liquid_road_list)
+ * 
+ * 执行上诉两个函数之后，会触发状态机，时刻提供此状态机的状态。
+ * 
+ * 提供 种状态
+ * 
+ * 1 no_injection_task
+ * 2 change_water_out_status
+ * 3 change_water_in_status
+ * 4 change_water_done
+ * 5 out_water_status
+ * 6 out_water_done
+ * 
+ * 算法设计逻辑，应当是一次性做完所有的换水/出水操作，所以整个状态机仅做一个状态
  * 
  * 
- * 因此换水流程如下
+ * 换水状态机 激活方法
+ * change_water(0xff); //给所有路换水
+ * out_water(0xff);//给所有路出水
  * 
- * 无论如何，保持出水LIQUID_OUT_WATER_WHATEVER_TIM_MS 时间
- * 这一段时间保持抽水泵工作，不判断液位传感器的返值
- * 当LIQUID_OUT_WATER_WHATEVER_TIM_MS这一段时间过去了之后
- * 进而判断液位传感器，判断管道里是否有水
+ * if(change_water(0xff) == false){
  * 
- * 逻辑见文件 抽/注水逻辑   
+ * }else{
+ *      
+ *      //打开轮询状态机查询状态机进展状态
+ *      CHANGE_WATER_SUCCESS = TRUE;
+ * }
  * 
- * 外部文件的使用逻辑，使用periph_water_injection函数后
- * 一直等待get_water_injection_status()函数返回injection_done
- * 
- * 使用举例，第0路换水
- * 
- * periph_water_injection(true,false,false,false,false);
- * 
- * if(get_water_injection_status() == injection_done){
- *      //换水完毕
- *      periph_humidity_sys_init();//初始化一下，使得此if仅进入一次
- *      //if 进入一次的好处在于，条件成立的次数与调用periph_water_injection一致
- *      //可酌情考虑
+ * if(CHANGE_WATER_SUCCESS){
+ *      if(injection_status == change_water_done ){
+ *              //换水结束
+ *      }
  * }
  * 
  */
 
 
-#define OUT_WATER_PUMP_ID 1
-#define IN_WATER_PUMP_ID  0
+#define OUT_WATER_PUMP_ID 0
+#define IN_WATER_PUMP_ID  1
 
 #define IN_MASTER_VAVLE_ID 5
 #define OUT_MASTER_VAVLE_ID 6
@@ -54,40 +66,51 @@
 #define VAVLE_ACTION_V 0
 #define VAVLE_NO_ACTION_V 1
 
+#define WATER_ROAD_NUM 5
 
-#define LIQUID_HAS_WATER_V 1
-#define LIQUID_HAS_NO_WATER_V 0
+//算法重要参数，默认抽水 OUT_WATER_FIXED_TIM * 100 ms
+#define OUT_WATER_FIXED_TIM 200
 
-#define LIQUID_NO_WATER_OUT_DONE_OVERTIME 50
-
-#define LIQUID_IN_WATER_ALL_TIM_MS 30
-#define LIQUID_IN_WATER_ERROR_TIM  10 //在抽水期间出现1S抽不到水，认为瓶子空了是错误情况
-
+//算法重要参数，默认注水 IN_WATER_FIXED_TIM * 100 ms
+#define IN_WATER_FIXED_TIM 50
 
 void periph_humidity_sys_init(void);
 void periph_humidity_sys_handle(void);
 
 typedef enum{
     no_injection_task=0,
-    injection_out_water,
-    injection_in_water,
-    injection_done,
+    change_water_out_status,
+    change_water_in_status,
+    change_water_done,
+    out_water_status,
+    out_water_done,
 }injection_status_t;
-/* 
- * 获得注水是否完成的状态
- */
+
+
 injection_status_t get_water_injection_status(void);
+void set_water_injection_status(injection_status_t injection_sta);
+
+
 /*
- * brief 注水代码
- * pra bool0 - bool4,决定五路盒子哪些需要做换水操作
- *      true  需要做
- *      false 不需要做
+ * brief : 换水代码，打开状态机，做换水操作
+ * pra @ liquid_road_list : 水路的编号
+ *      编号格式: BIT0 - BIT5 对应五路开关
+ *      例如 0x01 则仅换0x01
+ * 
+ * 返回操作是否成功，不允许重复做换水操作，多开换水线程
+ * 因为存在总出水开关/总入水开关，所以一次性丢入所有需要控制
+ * 的液路编号
  */
-void periph_water_injection(bool b0 ,bool b1 , bool b2 , bool b3 , bool b4); 
+bool change_water(uint8_t liquid_road_list);
 
+/*
+ * brief : 清理水代码，做出水操作
+ * pra @ liquid_road : 水路编号
+ * return 出水操作是否成功
+ */
+bool out_water(uint8_t liquid_road_list);
 
-typedef void (*error_indicator) (void);
-//外部注册错误指示处理函数
-void register_liquid_error_indicator(error_indicator func);
+//获得液路开启情况
+bool is_water_road_open(uint8_t water_road_id);
 
 #endif

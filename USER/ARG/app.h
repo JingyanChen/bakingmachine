@@ -46,8 +46,14 @@ typedef struct{
 
 //为debue协议提供如下两种访问温度控制状态机的方法
 
+typedef enum{
+    no_error=0,
+    change_water_error_repetitive_operation,
+	  pid_temp_control_pra_error,
+}error_t;
+
 //方法1 ，访问温控方法
-void config_temp_control_machine(temp_control_t * temp_control);
+error_t config_temp_control_machine(temp_control_t * temp_control);
 
 //方法2 ，获得当前的温控状态
 temp_control_t get_temp_control_machine_status(void);

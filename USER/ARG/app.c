@@ -174,10 +174,19 @@ static bool arg_temp_config_done=false;
 
 //提供给与TFT屏交互的通讯代码，访问整体的温控/湿控模块功能
 //输入参数填满 temp_contorl_t 类型
-void config_temp_control_machine(temp_control_t * temp_control){
+error_t config_temp_control_machine(temp_control_t * temp_control){
     
     uint8_t i=0;
-    bool change_water_bool[5];
+			
+	if(temp_control->control_num == 0)
+		return pid_temp_control_pra_error;
+	
+    //打开换水进程
+    //可以考虑集体换水，给所有路换水
+    if(change_water(0xff) == false){
+        return change_water_error_repetitive_operation;
+    }
+
 
     //将几路温度保存，不使用的PID控制器完全关闭
     //也就是说此函数也是关闭函数
@@ -196,22 +205,9 @@ void config_temp_control_machine(temp_control_t * temp_control){
         }
     }
 
-    //打开换水进程
-    //TODO 思考是否每次都要打开换水进程
-    //换水 0-1 为一组，只要有一个需要控温，那么就需要换水
-    for(i=0;i<5;i++){
-        if(tc.control_sw[i * 2] == true || tc.control_sw[i * 2 +1] == true){
-            change_water_bool[i] = true;
-        }else{
-            change_water_bool[i] = false;
-        }
-    }
-
-    periph_water_injection(change_water_bool[0],change_water_bool[1],change_water_bool[2],change_water_bool[3],change_water_bool[4]);
-
     arg_temp_config_done = false;
-
-    //配置完成，进程委托给handle 函数，等待换水完成开始PID控温
+		
+	return no_error;
 }
 
 void close_all_temp_controller(void){
@@ -221,7 +217,6 @@ void close_all_temp_controller(void){
     memset(tempctl.control_sw,false,10);
     memset(tempctl.control_temp,0xffff,10);
 
-    config_temp_control_machine(&tempctl);
 }
 
 
@@ -247,6 +242,7 @@ static void arg_temp_control_handle(void){
 
     for(i=0;i<10;i++){
         if(tc.control_sw[i] == true)
+            //至少有一路换水控温的任务
             goto VAILD_TASK_PRA;
     }
 
@@ -254,11 +250,14 @@ static void arg_temp_control_handle(void){
 
     VAILD_TASK_PRA:
 
-    if(get_water_injection_status() == injection_done){
-        //换水完毕
-        periph_humidity_sys_init();//初始化一下，使得此if仅进入一次
-        //if 进入一次的好处在于，条件成立的次数与调用periph_water_injection一致
+    //判断换水是否完成
+    if(get_water_injection_status() == change_water_done){
 
+        //换水完毕
+        set_water_injection_status(no_injection_task);
+        //初始化一下，使得此if仅进入一次
+        //if 进入一次的好处在于，条件成立的次数与调用periph_water_injection一致
+        
 
         //配置一次PID控制器
 

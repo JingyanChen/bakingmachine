@@ -168,10 +168,15 @@ void csp_gpio_init(void){
         water_cool_pump_control(i,true);
     }
 
-    for(i=0;i<2;i++){
-        humidity_control(0,false);
+    for(i=0;i<7;i++){
+        water_cool_vavle_control(i,true);
     }
 
+    humidity_control(0,true);
+    humidity_control(1,true);
+
+
+    //
 
 }
 
