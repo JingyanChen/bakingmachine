@@ -8,6 +8,7 @@
 #include "csp_adc.h"
 #include "csp_uart.h"
 #include "arg_debug_pro.h"
+#include "arg_tft_com.h"
 #include "arg_pid.h"
 #include "periph_motor.h"
 #include "periph_key.h"
@@ -30,6 +31,7 @@ int main(void)
 	periph_humidity_sys_init();
 	
 	arg_debug_pro_init();
+	arg_tft_com_init();
 	arg_pid_init();
 	
 	arg_app_init();
@@ -46,6 +48,7 @@ int main(void)
 		periph_humidity_sys_handle();
 		
 		arg_debug_pro_handle();
+		arg_tft_com_handle();
 		arg_pid_handle();
 		
 		arg_app_hanlde();

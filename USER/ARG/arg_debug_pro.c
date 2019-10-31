@@ -14,12 +14,16 @@
 #include "periph_humidity_sys.h"
 #include "arg_version.h"
 
-static bool temp_gui_upload_sw=false;
-
+static bool temp_gui_upload_sw  = false;
+static bool tft_com_transmit_sw = false;
 void arg_debug_pro_init(void){
     temp_gui_upload_sw = false;
+    tft_com_transmit_sw = false;
 }
 
+bool get_tft_com_transmit_sw(void){
+    return tft_com_transmit_sw;
+}
 
 static void help(void){
     debug_sender_str("\r\n\r\n\r\n csp test cmd list >>>>>>>\r\n");delay_ms(10);
@@ -51,6 +55,8 @@ static void help(void){
     debug_sender_str(" 3 start_pid id taget_temp Note id 0-9 target_temp 25 - 100\r\n");delay_ms(10);  
     debug_sender_str(" 4 open_temp_gui open_temp_gui Note press Enter to Stop\r\n");delay_ms(10);
     debug_sender_str(" 5 version\r\n");delay_ms(10);
+    debug_sender_str(" 6 open_tft_com_debug Note tft com will transmit to debug port\r\n");delay_ms(10);
+    debug_sender_str(" 7 close_tft_com_debug Note close tft com transmit\r\n ");delay_ms(10);
 }
 
 static void get_csp_adc(void){
@@ -865,8 +871,6 @@ static void set_acc_motor(void){
     sprintf((char *)send_buf,"set motor acc %d dir %d tim %d ms success\r\n",pra1,pra2,pra3);
     debug_sender_str(send_buf);    
 }
-
-
 //源源不断的发送十个温度片的数据
 static void open_temp_gui(void){
     temp_gui_upload_sw = true;
@@ -903,9 +907,20 @@ static void open_all_vavle(void){
 }
 static void change_water_all(void){
     change_water(0xff);
+    debug_sender_str("change water success\r\n");
 }
 static void out_water_all(void){
     out_water(0xff);
+    debug_sender_str("out water success\r\n");
+}
+static void open_tft_com_debug(void){
+    tft_com_transmit_sw = true;
+    debug_sender_str("tft com transmit open success\r\n");
+}
+
+static void close_tft_com_debug(void){
+    tft_com_transmit_sw = false;
+    debug_sender_str("tft com transmit close success\r\n");
 }
 debug_func_list_t debug_func_list[] = {
 
@@ -936,7 +951,8 @@ debug_func_list_t debug_func_list[] = {
     {start_pid,"start_pid"},
     {open_temp_gui,"open_temp_gui"},
     {version,"version"},
-
+    {open_tft_com_debug,"open_tft_com_debug"},
+    {close_tft_com_debug,"close_tft_com_debug"},
 };
 
 

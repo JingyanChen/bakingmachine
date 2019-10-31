@@ -73,6 +73,9 @@ bool lcd_buf_is_ready_check(void);
 void clear_lcd_uart(void);
 
 
+//工具函数 把hex 转成 string格式
+void hex_str(unsigned char *inchar, unsigned int len, unsigned char *outtxt);
+
 //为了减少对战调用，把UART的私有变量对外公开，外部文件谨慎使用
 
 extern uint8_t  debug_uart_rx_buf[DEBUG_UART_MAX_LEN];

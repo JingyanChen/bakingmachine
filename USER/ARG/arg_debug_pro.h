@@ -35,5 +35,12 @@ typedef struct{
     char cmd_str[MAX_DEBUG_FUNCTION_LEN];
 }debug_func_list_t;
 
- 
+/*
+ * brief : 获得用户设置的TFT屏DEBUG开关信号
+ * 如果用户打开DEBUG功能，则可以观察
+ * TFT-MCU之间的UART通讯包
+ * 不支持DEBUG功能干预通讯，有任何实际写操作
+ * 只允许DEBUG口观察，监控只读
+ */
+bool get_tft_com_transmit_sw(void);
 #endif

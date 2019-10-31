@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "csp_timer.h"
 #include "csp_gpio.h"
+#include "arg_debug_pro.h"
 
 uint8_t debug_uart_rx_buf[DEBUG_UART_MAX_LEN];
 uint16_t debug_uart_rec_len = 0;
@@ -172,7 +173,7 @@ void USART1_IRQHandler(void)
             {
                 debug_uart_rx_buf[debug_uart_rec_len % DEBUG_UART_MAX_LEN] = 0;
                 debug_uart_rx_buf[debug_uart_rec_len % DEBUG_UART_MAX_LEN - 1] = 0;
-                debug_uart_rec_len --; //退格按键
+                debug_uart_rec_len--; //退格按键
             }
             else
             {
@@ -324,9 +325,32 @@ void pt100_uart_self_test_handle(void)
     }
 }
 
+void hex_str(unsigned char *inchar, unsigned int len, unsigned char *outtxt)
+{
+    unsigned char hbit, lbit;
+    unsigned int i;
+
+    for (i = 0; i < len; i++)
+    {
+        hbit = (*(inchar + i) & 0xf0) >> 4;
+        lbit = *(inchar + i) & 0x0f;
+        if (hbit > 9)
+            outtxt[2 * i] = 'A' + hbit - 10;
+        else
+            outtxt[2 * i] = '0' + hbit;
+        if (lbit > 9)
+            outtxt[2 * i + 1] = 'A' + lbit - 10;
+        else
+            outtxt[2 * i + 1] = '0' + lbit;
+    }
+
+    outtxt[2 * i] = 0;
+}
+
 //lcd UART API
 void lcd_sender(uint8_t *sender, uint16_t len)
 {
+    uint8_t tft_debug_buf[100] = "MCU_RES:";
 
     if (len > LCD_UART_MAX_LEN)
         return;
@@ -336,6 +360,21 @@ void lcd_sender(uint8_t *sender, uint16_t len)
     lcd_uart_tx_tick = 0;
 
     USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
+
+    /*
+     * 如果get_tft_com_transmit_sw()返回true，认为打开了监控
+     * 此时所有lcd_sender任务，将会备份一个数据发送到DEBUG口
+     * 并且注明 MCU_RES:
+     */
+    if (get_tft_com_transmit_sw())
+    {
+        if (len < 90)
+        {
+            //把hex格式文件转化为字符串
+            hex_str(sender, len, tft_debug_buf + 8);
+            debug_sender_str(tft_debug_buf);
+        }
+    }
 }
 
 void USART3_IRQHandler(void)
@@ -411,5 +450,5 @@ void csp_uart_handle(void)
 {
     //debug_uart_self_test_handle();
     pt100_uart_self_test_handle();
-    lcd_uart_self_test_handle();
+    //lcd_uart_self_test_handle();
 }

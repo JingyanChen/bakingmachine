@@ -82,6 +82,7 @@ static void csp_100_ms_handle(void){
  	_UPLOAD_TEMP_GUI_FLAG = true;  	
     _APP_UPDATE_FLAG = true;
     _HUMIDITY_CONTROL_FLAG = true;
+    _TFT_COM_UPDATE_FLAG = true;
     //
 
     _1000ms_tick ++;
