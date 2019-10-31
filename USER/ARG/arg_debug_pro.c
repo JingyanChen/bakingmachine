@@ -924,7 +924,7 @@ static void close_tft_com_debug(void){
 }
 debug_func_list_t debug_func_list[] = {
 
-    {help,"help"},
+    {help,"help"},{help,"?"},{help,"HELP"},
 
     {get_csp_adc,"get_csp_adc"},{get_csp_adc,"1"},
     {set_warm_pwm,"set_warm_pwm"},{set_warm_pwm,"2"},
