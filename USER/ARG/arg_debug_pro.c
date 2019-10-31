@@ -27,36 +27,36 @@ bool get_tft_com_transmit_sw(void){
 
 static void help(void){
     debug_sender_str("\r\n\r\n\r\n csp test cmd list >>>>>>>\r\n");delay_ms(10);
-    debug_sender_str(" 1 get_csp_adc\r\n");delay_ms(10);
+    debug_sender_str(" 1 get_csp_adc \r\n");delay_ms(10);
     debug_sender_str(" 2 set_warm_pwm id percent Note id : 0-9 percent 0-1000\r\n");delay_ms(10); 
     debug_sender_str(" 3 set_motor_pwm id percent Note id : 0-4 percent 0-1000\r\n");delay_ms(10); 
 
 
     debug_sender_str("\r\n\r\n\r\n periph test cmd list >>>>>>>\r\n");delay_ms(10); 
-    debug_sender_str(" 1 water_cool_pump_con id sw Note id: 0-4 sw 0/1\r\n");delay_ms(10); 
-    debug_sender_str(" 2 water_cool_vavle_con id sw Note id 0-6 sw 0/1\r\n");delay_ms(10);
-    debug_sender_str(" 3 get_liquid_feedback\r\n");delay_ms(10);
-    debug_sender_str(" 4 humidity_con id sw Note id:0-1 sw 0/1\r\n");delay_ms(10);
-    debug_sender_str(" 5 get_motor_limit\r\n");delay_ms(10);
-    debug_sender_str(" 6 get_key_in\r\n");delay_ms(10);
-    debug_sender_str(" 7 fan_con id sw Note id 0-4 sw 0/1\r\n");delay_ms(10);
-    debug_sender_str(" 8 led_con id sw Note id 0 sw 0/1\r\n");delay_ms(10);
-    debug_sender_str(" 9 open_all_vavle Note open all vavle\r\n");delay_ms(10);
+    debug_sender_str(" 4 water_cool_pump_con id sw Note id: 0-4 sw 0/1\r\n");delay_ms(10); 
+    debug_sender_str(" 5 water_cool_vavle_con id sw Note id 0-6 sw 0/1\r\n");delay_ms(10);
+    debug_sender_str(" 6 get_liquid_feedback \r\n");delay_ms(10);
+    debug_sender_str(" 7 humidity_con id sw Note id:0-1 sw 0/1\r\n");delay_ms(10);
+    debug_sender_str(" 8 get_motor_limit \r\n");delay_ms(10);
+    debug_sender_str(" 9 get_key_in\r\n");delay_ms(10);
+    debug_sender_str(" 10 fan_con id sw Note id 0-4 sw 0/1\r\n");delay_ms(10);
+    debug_sender_str(" 11 led_con id sw Note id 0 sw 0/1\r\n");delay_ms(10);
+    debug_sender_str(" 12 open_all_vavle \r\n");delay_ms(10);
 
-    debug_sender_str("\r\n\r\n\r\n periph test cmd list >>>>>>>\r\n");delay_ms(10);
-    debug_sender_str(" 1 set_motor id dir speed Note id 0-4 dir 0/1 speed 0-1000\r\n");delay_ms(10);     
-    debug_sender_str(" 2 set_acc_motor id dir t Note id 0-4 dir 0/1 t 2000-65535\r\n");delay_ms(10);  
-    debug_sender_str(" 3 change_water_all \r\n");delay_ms(10); 
-    debug_sender_str(" 4 out_water_all \r\n");delay_ms(10);
+    debug_sender_str("\r\n\r\n\r\n periph2 test cmd list >>>>>>>\r\n");delay_ms(10);
+    debug_sender_str(" 13 set_motor id dir speed Note id 0-4 dir 0/1 speed 0-1000\r\n");delay_ms(10);     
+    debug_sender_str(" 14 set_acc_motor id dir t Note id 0-4 dir 0/1 t 2000-65535\r\n");delay_ms(10);  
+    debug_sender_str(" 15 change_water_all \r\n");delay_ms(10); 
+    debug_sender_str(" 16 out_water_all \r\n");delay_ms(10);
 
     debug_sender_str("\r\n\r\n\r\n app test cmd list >>>>>>>\r\n");delay_ms(10);  
-    debug_sender_str(" 1 get_temp\r\n");delay_ms(10);     
-    debug_sender_str(" 2 get_pid_sw\r\n");delay_ms(10);   
-    debug_sender_str(" 3 start_pid id taget_temp Note id 0-9 target_temp 25 - 100\r\n");delay_ms(10);  
-    debug_sender_str(" 4 open_temp_gui open_temp_gui Note press Enter to Stop\r\n");delay_ms(10);
-    debug_sender_str(" 5 version\r\n");delay_ms(10);
-    debug_sender_str(" 6 open_tft_com_debug Note tft com will transmit to debug port\r\n");delay_ms(10);
-    debug_sender_str(" 7 close_tft_com_debug Note close tft com transmit\r\n ");delay_ms(10);
+    debug_sender_str(" 17 get_temp \r\n");delay_ms(10);     
+    debug_sender_str(" 18 get_pid_sw \r\n");delay_ms(10);   
+    debug_sender_str(" 19 start_pid id taget_temp Note id 0-9 target_temp 25 - 100\r\n");delay_ms(10);  
+    debug_sender_str(" 20 open_temp_gui  open_temp_gui Note press Enter to Stop\r\n");delay_ms(10);
+    debug_sender_str(" 21 version\r\n");delay_ms(10);
+    debug_sender_str(" 22 open_tft_com_debug  Note tft com will transmit to debug port\r\n");delay_ms(10);
+    debug_sender_str(" 23 close_tft_com_debug  Note close tft com transmit\r\n ");delay_ms(10);
 }
 
 static void get_csp_adc(void){
@@ -926,33 +926,36 @@ debug_func_list_t debug_func_list[] = {
 
     {help,"help"},
 
-    {get_csp_adc,"get_csp_adc"},
-    {set_warm_pwm,"set_warm_pwm"},
-    {set_motor_pwm,"set_motor_pwm"},
+    {get_csp_adc,"get_csp_adc"},{get_csp_adc,"1"},
+    {set_warm_pwm,"set_warm_pwm"},{set_warm_pwm,"2"},
+    {set_motor_pwm,"set_motor_pwm"},{set_motor_pwm,"3"},
 
-    {water_cool_pump_con,"water_cool_pump_con"},
-    {water_cool_vavle_con,"water_cool_vavle_con"},
-    {get_liquid_feedback,"get_liquid_feedback"},
-    {humidity_con,"humidity_con"},
-    {get_motor_limit,"get_motor_limit"},
-    {get_key_in,"get_key_in"},
-    {fan_con,"fan_con"},
-    {led_con,"led_con"},
-    {open_all_vavle,"open_all_vavle"},
+    {water_cool_pump_con,"water_cool_pump_con"},{water_cool_pump_con,"4"},
+    {water_cool_vavle_con,"water_cool_vavle_con"},{water_cool_vavle_con,"5"},
+    {get_liquid_feedback,"get_liquid_feedback"},{get_liquid_feedback,"6"},
+    {humidity_con,"humidity_con"},{humidity_con,"7"},
+    {get_motor_limit,"get_motor_limit"},{get_motor_limit,"8"},
+    {get_key_in,"get_key_in"},{get_key_in,"9"},
+    {fan_con,"fan_con"},{fan_con,"10"},
+    {led_con,"led_con"},{led_con,"11"},
+    {open_all_vavle,"open_all_vavle"},{open_all_vavle,"12"},
 
-    {set_motor,"set_motor"},
-    {set_acc_motor,"set_acc_motor"},
-    {change_water_all,"change_water_all"},
-    {out_water_all,"out_water_all"},
-    {get_humidity_status ,"get_humidity_status"},
+    {set_motor,"set_motor"},{set_motor,"13"},
+    {set_acc_motor,"set_acc_motor"},{set_acc_motor,"14"},
+    {change_water_all,"change_water_all"},{change_water_all,"15"},
+    {out_water_all,"out_water_all"},{out_water_all,"16"},
+    {get_humidity_status ,"get_humidity_status"},{get_humidity_status,"17"},
 
-    {get_temp,"get_temp"},
-    {get_pid_sw,"get_pid_sw"},
-    {start_pid,"start_pid"},
-    {open_temp_gui,"open_temp_gui"},
-    {version,"version"},
-    {open_tft_com_debug,"open_tft_com_debug"},
-    {close_tft_com_debug,"close_tft_com_debug"},
+    {get_temp,"get_temp"},{get_temp,"18"},
+    {get_pid_sw,"get_pid_sw"},{get_pid_sw,"19"},
+    {start_pid,"start_pid"},{start_pid,"20"},
+    {open_temp_gui,"open_temp_gui"},{open_temp_gui,"21"},
+    {version,"version"},{version,"1"},
+    {open_tft_com_debug,"open_tft_com_debug"},{open_tft_com_debug,"22"},
+    {close_tft_com_debug,"close_tft_com_debug"},{close_tft_com_debug,"23"},
+
+    //对没有参数的函数进行快速访问
+
 };
 
 

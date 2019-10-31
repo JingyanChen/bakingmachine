@@ -65,6 +65,7 @@ static void csp_10_ms_handle(void){
     _UART_LCD_10MS_FLAG = true;
     _MOTOR_ACC_CON_FLAG = true;
     _KEY_EVENT_CHECK_FLAG = true;
+    _TFT_COM_UPDATE_FLAG = true;
     //
 
     _100ms_tick ++;
@@ -82,7 +83,6 @@ static void csp_100_ms_handle(void){
  	_UPLOAD_TEMP_GUI_FLAG = true;  	
     _APP_UPDATE_FLAG = true;
     _HUMIDITY_CONTROL_FLAG = true;
-    _TFT_COM_UPDATE_FLAG = true;
     //
 
     _1000ms_tick ++;

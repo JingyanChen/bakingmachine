@@ -350,7 +350,7 @@ void hex_str(unsigned char *inchar, unsigned int len, unsigned char *outtxt)
 //lcd UART API
 void lcd_sender(uint8_t *sender, uint16_t len)
 {
-    uint8_t tft_debug_buf[100] = "MCU_RES:";
+    uint8_t tft_debug_buf[100] = "MCU_SEND:";
 
     if (len > LCD_UART_MAX_LEN)
         return;
@@ -371,7 +371,7 @@ void lcd_sender(uint8_t *sender, uint16_t len)
         if (len < 90)
         {
             //把hex格式文件转化为字符串
-            hex_str(sender, len, tft_debug_buf + 8);
+            hex_str(sender, len, tft_debug_buf + 9);
             debug_sender_str(tft_debug_buf);
         }
     }
