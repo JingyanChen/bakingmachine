@@ -7,12 +7,14 @@
 #include "arg_debug_pro.h"
 #include "delay.h"
 #include "csp_pwm.h"
+#include "app.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include "arg_pid.h"
 #include "periph_motor.h"
 #include "periph_humidity_sys.h"
 #include "arg_version.h"
+#include "periph_fan.h"
 
 static bool temp_gui_upload_sw  = false;
 static bool tft_com_transmit_sw = false;
@@ -56,7 +58,10 @@ static void help(void){
     debug_sender_str(" 20 open_temp_gui  open_temp_gui Note press Enter to Stop\r\n");delay_ms(10);
     debug_sender_str(" 21 version\r\n");delay_ms(10);
     debug_sender_str(" 22 open_tft_com_debug  Note tft com will transmit to debug port\r\n");delay_ms(10);
-    debug_sender_str(" 23 close_tft_com_debug  Note close tft com transmit\r\n ");delay_ms(10);
+    debug_sender_str(" 23 close_tft_com_debug  Note close tft com transmit\r\n");delay_ms(10);
+    debug_sender_str(" 24 read_box_status\r\n");delay_ms(10);
+    debug_sender_str(" 25 read_fan_status\r\n");delay_ms(10);
+    
 }
 
 static void get_csp_adc(void){
@@ -533,7 +538,7 @@ static void fan_con(void){
         return ;        
     }
 
-    fan_control(pra1,pra2);
+    set_fan(pra1,pra2);
 
     sprintf((char *)send_buf,"set fan con %d as %d success\r\n",pra1,pra2);
 
@@ -922,6 +927,38 @@ static void close_tft_com_debug(void){
     tft_com_transmit_sw = false;
     debug_sender_str("tft com transmit close success\r\n");
 }
+
+static void read_box_status(void){
+    uint8_t sender_buf[100];
+    uint8_t i=0;
+    box_status_t status = box_off;
+
+    for(i=0;i<5;i++){
+        status = get_box_status(i);
+        switch(status){
+            case box_off :sprintf((char *)sender_buf,">>> box %d status is box_off  \r\n" , i);break;
+            case box_running_forward :sprintf((char *)sender_buf,">>> box %d status is box_running_forward  \r\n" , i);break;
+            case box_running_backward :sprintf((char *)sender_buf,">>> box %d status is box_running_backward  \r\n" , i);break;
+            case box_on :sprintf((char *)sender_buf,">>> box %d status is box_on  \r\n" , i);break;
+            case box_unknown:sprintf((char *)sender_buf,">>> box %d status is box_unknown  \r\n" , i);break;
+        }
+        debug_sender_str(sender_buf);
+        delay_ms(10);
+    }
+}
+
+static void read_fan_status(void){
+    uint8_t sender_buf[100];
+    uint8_t i=0;
+    uint16_t b = 0;
+
+    for(i=0;i<5;i++){
+        b = get_fan_status(i);
+        sprintf((char *)sender_buf,">>> fan %d sw is %d  \r\n" , i,b);
+        debug_sender_str(sender_buf);
+        delay_ms(10);
+    }
+}
 debug_func_list_t debug_func_list[] = {
 
     {help,"help"},{help,"?"},{help,"HELP"},
@@ -953,8 +990,9 @@ debug_func_list_t debug_func_list[] = {
     {version,"version"},{version,"1"},
     {open_tft_com_debug,"open_tft_com_debug"},{open_tft_com_debug,"22"},
     {close_tft_com_debug,"close_tft_com_debug"},{close_tft_com_debug,"23"},
+    {read_box_status,"read_box_status"},{read_box_status,"24"},
+    {read_fan_status,"read_fan_status"},{read_fan_status,"25"},
 
-    //对没有参数的函数进行快速访问
 
 };
 

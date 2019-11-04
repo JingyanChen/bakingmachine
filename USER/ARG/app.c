@@ -24,8 +24,12 @@
  * 
  */
 
-box_status_t box_status[BOX_NUM];
+box_status_t box_status[BOX_NUM]={box_unknown,box_unknown,box_unknown,box_unknown,box_unknown};
 
+
+box_status_t  get_box_status(uint8_t box_id){
+    return box_status[box_id % 5];
+}
 
 bool arg_box_push_pop_init_done =false;
 static bool check_box_restart_ok(void){
@@ -40,7 +44,7 @@ static bool check_box_restart_ok(void){
 }
 
 //考虑匀速退回的时候按下是否可以迅速弹出
-static void key_box_logic(uint8_t box_id){
+void key_box_logic(uint8_t box_id){
     if(box_status[box_id] == box_off && get_motor_status(box_id) == no_running){
         //盒子处于关闭状态，且不处于运动状态
         //注意box_status[box_id]是最终状态，get_motor_status[box_id]是最中间状态
@@ -169,7 +173,7 @@ static void arg_box_push_pop_handle(void){
 
 }
 
-static temp_control_t tc;
+temp_control_t tc;
 static bool arg_temp_config_done=false;
 
 //提供给与TFT屏交互的通讯代码，访问整体的温控/湿控模块功能
@@ -183,8 +187,10 @@ error_t config_temp_control_machine(temp_control_t * temp_control){
 	
     //打开换水进程
     //可以考虑集体换水，给所有路换水
-    if(change_water(0xff) == false){
-        return change_water_error_repetitive_operation;
+
+    if(temp_control -> need_change_water == true){
+        change_water(0xff);
+
     }
 
 
@@ -194,6 +200,7 @@ error_t config_temp_control_machine(temp_control_t * temp_control){
     //赋值给全局变量tc
 
     tc.control_num = temp_control->control_num;
+    tc.need_change_water = temp_control->need_change_water;
     memcpy(tc.control_sw,temp_control->control_sw,10);
     memcpy(tc.control_temp,temp_control->control_temp,10);
 
@@ -251,22 +258,33 @@ static void arg_temp_control_handle(void){
     VAILD_TASK_PRA:
 
     //判断换水是否完成
-    if(get_water_injection_status() == change_water_done){
+    if(tc.need_change_water == true){
+        if(get_water_injection_status() == change_water_done){
 
-        //换水完毕
-        set_water_injection_status(no_injection_task);
-        //初始化一下，使得此if仅进入一次
-        //if 进入一次的好处在于，条件成立的次数与调用periph_water_injection一致
-        
+            //换水完毕
+            set_water_injection_status(no_injection_task);
+            //初始化一下，使得此if仅进入一次
+            //if 进入一次的好处在于，条件成立的次数与调用periph_water_injection一致
+            
 
-        //配置一次PID控制器
+            //配置一次PID控制器
 
-        for(i=0;i<10;i++){
-            if(tc.control_sw[i] == true)
-                start_pid_controller_as_target_temp(i,tc.control_temp[i]);                
+            for(i=0;i<10;i++){
+                if(tc.control_sw[i] == true)
+                    start_pid_controller_as_target_temp(i,tc.control_temp[i]);                
+            }
+
+            arg_temp_config_done = true;
         }
+    }else{
+            //直接更新配置一次PID控制器
 
-        arg_temp_config_done = true;
+            for(i=0;i<10;i++){
+                if(tc.control_sw[i] == true)
+                    start_pid_controller_as_target_temp(i,tc.control_temp[i]);                
+            }
+
+            arg_temp_config_done = true;        
     }
 
 }

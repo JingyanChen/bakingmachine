@@ -21,6 +21,7 @@ typedef enum{
     box_running_forward,
     box_running_backward,
     box_on,
+    box_unknown,//开机的时候还没有做完复位操作后的状态
 }box_status_t; 
 
 
@@ -31,8 +32,10 @@ typedef enum{
 // 0 - 4 阻止 CW 方向
 // 5 - 9 阻止 CCW 方向
 
-
-
+//获得盒子的当前状态 
+box_status_t  get_box_status(uint8_t box_id);
+//通过此函数，访问盒子运动功能，模拟按下按键
+void key_box_logic(uint8_t box_id);
 ///
 
 #define CONTROL_TEMP_NUM 10
@@ -40,16 +43,17 @@ typedef struct{
     uint8_t control_num;
     bool control_sw[10];
     uint16_t control_temp[10];
+    bool need_change_water;
 }temp_control_t;
 
-
+extern temp_control_t tc;//外部可访问此变量，得到当前的控温状态
 
 //为debue协议提供如下两种访问温度控制状态机的方法
 
 typedef enum{
     no_error=0,
     change_water_error_repetitive_operation,
-	  pid_temp_control_pra_error,
+	pid_temp_control_pra_error,
 }error_t;
 
 //方法1 ，访问温控方法

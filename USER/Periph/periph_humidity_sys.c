@@ -151,7 +151,10 @@ bool change_water(uint8_t liquid_road_list)
 
     if (injection_status != no_injection_task && injection_status != change_water_done && injection_status != out_water_done)
     {
-        return false; //不允许在未结束的情况下重新开始状态机
+        //出现了如下情况，上一次换水并未结束，又开始新的一次换水
+        //初始化状态机，重置状态机。
+        //表现是 如果快速的换水，不会对系统有任何影响
+        periph_humidity_sys_init();
     }
 
 
@@ -181,7 +184,7 @@ bool change_water(uint8_t liquid_road_list)
 
     injection_status = change_water_out_status;
 		
-		return true;
+	return true;
 }
 
 bool out_water(uint8_t liquid_road_list)
@@ -195,7 +198,10 @@ bool out_water(uint8_t liquid_road_list)
 
     if (injection_status != no_injection_task && injection_status != change_water_done && injection_status != out_water_done)
     {
-        return false; //不允许在未结束的情况下重新开始状态机
+        //出现了如下情况，上一次换水并未结束，又开始新的一次换水
+        //初始化状态机，重置状态机。
+        //表现是 如果快速的退水，不会对系统有任何影响
+        periph_humidity_sys_init();
     }
 
     for (i = 0; i < WATER_ROAD_NUM; i++)

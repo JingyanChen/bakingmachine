@@ -4,6 +4,7 @@
         "csp_gpio.h": "c",
         "sys.h": "c",
         "periph_motor.h": "c",
-        "arg_debug_pro.h": "c"
+        "arg_debug_pro.h": "c",
+        "arg_tft_com.h": "c"
     }
 }
