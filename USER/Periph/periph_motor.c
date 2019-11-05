@@ -3,6 +3,7 @@
 #include "csp_pwm.h"
 #include "csp_uart.h"
 #include "csp_timer.h"
+#include "app.h"
 
 static bool motor_acc_arg_sw[MOTOR_NUM];
 static dir_t motor_acc_arg_running_dir[MOTOR_NUM];
@@ -58,7 +59,7 @@ void periph_motor_handle(void){
                     //运动结束
                     clear_motor_acc_arg(i);
                 }else{
-                    set_motor_speed_dir(i % 5 ,(dir_t)motor_acc_arg_running_dir[i % 5] , motor_acc_list[motor_acc_arg_now_speed_index[i % 5]]);             
+                    set_motor_speed_dir(i % 5 ,(dir_t)motor_acc_arg_running_dir[i % 5] , motor_acc_list[motor_acc_arg_now_speed_index[i % 5]]-300);             
                 }   
             }
         }
@@ -76,8 +77,8 @@ void periph_motor_handle(void){
     for(i=0;i<MOTOR_NUM;i++){
         if(motor_status[i] == is_running){
             //发现电机在运动，判断其运动方向
-
-            if(motor_acc_arg_running_dir[i] == CW){
+            //注意 低位是复位限位开关，高位是终点限位开关
+            if(motor_acc_arg_running_dir[i] == BOX_BACKWARD_DIR){
                 if(get_motor_limit_v(i) == MOTOR_LIMIT_V){
                     close_motor(i);
                     clear_motor_acc_arg(i);

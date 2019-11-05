@@ -27,7 +27,7 @@ typedef enum{
 
 #define BOX_FORWARD_DIR   CW
 #define BOX_BACKWARD_DIR  CCW
-#define BOX_RUNNING_TIM 6000
+#define BOX_RUNNING_TIM 8000
 
 // 0 - 4 阻止 CW 方向
 // 5 - 9 阻止 CCW 方向

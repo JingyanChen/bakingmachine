@@ -24,7 +24,7 @@
  * 
  */
 
-box_status_t box_status[BOX_NUM]={box_unknown,box_unknown,box_unknown,box_unknown,box_unknown};
+box_status_t box_status[BOX_NUM]={box_off,box_off,box_off,box_off,box_off};
 
 
 box_status_t  get_box_status(uint8_t box_id){
