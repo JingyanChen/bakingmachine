@@ -137,10 +137,6 @@ void csp_uart_init(void)
 
     //rs485 EN 0 rx 1 tx  default is rx
     rs485_enbale_control(false);
-
-    //debug welcome ui
-    debug_sender_str("welcome to comegene instruction system\r\n");
-    debug_sender_str("input '?' to get help \r\n");
 }
 
 //DEBUG UART API

@@ -7,6 +7,7 @@
 #include "csp_uart.h"
 #include "csp_adc.h"
 #include "csp_uart.h"
+#include "csp_wtd.h"
 #include "arg_debug_pro.h"
 #include "arg_tft_com.h"
 #include "arg_pid.h"
@@ -27,6 +28,7 @@ int main(void)
 	csp_timer_init();
 	csp_uart_init();
 	csp_adc_init();
+	csp_wtd_init();
 
 	periph_motor_init();
 	periph_key_init();
@@ -46,7 +48,8 @@ int main(void)
 		csp_uart_handle();
 		csp_adc_handle();
 		csp_pwm_handle();
-
+		csp_wtd_handle();
+		
 		periph_motor_handle();
 		periph_key_handle();
 		periph_humidity_sys_handle();

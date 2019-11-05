@@ -16,55 +16,71 @@
 #include "arg_version.h"
 #include "periph_fan.h"
 #include "periph_power.h"
+#include "csp_wtd.h"
 
 static bool temp_gui_upload_sw  = false;
 static bool tft_com_transmit_sw = false;
+
 void arg_debug_pro_init(void){
+    uint8_t welcom_string[200];
+
     temp_gui_upload_sw = false;
     tft_com_transmit_sw = false;
+
+    sprintf((char *)welcom_string,"\r\nWelcome to comegene debug instruction systems.Version %d.%d.%d [make_time:%s_%s] \r\nType ""help"",""?"",""copyright"" or ""author"" for more information.\r\n",MAIN_VERSION,SECOND_VERSION,IS_RELEASE,__DATE__, __TIME__);
+    debug_sender_str(welcom_string);
+
 }
 
 bool get_tft_com_transmit_sw(void){
     return tft_com_transmit_sw;
 }
 
+static void debug_send_nop(void){
+    csp_wtd_handle();
+    delay_ms(10);
+}
+
+static void copyright(void){
+    debug_sender_str("Copyright (c) 2001-2019 Comegene LLC.\r\nAll Rights Reserved.\r\n");
+}
+
+static void author(void){
+    debug_sender_str("Name Jingyan Chen\r\n E-mail xqchendream@163.com\r\nAll code author\r\n");
+}
 static void help(void){
-    debug_sender_str("\r\n\r\n\r\n csp test cmd list >>>>>>>\r\n");delay_ms(10);
-    debug_sender_str(" 1 get_csp_adc \r\n");delay_ms(10);
-    debug_sender_str(" 2 set_warm_pwm id percent Note id : 0-9 percent 0-1000\r\n");delay_ms(10); 
-    debug_sender_str(" 3 set_motor_pwm id percent Note id : 0-4 percent 0-1000\r\n");delay_ms(10); 
-
-
-    debug_sender_str("\r\n\r\n\r\n periph test cmd list >>>>>>>\r\n");delay_ms(10); 
-    debug_sender_str(" 4 water_cool_pump_con id sw Note id: 0-4 sw 0/1\r\n");delay_ms(10); 
-    debug_sender_str(" 5 water_cool_vavle_con id sw Note id 0-6 sw 0/1\r\n");delay_ms(10);
-    debug_sender_str(" 6 get_liquid_feedback \r\n");delay_ms(10);
-    debug_sender_str(" 7 humidity_con id sw Note id:0-1 sw 0/1\r\n");delay_ms(10);
-    debug_sender_str(" 8 get_motor_limit \r\n");delay_ms(10);
-    debug_sender_str(" 9 get_key_in\r\n");delay_ms(10);
-    debug_sender_str(" 10 fan_con id sw Note id 0-4 sw 0/1\r\n");delay_ms(10);
-    debug_sender_str(" 11 led_con id sw Note id 0 sw 0/1\r\n");delay_ms(10);
-    debug_sender_str(" 12 open_all_vavle \r\n");delay_ms(10);
-
-    debug_sender_str("\r\n\r\n\r\n periph2 test cmd list >>>>>>>\r\n");delay_ms(10);
-    debug_sender_str(" 13 set_motor id dir speed Note id 0-4 dir 0/1 speed 0-1000\r\n");delay_ms(10);     
-    debug_sender_str(" 14 set_acc_motor id dir t Note id 0-4 dir 0/1 t 2000-65535\r\n");delay_ms(10);  
-    debug_sender_str(" 15 change_water_all \r\n");delay_ms(10); 
-    debug_sender_str(" 16 out_water_all \r\n");delay_ms(10);
-
-    debug_sender_str("\r\n\r\n\r\n app test cmd list >>>>>>>\r\n");delay_ms(10);  
-    debug_sender_str(" 17 get_temp \r\n");delay_ms(10);     
-    debug_sender_str(" 18 get_pid_sw \r\n");delay_ms(10);   
-    debug_sender_str(" 19 start_pid id taget_temp Note id 0-9 target_temp 25 - 100\r\n");delay_ms(10);  
-    debug_sender_str(" 20 open_temp_gui  open_temp_gui Note press Enter to Stop\r\n");delay_ms(10);
-    debug_sender_str(" 21 version\r\n");delay_ms(10);
-    debug_sender_str(" 22 open_tft_com_debug  Note tft com will transmit to debug port\r\n");delay_ms(10);
-    debug_sender_str(" 23 close_tft_com_debug  Note close tft com transmit\r\n");delay_ms(10);
-    debug_sender_str(" 24 read_box_status\r\n");delay_ms(10);
-    debug_sender_str(" 25 read_fan_status\r\n");delay_ms(10);
-    debug_sender_str(" 26 power_on\r\n");delay_ms(10);  
-    debug_sender_str(" 27 power_off\r\n");delay_ms(10);  
-    debug_sender_str(" 28 get_power_status\r\n");delay_ms(10);      
+    debug_sender_str("\r\n\r\n\r\n help cmd list >>>>>>>\r\n");debug_send_nop();
+    debug_sender_str(" 1  get_csp_adc \r\n");debug_send_nop();
+    debug_sender_str(" 2  set_warm_pwm id percent Note id : 0-9 percent 0-1000\r\n");debug_send_nop();
+    debug_sender_str(" 3  set_motor_pwm id percent Note id : 0-4 percent 0-1000\r\n");debug_send_nop();
+    debug_sender_str(" 4  water_cool_pump_con id sw Note id: 0-4 sw 0/1\r\n");debug_send_nop();
+    debug_sender_str(" 5  water_cool_vavle_con id sw Note id 0-6 sw 0/1\r\n");debug_send_nop();
+    debug_sender_str(" 6  get_liquid_feedback \r\n");debug_send_nop();
+    debug_sender_str(" 7  humidity_con id sw Note id:0-1 sw 0/1\r\n");debug_send_nop();
+    debug_sender_str(" 8  get_motor_limit \r\n");debug_send_nop();
+    debug_sender_str(" 9  get_key_in\r\n");debug_send_nop();
+    debug_sender_str(" 10 fan_con id sw Note id 0-4 sw 0/1\r\n");debug_send_nop();
+    debug_sender_str(" 11 led_con id sw Note id 0 sw 0/1\r\n");debug_send_nop();
+    debug_sender_str(" 12 open_all_vavle \r\n");debug_send_nop();
+    debug_sender_str(" 13 set_motor id dir speed Note id 0-4 dir 0/1 speed 0-1000\r\n");debug_send_nop();     
+    debug_sender_str(" 14 set_acc_motor id dir t Note id 0-4 dir 0/1 t 2000-65535\r\n");debug_send_nop();
+    debug_sender_str(" 15 change_water_all \r\n");debug_send_nop();
+    debug_sender_str(" 16 out_water_all \r\n");debug_send_nop();
+    debug_sender_str(" 17 get_temp \r\n");debug_send_nop();     
+    debug_sender_str(" 18 get_pid_sw \r\n");debug_send_nop();   
+    debug_sender_str(" 19 start_pid id taget_temp Note id 0-9 target_temp 25 - 100\r\n");debug_send_nop();  
+    debug_sender_str(" 20 open_temp_gui  open_temp_gui Note press Enter to Stop\r\n");debug_send_nop();
+    debug_sender_str(" 21 version\r\n");debug_send_nop();
+    debug_sender_str(" 22 open_tft_com_debug  Note tft com will transmit to debug port\r\n");debug_send_nop();
+    debug_sender_str(" 23 close_tft_com_debug  Note close tft com transmit\r\n");debug_send_nop();
+    debug_sender_str(" 24 read_box_status\r\n");debug_send_nop();
+    debug_sender_str(" 25 read_fan_status\r\n");debug_send_nop();
+    debug_sender_str(" 26 power_on\r\n");debug_send_nop();  
+    debug_sender_str(" 27 power_off\r\n");debug_send_nop();  
+    debug_sender_str(" 28 get_power_status\r\n");debug_send_nop();   
+    debug_sender_str(" 29 wtd_test\r\n");debug_send_nop();  
+    debug_sender_str(" 30 copyright\r\n");debug_send_nop();   
+    debug_sender_str(" 31 author\r\n");debug_send_nop();  
 }
 
 static void get_csp_adc(void){
@@ -981,6 +997,11 @@ static void get_power_status(void){
     }
 }
 
+static void wtd_test(void){
+    debug_sender_str("system will block delay 3 seconds\r\n");
+    delay_ms(3000);
+}
+
 debug_func_list_t debug_func_list[] = {
 
     {help,"help"},{help,"?"},{help,"HELP"},
@@ -1017,6 +1038,9 @@ debug_func_list_t debug_func_list[] = {
     {power_on,"power_on"},{power_on,"26"},
     {power_off,"power_off"},{power_off,"27"},
     {get_power_status,"get_power_status"},{get_power_status,"28"},
+    {wtd_test,"wtd_test"},{wtd_test,"29"},
+    {copyright,"copyright"},{copyright,"30"},
+    {author,"author"},{author,"31"},
 
 };
 
