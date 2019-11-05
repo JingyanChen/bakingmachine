@@ -14,6 +14,7 @@
 #include "periph_key.h"
 #include "periph_humidity_sys.h"
 #include "periph_fan.h"
+#include "periph_power.h"
 #include "app.h"
 
 
@@ -31,6 +32,7 @@ int main(void)
 	periph_key_init();
 	periph_humidity_sys_init();
 	periph_fan_init();
+	periph_power_init();
 	
 	arg_debug_pro_init();
 	arg_tft_com_init();

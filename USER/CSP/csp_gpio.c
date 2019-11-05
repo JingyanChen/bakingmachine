@@ -35,6 +35,9 @@ GPIO_TypeDef *OUTPUT_PORT_LIST[] = {
     MOTOR_DIR_PORT_2,
     MOTOR_DIR_PORT_3,
     MOTOR_DIR_PORT_4,
+
+    LCD_POWER_PORT,
+
 };
 
 uint16_t OUTPUT_PIN_LIST[] = {
@@ -70,6 +73,8 @@ uint16_t OUTPUT_PIN_LIST[] = {
     MOTOR_DIR_PIN_2,
     MOTOR_DIR_PIN_3,
     MOTOR_DIR_PIN_4,
+
+    LCD_POWER_PIN,
 };
 
 GPIO_TypeDef *INPUT_PORT_LIST[] = {
@@ -134,7 +139,7 @@ void csp_gpio_init(void){
 
     //output set
 
-    for (i = 0; i < 26; i++)
+    for (i = 0; i < 27; i++)
     {
 
         GPIO_InitStructure.GPIO_Pin = OUTPUT_PIN_LIST[i];
@@ -236,6 +241,14 @@ void power_led_control(bool sw){
     }else{
         GPIO_ResetBits(LED_PORT , LED_PIN);
     }      
+}
+
+void lcd_power_control(bool sw){
+    if(sw){
+        GPIO_SetBits(LCD_POWER_PORT , LCD_POWER_PIN);
+    }else{
+        GPIO_ResetBits(LCD_POWER_PORT , LCD_POWER_PIN);
+    } 
 }
 
 #define MOTOR_DIR_CONTROL_OFFSET 21

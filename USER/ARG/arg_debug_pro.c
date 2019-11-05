@@ -15,6 +15,7 @@
 #include "periph_humidity_sys.h"
 #include "arg_version.h"
 #include "periph_fan.h"
+#include "periph_power.h"
 
 static bool temp_gui_upload_sw  = false;
 static bool tft_com_transmit_sw = false;
@@ -61,7 +62,9 @@ static void help(void){
     debug_sender_str(" 23 close_tft_com_debug  Note close tft com transmit\r\n");delay_ms(10);
     debug_sender_str(" 24 read_box_status\r\n");delay_ms(10);
     debug_sender_str(" 25 read_fan_status\r\n");delay_ms(10);
-    
+    debug_sender_str(" 26 power_on\r\n");delay_ms(10);  
+    debug_sender_str(" 27 power_off\r\n");delay_ms(10);  
+    debug_sender_str(" 28 get_power_status\r\n");delay_ms(10);      
 }
 
 static void get_csp_adc(void){
@@ -959,6 +962,25 @@ static void read_fan_status(void){
         delay_ms(10);
     }
 }
+
+static void power_on(void){
+    lcd_power_control_func(true);
+    debug_sender_str("power on success\r\n");
+}
+
+static void power_off(void){
+    lcd_power_control_func(false);
+    debug_sender_str("power off success\r\n");
+}
+
+static void get_power_status(void){
+    if(get_lcd_power_status() ==  lcd_power_off){
+        debug_sender_str("lcd_power_off\r\n");
+    }else{
+        debug_sender_str("lcd_power_on\r\n");
+    }
+}
+
 debug_func_list_t debug_func_list[] = {
 
     {help,"help"},{help,"?"},{help,"HELP"},
@@ -992,7 +1014,9 @@ debug_func_list_t debug_func_list[] = {
     {close_tft_com_debug,"close_tft_com_debug"},{close_tft_com_debug,"23"},
     {read_box_status,"read_box_status"},{read_box_status,"24"},
     {read_fan_status,"read_fan_status"},{read_fan_status,"25"},
-
+    {power_on,"power_on"},{power_on,"26"},
+    {power_off,"power_off"},{power_off,"27"},
+    {get_power_status,"get_power_status"},{get_power_status,"28"},
 
 };
 

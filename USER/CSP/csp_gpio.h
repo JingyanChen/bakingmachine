@@ -175,7 +175,10 @@
 #define LED_PORT   GPIOC
 #define LED_PIN    GPIO_Pin_5
 
+//LCD POWER
 
+#define LCD_POWER_PORT  GPIOC
+#define LCD_POWER_PIN   GPIO_Pin_4 
 
 void csp_gpio_init(void);
 void csp_gpio_handle(void);
@@ -231,4 +234,9 @@ bool get_power_key_in(void);
  * set motor dir
  */
 void motor_dir_set(uint8_t id , bool sw);
+/*
+ * set lcd power 
+ */
+void lcd_power_control(bool sw);
+
 #endif

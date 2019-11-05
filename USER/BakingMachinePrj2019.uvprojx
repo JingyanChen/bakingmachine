@@ -623,6 +623,11 @@
               <FileType>1</FileType>
               <FilePath>.\ARG\arg_version.c</FilePath>
             </File>
+            <File>
+              <FileName>arg_tft_com.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\ARG\arg_tft_com.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -642,6 +647,16 @@
               <FileName>periph_humidity_sys.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Periph\periph_humidity_sys.c</FilePath>
+            </File>
+            <File>
+              <FileName>periph_power.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Periph\periph_power.c</FilePath>
+            </File>
+            <File>
+              <FileName>periph_fan.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Periph\periph_fan.c</FilePath>
             </File>
           </Files>
         </Group>
