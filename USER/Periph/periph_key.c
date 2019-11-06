@@ -21,11 +21,11 @@ static key_event_t key_event_func[KEY_NUM]={
 };
 
 static event_type_t key_event_v[KEY_NUM]={
-    both,
-    both,
-    both,
-    both,
-    both,
+    negative,
+    negative,
+    negative,
+    negative,
+    negative,
     negative,
 };
 
