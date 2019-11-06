@@ -24,7 +24,7 @@
  * 
  */
 
-box_status_t box_status[BOX_NUM]={box_off,box_off,box_off,box_off,box_off};
+box_status_t box_status[BOX_NUM]={box_unknown,box_unknown,box_unknown,box_unknown,box_unknown};
 
 
 box_status_t  get_box_status(uint8_t box_id){
@@ -95,7 +95,7 @@ static void arg_box_push_pop_init(void){
             if(get_motor_limit_v(i) != MOTOR_LIMIT_V){
                 //发现没有触碰光电开关的情况
                 //发起一次匀速复位运动
-                set_motor_speed_dir(i,BOX_BACKWARD_DIR,500);
+                set_motor_speed_dir(i,BOX_BACKWARD_DIR,700);
             }
         }
 
@@ -104,7 +104,7 @@ static void arg_box_push_pop_init(void){
             if(get_motor_limit_v(5 + i) != MOTOR_LIMIT_V){
                 //发现没有触碰光电开关的情况
                 //发起一次匀速复位运动
-                set_motor_speed_dir(i,BOX_BACKWARD_DIR,500);
+                set_motor_speed_dir(i,BOX_BACKWARD_DIR,700);
             }
         }
     }

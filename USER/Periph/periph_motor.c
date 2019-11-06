@@ -12,7 +12,8 @@ static uint8_t motor_acc_change_speed_index[MOTOR_NUM];
 static uint8_t motor_acc_arg_now_speed_index[MOTOR_NUM];
 static motor_status_t motor_status[MOTOR_NUM];
 
-//使用S曲线进行拟合 从起始速度到满速度
+/*
+//使用S曲线进行拟合 从起始速度到满速度 500 - 1000
 const uint16_t motor_acc_list[ACC_LIST_LEN]={
 500 ,525 ,550 ,574 ,599 ,622 ,646 ,668 ,690 ,711 ,
 731 ,750 ,769 ,786 ,802 ,818 ,832 ,846 ,858 ,870 ,
@@ -28,7 +29,25 @@ const uint16_t motor_acc_list[ACC_LIST_LEN]={
 870 ,858 ,846 ,832 ,818 ,802 ,786 ,769 ,750 ,731 ,
 711 ,690 ,668 ,646 ,622 ,599 ,574 ,550 ,525 ,500 ,
 };
+*/
 
+//400-800
+const uint16_t motor_acc_list[ACC_LIST_LEN]={
+400 ,420 ,440 ,460 ,479 ,498 ,517 ,535 ,552 ,569 ,
+585 ,600 ,615 ,629 ,642 ,654 ,666 ,676 ,687 ,696 ,
+705 ,713 ,720 ,727 ,733 ,739 ,745 ,750 ,754 ,758 ,
+762 ,766 ,769 ,772 ,774 ,777 ,779 ,781 ,782 ,784 ,
+786 ,787 ,788 ,789 ,790 ,791 ,792 ,793 ,793 ,794 , 
+
+
+//上述是S曲线拟合的后半段，加速过程，减速过程是他的镜像
+
+794 ,793 ,793 ,792 ,791 ,790 ,789 ,788 ,787 ,786 ,
+784 ,782 ,781 ,779 ,777 ,774 ,772 ,769 ,766 ,762 ,
+758 ,754 ,750 ,745 ,739 ,733 ,727 ,720 ,713 ,705 ,
+696 ,687 ,676 ,666 ,654 ,642 ,629 ,615 ,600 ,585 ,
+569 ,552 ,535 ,517 ,498 ,479 ,460 ,440 ,420 ,400 ,
+};
 void periph_motor_init(void){
     uint8_t i=0;
     for(i=0;i<MOTOR_NUM;i++){
@@ -59,7 +78,7 @@ void periph_motor_handle(void){
                     //运动结束
                     clear_motor_acc_arg(i);
                 }else{
-                    set_motor_speed_dir(i % 5 ,(dir_t)motor_acc_arg_running_dir[i % 5] , motor_acc_list[motor_acc_arg_now_speed_index[i % 5]]-300);             
+                    set_motor_speed_dir(i % 5 ,(dir_t)motor_acc_arg_running_dir[i % 5] , motor_acc_list[motor_acc_arg_now_speed_index[i % 5]]+S_SPEED_LIST_OFFSET);             
                 }   
             }
         }
