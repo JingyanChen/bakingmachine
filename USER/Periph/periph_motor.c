@@ -4,6 +4,9 @@
 #include "csp_uart.h"
 #include "csp_timer.h"
 #include "app.h"
+#include "arg_debug_pro.h"
+#include <stdio.h>
+
 
 static bool motor_acc_arg_sw[MOTOR_NUM];
 static dir_t motor_acc_arg_running_dir[MOTOR_NUM];
@@ -11,6 +14,7 @@ static uint8_t motor_acc_arg_now_index[MOTOR_NUM];
 static uint8_t motor_acc_change_speed_index[MOTOR_NUM];
 static uint8_t motor_acc_arg_now_speed_index[MOTOR_NUM];
 static motor_status_t motor_status[MOTOR_NUM];
+static bool motor_acc_reversal[MOTOR_NUM];
 
 /*
 //使用S曲线进行拟合 从起始速度到满速度 500 - 1000
@@ -92,30 +96,67 @@ static void motor_limit_handle(void){
     }
 }
 
-static void motor_acc_handle(void){
+static void motor_acc_handle(void)
+{
 
-    uint8_t i=0;
+    uint8_t i = 0;
+    uint8_t debug_send_buf[100];
 
-    if(_MOTOR_ACC_CON_FLAG == false)
-        return ;
+    if (_MOTOR_ACC_CON_FLAG == false)
+        return;
 
     _MOTOR_ACC_CON_FLAG = false;
 
     //10ms 速度切换handle
-    for(i=0;i<MOTOR_NUM;i++){
-        if(motor_acc_arg_sw[i] == true){
-            motor_acc_arg_now_index[i % 5] ++;
-            if(motor_acc_arg_now_index[i % 5] > motor_acc_change_speed_index[i % 5]){
-                motor_acc_arg_now_index[i % 5]  = 0;
+    for (i = 0; i < MOTOR_NUM; i++)
+    {
+        if (motor_acc_arg_sw[i] == true)
+        {
+            motor_acc_arg_now_index[i % 5]++;
+            if (motor_acc_arg_now_index[i % 5] > motor_acc_change_speed_index[i % 5])
+            {
+                motor_acc_arg_now_index[i % 5] = 0;
 
-                motor_acc_arg_now_speed_index[i % 5]++;
+                if (motor_acc_reversal[i % 5] == false)
+                {
+                    motor_acc_arg_now_speed_index[i % 5]++;
 
-                if(motor_acc_arg_now_speed_index[i % 5] > ACC_LIST_LEN - 1){
-                    //运动结束
-                    clear_motor_acc_arg(i);
-                }else{
-                    set_motor_speed_dir(i % 5 ,(dir_t)motor_acc_arg_running_dir[i % 5] , motor_acc_list[motor_acc_arg_now_speed_index[i % 5]]+S_SPEED_LIST_OFFSET);             
-                }   
+                    if (motor_acc_arg_now_speed_index[i % 5] > ACC_LIST_LEN - 1)
+                    {
+                        //运动结束
+                        clear_motor_acc_arg(i);
+                    }
+                    else
+                    {
+                        set_motor_speed_dir(i % 5, (dir_t)motor_acc_arg_running_dir[i % 5], motor_acc_list[motor_acc_arg_now_speed_index[i % 5]] + S_SPEED_LIST_OFFSET);
+                    }
+                }
+                else
+                {
+                    //改变运动方向，此时向后选择速度，当前的上一次速度选择是motor_acc_arg_now_speed_index[i % 5]
+                    //接下来每次到更换速度时间，每次--，配置状态机的时候 保证motor_acc_arg_now_speed_index[i % 5]不是0
+                    if(motor_acc_arg_now_speed_index[i % 5])
+                        motor_acc_arg_now_speed_index[i % 5]--;
+                    else
+                        motor_acc_arg_now_speed_index[i % 5] = 0;
+
+                    if (motor_acc_arg_now_speed_index[i % 5] == 0)
+                    {
+                        //运动结束
+                        clear_motor_acc_arg(i);
+                    }
+                    else
+                    {
+                        set_motor_speed_dir(i % 5, (dir_t)motor_acc_arg_running_dir[i % 5], motor_acc_list[motor_acc_arg_now_speed_index[i % 5]] + S_SPEED_LIST_OFFSET);
+                    }
+                }
+            }
+            
+            if(get_box_running_debug_sw()){
+                if(i==0){
+                    sprintf((char *)debug_send_buf,"dir : %d speed : %d",(dir_t)motor_acc_arg_running_dir[i % 5], motor_acc_list[motor_acc_arg_now_speed_index[i % 5]] + S_SPEED_LIST_OFFSET);
+                    debug_sender_str(debug_send_buf);
+                }    
             }
         }
     }
@@ -139,10 +180,42 @@ void start_motor_acc_arg(uint8_t motor_id , dir_t dir ,uint16_t run_tim){
     motor_acc_arg_now_speed_index[motor_id % 5] = 0;
     motor_acc_change_speed_index[motor_id % 5] = run_tim / 100;
     motor_acc_arg_running_dir[motor_id % 5] = dir;
+    motor_acc_reversal[motor_id % 5] = false;
 
     motor_status[motor_id % 5] = is_running;
 
     set_motor_speed_dir(motor_id % 5 ,dir , motor_acc_list[motor_acc_arg_now_speed_index[motor_id % 5]]);
+}
+
+
+bool start_motor_acc_arg_return(uint8_t motor_id){
+
+    if(motor_acc_arg_sw[motor_id % 5] == false)
+        return false;
+    
+    if(motor_status[motor_id % 5] != is_running)
+        return false;
+
+    if(motor_acc_arg_now_speed_index[motor_id % 5] == 0)
+        return false;
+
+    if(motor_acc_reversal[motor_id % 5] == false)
+        motor_acc_reversal[motor_id % 5] = true;
+    else
+        motor_acc_reversal[motor_id % 5] = false;
+
+    //改变运动方向
+
+    if(motor_acc_arg_running_dir[motor_id % 5] == CCW){
+        motor_acc_arg_running_dir[motor_id % 5] = CW;
+    }
+
+    if(motor_acc_arg_running_dir[motor_id % 5] == CW){
+        motor_acc_arg_running_dir[motor_id % 5] = CCW;
+    }  
+
+    return true;
+    
 }
 
 void clear_motor_acc_arg(uint8_t motor_id){
@@ -151,7 +224,7 @@ void clear_motor_acc_arg(uint8_t motor_id){
     motor_acc_arg_now_index[motor_id % 5] = 0;
     motor_acc_arg_now_speed_index[motor_id % 5] = 0;
     motor_acc_change_speed_index[motor_id % 5] = 0;
-
+    motor_acc_reversal[motor_id % 5] = false;
 
     //目前层面的封装，让运动结束之后，不停止电机，以最低速度运行，一直等到光电开关作用为止
     //motor_acc_arg_running_dir[motor_id % 5] = CW;    

@@ -7,7 +7,7 @@
 
 
 #define MAIN_VERSION    0
-#define SECOND_VERSION  3
+#define SECOND_VERSION  4
 #define IS_RELEASE      0
 
 
@@ -17,7 +17,7 @@
  * V0.1 基本框架
  * V0.2 完成了注水逻辑 温控方法 还剩余与上位机交互，温控APP逻辑算法
  * V0.3 完成了power代码 完成了看门狗算法，进一步优化DEBUG功能
- * 
+ * V0.4 升级了MOTOR包，BOX现在功能与DVD驱动器看齐，待微调测试
  */
 
 void get_version_str(uint8_t * str,uint16_t len);

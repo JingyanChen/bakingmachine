@@ -20,13 +20,15 @@
 
 static bool temp_gui_upload_sw  = false;
 static bool tft_com_transmit_sw = false;
+static bool box_running_debug_sw = false;
 
 void arg_debug_pro_init(void){
     uint8_t welcom_string[200];
 
     temp_gui_upload_sw = false;
     tft_com_transmit_sw = false;
-
+    box_running_debug_sw = false;
+    
     sprintf((char *)welcom_string,"\r\nWelcome to comegene debug instruction systems.Version %d.%d.%d [make_time:%s_%s] \r\nType ""help"",""?"",""copyright"" or ""author"" for more information.\r\n",MAIN_VERSION,SECOND_VERSION,IS_RELEASE,__DATE__, __TIME__);
     debug_sender_str(welcom_string);
 
@@ -34,6 +36,10 @@ void arg_debug_pro_init(void){
 
 bool get_tft_com_transmit_sw(void){
     return tft_com_transmit_sw;
+}
+
+bool get_box_running_debug_sw(void){
+    return box_running_debug_sw;
 }
 
 static void debug_send_nop(void){
@@ -81,6 +87,8 @@ static void help(void){
     debug_sender_str(" 29 wtd_test\r\n");debug_send_nop();  
     debug_sender_str(" 30 copyright\r\n");debug_send_nop();   
     debug_sender_str(" 31 author\r\n");debug_send_nop();  
+    debug_sender_str(" 32 open_box_speed_debug\r\n");debug_send_nop();
+    debug_sender_str(" 33 close_box_speed_debug\r\n");debug_send_nop();
 }
 
 static void get_csp_adc(void){
@@ -1002,6 +1010,14 @@ static void wtd_test(void){
     delay_ms(3000);
 }
 
+static void open_box_speed_debug(void){
+    box_running_debug_sw = true;
+    debug_sender_str("box speed debug open success\r\n");
+}
+static void close_box_speed_debug(void){
+    box_running_debug_sw = false;
+    debug_sender_str("box speed debug close success\r\n");
+}
 debug_func_list_t debug_func_list[] = {
 
     {help,"help"},{help,"?"},{help,"HELP"},
@@ -1041,7 +1057,8 @@ debug_func_list_t debug_func_list[] = {
     {wtd_test,"wtd_test"},{wtd_test,"29"},
     {copyright,"copyright"},{copyright,"30"},
     {author,"author"},{author,"31"},
-
+    {open_box_speed_debug,"open_box_speed_debug"},{open_box_speed_debug,"32"},
+    {close_box_speed_debug,"close_box_speed_debug"},{close_box_speed_debug,"33"},
 };
 
 

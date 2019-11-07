@@ -3,7 +3,7 @@
 
 
 #include <stdint.h>
-
+#include <stdbool.h>
 
 #define MOTOR_NUM 5
 #define ACC_LIST_LEN 100
@@ -87,6 +87,30 @@ typedef enum{
  * pra run_tim : 运行的时间 单位ms
  */
 void start_motor_acc_arg(uint8_t motor_id , dir_t dir  , uint16_t run_tim);
+
+/*
+ * brief 试图对motor_id号电机的运动状态进行反悔
+ *      具体做如下几件事
+ *      某个时刻，motor_id已经更改速度到了
+ *      motor_acc_arg_now_index[i % 5]
+ *      那么此时，我希望他能更改方向，并且将原来的曲线倒着走一遍
+ * 
+ *      基本的算法流程，每隔t S 更换一次速度 从0-100 递增
+ *      在T1时刻出现反悔，当前的速度id是 v
+ *      今后每隔t s 更换速度，从v-0,依次递减
+ *      当速度减到0时，反悔流程结束。
+ *      
+ *      可瞬间反复调用
+ * 
+ *      最终显示的效果，加减速推出，无缝加减速退回。
+ *      如果在加减速退回的时候又又按下事件
+ *      再加减速弹出
+ *      无限循环
+ * 
+ * pra motor_id : 试图返回的电机id
+ * return true/false 是否操作成功
+ */
+bool start_motor_acc_arg_return(uint8_t motor_id);
 
 //清空加减速状态机
 void clear_motor_acc_arg(uint8_t motor_id);

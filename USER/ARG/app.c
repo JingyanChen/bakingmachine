@@ -67,11 +67,6 @@ void key_box_logic(uint8_t box_id)
         //如果成功的运行完成，在handle中一直等待结束条件
         //并且切换status
         break;
-    case box_running_forward:
-
-        break;
-    case box_running_backward:
-        break;
     case box_on:
         //设备处于关闭状态，按下之后做向前加减速运动操作
         start_motor_acc_arg(box_id, BOX_BACKWARD_DIR, RUN_TIM_ALL_ROUTE);
@@ -80,8 +75,23 @@ void key_box_logic(uint8_t box_id)
         //如果成功的运行完成，在handle中一直等待结束条件
         //并且切换status
         break;
+
+    case box_running_forward:
+        //在设备处于加减速向前运动的状态下，突然反悔，向反方向运动
+        start_motor_acc_arg_return(box_id);
+        //开始配置状态机，做反悔运动
+        box_status[box_id] = box_running_backward;
+        break;
+    case box_running_backward:
+        //在设备处于加减速向前运动的状态下，突然反悔，向反方向运动
+        start_motor_acc_arg_return(box_id);
+        //开始配置状态机，做反悔运动
+        box_status[box_id] = box_running_forward;    
+        break;        
     case box_unknown:
         break;
+    
+    default : break;
     }
 }
 static void key_handle_0(void) { key_box_logic(0); }
@@ -145,7 +155,57 @@ static void arg_box_push_pop_init(void)
         arg_box_push_pop_init_done = false;
     }
 }
+/*
+ * 提供一个手推盒子，自动弹回的机制
+ * 此状态机触发的要求很严格，100ms检查一次
+ * 触发条件 :盒子处于on状态 终点限位开关处于按下状态 
+ *             出现一个时刻，终点限位开关不处于按下状态
+ * 触发内容：触发一次按键任务
+ * TODO TEST TASK
+ */
+static bool manual_push_ready[BOX_NUM];
+static bool is_wait_ready_status[BOX_NUM];
 
+static void arg_manual_push_init(void)
+{
+    uint8_t i=0;
+    for(i=0;i<BOX_NUM;i++){
+        manual_push_ready[i] = false;
+        is_wait_ready_status[i] = false;
+    }
+}
+
+static void arg_manual_push_handle(void)
+{
+    uint8_t i = 0;
+    for (i = 0; i < BOX_NUM; i++)
+    {
+        if (is_wait_ready_status[i] == false)
+        {
+            if (box_status[i] == box_on &&
+                box_pri_status[i] == box_on &&
+                get_motor_limit_v(5 + i) == MOTOR_LIMIT_V)
+            {
+                manual_push_ready[i] = true;
+                is_wait_ready_status[i] = true;
+            }
+        }
+        else
+        {
+            if (box_status[i] == box_on &&
+                box_pri_status[i] == box_on &&
+                get_motor_limit_v(5 + i) != MOTOR_LIMIT_V &&
+                manual_push_ready[i] == true)
+            {
+                //事件被触发
+
+                key_box_logic(i);
+                manual_push_ready[i] = false;
+                is_wait_ready_status[i] = false;               
+            }
+        }
+    }
+}
 static void arg_box_push_pop_handle(void)
 {
     uint8_t i = 0;
@@ -213,6 +273,40 @@ static void arg_box_push_pop_handle(void)
                 box_status[i] = box_off;
                 box_pri_status[i] = box_off;
             }
+            if (box_status[i] == box_running_backward && //当前状态是处于向后运动的状态
+                get_motor_status(i) == no_running &&    //电机停止运动，因为碰到限位开关
+                box_pri_status[i] == box_running_forward)           //之前状态是前进状态
+            {
+                /*
+                     * 满足了三个条件
+                     * 1 当前的运动状态是向前运动
+                     * 2 目前电机已经停止运动了
+                     * 3 之前是前进状态，后来反悔了变成了后退状态
+                     * 
+                     * 初始化之后第一次电机电容按键，中途反悔了，电机还没有走到零点的位置又按下了按键
+                     * 这时候是后悔回退操作，不被打断最终的状态时box_off
+                     */
+                box_status[i] = box_off;
+                box_pri_status[i] = box_off;
+            }
+
+            if (box_status[i] ==  box_running_forward && //当前状态是处于向前运动的状态
+                get_motor_status(i) == no_running &&    //电机停止运动，因为碰到限位开关
+                box_pri_status[i] == box_running_backward)           //之前状态是后退状态
+            {
+                /*
+                     * 满足了三个条件
+                     * 1 当前的运动状态是向前运动
+                     * 2 目前电机已经停止运动了
+                     * 3 之前是前进状态，后来反悔了变成了前进状态
+                     * 
+                     * 初始化之后第一次电机电容按键，中途反悔了，电机还没有走到零点的位置又按下了按键
+                     * 这时候是后悔回退操作，不被打断最终的状态时box_off
+                     */
+                box_status[i] = box_on;
+                box_pri_status[i] = box_on;
+            }
+
         }
     }
 }
@@ -345,6 +439,7 @@ VAILD_TASK_PRA:
 void arg_app_init(void)
 {
     arg_box_push_pop_init();
+    arg_manual_push_init();
     arg_temp_control_init();
 }
 
@@ -356,5 +451,6 @@ void arg_app_hanlde(void)
     _APP_UPDATE_FLAG = false;
 
     arg_box_push_pop_handle();
-    arg_temp_control_handle();
+    arg_manual_push_handle();
+    arg_temp_control_handle();    
 }

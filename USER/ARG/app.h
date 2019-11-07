@@ -25,6 +25,7 @@ typedef enum{
 }box_status_t; 
 
 
+
 #define BOX_FORWARD_DIR   CW
 #define BOX_BACKWARD_DIR  CCW
 #define BOX_RUNNING_TIM 2800
@@ -36,6 +37,7 @@ typedef enum{
 box_status_t  get_box_status(uint8_t box_id);
 //通过此函数，访问盒子运动功能，模拟按下按键
 void key_box_logic(uint8_t box_id);
+
 ///
 
 #define CONTROL_TEMP_NUM 10
