@@ -50,7 +50,8 @@ static void csp_1_ms_handle(void){
     // 1 ms code
     _PLUSE_MAKER_FLAG = true;
     //
-
+    _MOTOR_ACC_CON_FLAG = true;
+    
     _10ms_tick++;
 }
 
@@ -63,9 +64,9 @@ static void csp_10_ms_handle(void){
     // 10 ms code
     _UART_PT100_10MS_FLAG = true;
     _UART_LCD_10MS_FLAG = true;
-    _MOTOR_ACC_CON_FLAG = true;
     _KEY_EVENT_CHECK_FLAG = true;
     _TFT_COM_UPDATE_FLAG = true;
+    _MOTOR_LIMIT_UPDATE_FLAG = true;
     //
 
     _100ms_tick ++;
