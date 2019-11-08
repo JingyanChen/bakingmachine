@@ -29,7 +29,6 @@
  * box_pri_status是上一个状态
  */
 box_status_t box_status[BOX_NUM] = {box_unknown, box_unknown, box_unknown, box_unknown, box_unknown};
-box_status_t box_pri_status[BOX_NUM] = {box_unknown, box_unknown, box_unknown, box_unknown, box_unknown};
 
 box_status_t get_box_status(uint8_t box_id)
 {
@@ -57,7 +56,7 @@ void key_box_logic(uint8_t box_id)
     //出现了box id 的按键事件
     //根据上一次的状态决定接下来的动作
 
-    switch (box_pri_status[box_id])
+    switch (box_status[box_id])
     {
     case box_off:
         //设备处于关闭状态，按下之后做向前加减速运动操作
@@ -71,28 +70,28 @@ void key_box_logic(uint8_t box_id)
         //设备处于关闭状态，按下之后做向前加减速运动操作
         start_motor_acc_arg(box_id, BOX_BACKWARD_DIR, RUN_TIM_ALL_ROUTE);
         //改变目前的状态box_status为forward
-        box_status[box_id] = box_running_forward;
+        box_status[box_id] = box_running_backward;
         //如果成功的运行完成，在handle中一直等待结束条件
         //并且切换status
         break;
-
     case box_running_forward:
-        //在设备处于加减速向前运动的状态下，突然反悔，向反方向运动
-        start_motor_acc_arg_return(box_id);
-        //开始配置状态机，做反悔运动
-        box_status[box_id] = box_running_backward;
-        break;
+            start_motor_acc_arg_return(box_id);
+            box_status[box_id] = box_running_backward;
+            break;
     case box_running_backward:
-        //在设备处于加减速向前运动的状态下，突然反悔，向反方向运动
-        start_motor_acc_arg_return(box_id);
-        //开始配置状态机，做反悔运动
-        box_status[box_id] = box_running_forward;    
-        break;        
+            debug_sender_str("key_happend \r\n");
+            start_motor_acc_arg_return(box_id);
+            box_status[box_id] = box_running_forward;
+            debug_sender_str("key_happend end1\r\n");
+            break;
     case box_unknown:
         break;
-    
-    default : break;
+
+    default:
+        break;
     }
+
+    debug_sender_str("key_happend \r\n");
 }
 static void key_handle_0(void) { key_box_logic(0); }
 static void key_handle_1(void) { key_box_logic(1); }
@@ -183,7 +182,6 @@ static void arg_manual_push_handle(void)
         if (is_wait_ready_status[i] == false)
         {
             if (box_status[i] == box_on &&
-                box_pri_status[i] == box_on &&
                 get_motor_limit_v(5 + i) == MOTOR_LIMIT_V)
             {
                 manual_push_ready[i] = true;
@@ -193,7 +191,6 @@ static void arg_manual_push_handle(void)
         else
         {
             if (box_status[i] == box_on &&
-                box_pri_status[i] == box_on &&
                 get_motor_limit_v(5 + i) != MOTOR_LIMIT_V &&
                 manual_push_ready[i] == true)
             {
@@ -217,7 +214,6 @@ static void arg_box_push_pop_handle(void)
             for (i = 0; i < BOX_NUM; i++)
             {
                 box_status[i] = box_off;
-                box_pri_status[i] = box_off;
             }
             arg_box_push_pop_init_done = true;
 
@@ -242,8 +238,7 @@ static void arg_box_push_pop_handle(void)
         for (i = 0; i < BOX_NUM; i++)
         {
             if (box_status[i] == box_running_forward && //当前状态是处于向前运动的状态
-                get_motor_status(i) == no_running &&    //电机停止运动，因为碰到限位开关
-                box_pri_status[i] == box_off)           //之前状态是关闭状态
+                get_motor_status(i) == no_running )           //之前状态是关闭状态
             {
                 /*
                      * 满足了三个条件
@@ -254,11 +249,10 @@ static void arg_box_push_pop_handle(void)
                      * 初始化之后第一次电机电容按键，中途没有反悔，让状态机完整运行完，一定是进入这个状态
                      */
                 box_status[i] = box_on;
-                box_pri_status[i] = box_on;
             }
+
             if (box_status[i] == box_running_backward && //当前状态是处于向后运动的状态
-                get_motor_status(i) == no_running &&    //电机停止运动，因为碰到限位开关
-                box_pri_status[i] == box_on)           //之前状态是打开状态
+                get_motor_status(i) == no_running)           //之前状态是打开状态
             {
                 /*
                      * 满足了三个条件
@@ -271,40 +265,6 @@ static void arg_box_push_pop_handle(void)
                      * 
                      */
                 box_status[i] = box_off;
-                box_pri_status[i] = box_off;
-            }
-            if (box_status[i] == box_running_backward && //当前状态是处于向后运动的状态
-                get_motor_status(i) == no_running &&    //电机停止运动，因为碰到限位开关
-                box_pri_status[i] == box_running_forward)           //之前状态是前进状态
-            {
-                /*
-                     * 满足了三个条件
-                     * 1 当前的运动状态是向前运动
-                     * 2 目前电机已经停止运动了
-                     * 3 之前是前进状态，后来反悔了变成了后退状态
-                     * 
-                     * 初始化之后第一次电机电容按键，中途反悔了，电机还没有走到零点的位置又按下了按键
-                     * 这时候是后悔回退操作，不被打断最终的状态时box_off
-                     */
-                box_status[i] = box_off;
-                box_pri_status[i] = box_off;
-            }
-
-            if (box_status[i] ==  box_running_forward && //当前状态是处于向前运动的状态
-                get_motor_status(i) == no_running &&    //电机停止运动，因为碰到限位开关
-                box_pri_status[i] == box_running_backward)           //之前状态是后退状态
-            {
-                /*
-                     * 满足了三个条件
-                     * 1 当前的运动状态是向前运动
-                     * 2 目前电机已经停止运动了
-                     * 3 之前是前进状态，后来反悔了变成了前进状态
-                     * 
-                     * 初始化之后第一次电机电容按键，中途反悔了，电机还没有走到零点的位置又按下了按键
-                     * 这时候是后悔回退操作，不被打断最终的状态时box_off
-                     */
-                box_status[i] = box_on;
-                box_pri_status[i] = box_on;
             }
 
         }

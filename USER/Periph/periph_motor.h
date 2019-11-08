@@ -37,7 +37,7 @@
 #define S_SPEED_LIST_OFFSET 0
 
 //加减速运动的总行程
-#define RUN_TIM_ALL_ROUTE 4000
+#define RUN_TIM_ALL_ROUTE 5000
 typedef enum{
     CW=0,
     CCW,

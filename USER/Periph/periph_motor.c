@@ -16,8 +16,9 @@ static uint8_t motor_acc_arg_now_speed_index[MOTOR_NUM];
 static motor_status_t motor_status[MOTOR_NUM];
 static bool motor_acc_reversal[MOTOR_NUM];
 
-/*
+
 //使用S曲线进行拟合 从起始速度到满速度 500 - 1000
+/*
 const uint16_t motor_acc_list[ACC_LIST_LEN]={
 500 ,525 ,550 ,574 ,599 ,622 ,646 ,668 ,690 ,711 ,
 731 ,750 ,769 ,786 ,802 ,818 ,832 ,846 ,858 ,870 ,
@@ -34,6 +35,7 @@ const uint16_t motor_acc_list[ACC_LIST_LEN]={
 711 ,690 ,668 ,646 ,622 ,599 ,574 ,550 ,525 ,500 ,
 };
 */
+
 
 //400-800
 const uint16_t motor_acc_list[ACC_LIST_LEN]={
@@ -52,6 +54,7 @@ const uint16_t motor_acc_list[ACC_LIST_LEN]={
 696 ,687 ,676 ,666 ,654 ,642 ,629 ,615 ,600 ,585 ,
 569 ,552 ,535 ,517 ,498 ,479 ,460 ,440 ,420 ,400 ,
 };
+
 void periph_motor_init(void){
     uint8_t i=0;
     for(i=0;i<MOTOR_NUM;i++){
@@ -180,7 +183,12 @@ void start_motor_acc_arg(uint8_t motor_id , dir_t dir ,uint16_t run_tim){
     motor_acc_arg_now_speed_index[motor_id % 5] = 0;
     motor_acc_change_speed_index[motor_id % 5] = run_tim / 100;
     motor_acc_arg_running_dir[motor_id % 5] = dir;
-    motor_acc_reversal[motor_id % 5] = false;
+
+    if(motor_acc_reversal[motor_id % 5] == false)
+        motor_acc_reversal[motor_id % 5] = true;
+    else
+        motor_acc_reversal[motor_id % 5] = false;
+
 
     motor_status[motor_id % 5] = is_running;
 
@@ -208,12 +216,13 @@ bool start_motor_acc_arg_return(uint8_t motor_id){
 
     if(motor_acc_arg_running_dir[motor_id % 5] == CCW){
         motor_acc_arg_running_dir[motor_id % 5] = CW;
-    }
-
-    if(motor_acc_arg_running_dir[motor_id % 5] == CW){
+    }else if(motor_acc_arg_running_dir[motor_id % 5] == CW){
         motor_acc_arg_running_dir[motor_id % 5] = CCW;
-    }  
+    } 
 
+    //给初始速度
+
+     set_motor_speed_dir(motor_id % 5 ,motor_acc_arg_running_dir[motor_id % 5] , motor_acc_list[motor_acc_arg_now_speed_index[motor_id % 5]]);
     return true;
     
 }
@@ -224,7 +233,7 @@ void clear_motor_acc_arg(uint8_t motor_id){
     motor_acc_arg_now_index[motor_id % 5] = 0;
     motor_acc_arg_now_speed_index[motor_id % 5] = 0;
     motor_acc_change_speed_index[motor_id % 5] = 0;
-    motor_acc_reversal[motor_id % 5] = false;
+    motor_acc_reversal[motor_id % 5] = true;
 
     //目前层面的封装，让运动结束之后，不停止电机，以最低速度运行，一直等到光电开关作用为止
     //motor_acc_arg_running_dir[motor_id % 5] = CW;    

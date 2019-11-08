@@ -17,6 +17,7 @@
 #include "periph_fan.h"
 #include "periph_power.h"
 #include "csp_wtd.h"
+#include "app.h"
 
 static bool temp_gui_upload_sw  = false;
 static bool tft_com_transmit_sw = false;
@@ -89,6 +90,7 @@ static void help(void){
     debug_sender_str(" 31 author\r\n");debug_send_nop();  
     debug_sender_str(" 32 open_box_speed_debug\r\n");debug_send_nop();
     debug_sender_str(" 33 close_box_speed_debug\r\n");debug_send_nop();
+    debug_sender_str(" 34 get_box_status_func\r\n");debug_send_nop();
 }
 
 static void get_csp_adc(void){
@@ -1018,6 +1020,24 @@ static void close_box_speed_debug(void){
     box_running_debug_sw = false;
     debug_sender_str("box speed debug close success\r\n");
 }
+
+
+static void get_box_status_func(void){
+    box_status_t status;
+    status = get_box_status(0);
+
+    switch(status){
+        case box_off:
+            debug_sender_str("now_status :box_off\r\n"); break;
+        case box_running_forward:
+            debug_sender_str("now_status :box_running_forward\r\n");break;
+        case box_running_backward:
+             debug_sender_str("now_status :box_running_backward\r\n");break;
+        case box_on:
+            debug_sender_str("now_status :box_on\r\n");break;
+    }
+
+}
 debug_func_list_t debug_func_list[] = {
 
     {help,"help"},{help,"?"},{help,"HELP"},
@@ -1059,6 +1079,7 @@ debug_func_list_t debug_func_list[] = {
     {author,"author"},{author,"31"},
     {open_box_speed_debug,"open_box_speed_debug"},{open_box_speed_debug,"32"},
     {close_box_speed_debug,"close_box_speed_debug"},{close_box_speed_debug,"33"},
+    {get_box_status_func,"get_box_status_func"},{get_box_status_func,"34"},
 };
 
 

@@ -171,6 +171,7 @@ void csp_gpio_init(void){
 
     for(i=0;i<5;i++){
         water_cool_pump_control(i,true);
+        fan_control(i,true);
     }
 
     for(i=0;i<7;i++){
@@ -221,9 +222,9 @@ void humidity_control(uint8_t humidity_id , bool sw){
 #define FAN_CONTROL_OFFSET 14
 void fan_control(uint8_t id , bool sw){
     if(sw){
-        GPIO_SetBits(OUTPUT_PORT_LIST[FAN_CONTROL_OFFSET + id ] , OUTPUT_PIN_LIST[HUMIDITY_CONTROL_OFFSET+ id ]);
+        GPIO_SetBits(OUTPUT_PORT_LIST[FAN_CONTROL_OFFSET + id ] , OUTPUT_PIN_LIST[FAN_CONTROL_OFFSET+ id ]);
     }else{
-        GPIO_ResetBits(OUTPUT_PORT_LIST[FAN_CONTROL_OFFSET + id ] , OUTPUT_PIN_LIST[HUMIDITY_CONTROL_OFFSET+ id ]);
+        GPIO_ResetBits(OUTPUT_PORT_LIST[FAN_CONTROL_OFFSET + id ] , OUTPUT_PIN_LIST[FAN_CONTROL_OFFSET+ id ]);
     }
 }
 

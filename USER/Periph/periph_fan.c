@@ -8,8 +8,8 @@ void periph_fan_init(void){
     uint8_t i=0;
 
     for(i=0;i<FAN_NUM;i++){
-        fan_status[i] = false;
-        fan_control(i,false);
+        fan_status[i] = true;
+        fan_control(i,true);
     }
 }
 
