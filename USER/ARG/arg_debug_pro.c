@@ -91,6 +91,7 @@ static void help(void){
     debug_sender_str(" 32 open_box_speed_debug\r\n");debug_send_nop();
     debug_sender_str(" 33 close_box_speed_debug\r\n");debug_send_nop();
     debug_sender_str(" 34 get_box_status_func\r\n");debug_send_nop();
+    debug_sender_str(" 35 start_pid_test\r\n");debug_send_nop();
 }
 
 static void get_csp_adc(void){
@@ -649,9 +650,9 @@ static void get_pid_sw(void){
 
     for(i=0;i<10;i++){
         if(get_pid_con_sw(i))
-            sprintf((char *)sender_buf,">>> pid controller %d is on \r\n" , i);
+            sprintf((char *)sender_buf,">>> pid controller %d is on target temp %d \r\n" , i,tc.control_temp[i]);
         else
-            sprintf((char *)sender_buf,">>> pid controller %d is off \r\n" ,  i);
+            sprintf((char *)sender_buf,">>> pid controller %d is off target temp %d\r\n" ,  i,tc.control_temp[i]);
         debug_sender_str(sender_buf);
         delay_ms(10);
     }    
@@ -1038,6 +1039,21 @@ static void get_box_status_func(void){
     }
 
 }
+static void start_pid_test(void){
+    temp_control_t temp_control_pra;
+
+    temp_control_pra.control_num =2;
+    temp_control_pra.control_sw[0]= true;
+    temp_control_pra.control_sw[1]= true;
+
+    temp_control_pra.control_temp[0]= 800;
+    temp_control_pra.control_temp[1]= 800;
+
+    temp_control_pra.need_change_water = false;
+
+    config_temp_control_machine(&temp_control_pra);
+}
+
 debug_func_list_t debug_func_list[] = {
 
     {help,"help"},{help,"?"},{help,"HELP"},
@@ -1080,6 +1096,7 @@ debug_func_list_t debug_func_list[] = {
     {open_box_speed_debug,"open_box_speed_debug"},{open_box_speed_debug,"32"},
     {close_box_speed_debug,"close_box_speed_debug"},{close_box_speed_debug,"33"},
     {get_box_status_func,"get_box_status_func"},{get_box_status_func,"34"},
+    {start_pid_test,"start_pid_test"},{start_pid_test,"35"},
 };
 
 
