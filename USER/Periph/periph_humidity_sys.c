@@ -16,6 +16,7 @@ void periph_humidity_sys_init(void)
     for (i = 0; i < WATER_ROAD_NUM; i++)
     {
         water_op_sw[i] = false;
+        water_cool_vavle_control(i, VAVLE_NO_ACTION_V);  
     }
     out_water_tim_tick = 0;
     in_water_tim_tick = 0;
@@ -23,6 +24,7 @@ void periph_humidity_sys_init(void)
 
     humidity_control(OUT_WATER_PUMP_ID,VAVLE_NO_ACTION_V);
     humidity_control(IN_WATER_PUMP_ID,VAVLE_NO_ACTION_V);
+ 
 
 }
 
