@@ -8,11 +8,11 @@ ee 00 0e 00 00 00 03 00 15 01 2c 02 58 03 84 00 01 59 db ff fe fd ff
 ee 00 0c 00 00 00 02 00 0a 02 bc 02 bc 00 00 07 47 ff fe fd ff
 
 
-关闭温控系统，不抽水
-ee 00 04 00 01 00 00 e4 51 ff fe fd ff
+关闭x路温控系统，不抽水
+ee 00 04 00 01 00 0x 00 00 xx xx ff fe fd ff
 
-关闭温控系统，抽干水
-ee 00 04 00 01 00 01 24 90 ff fe fd ff
+关闭x路温控系统，抽干水
+ee 00 04 00 01 00 0x 00 01 xx xx ff fe fd ff
 
 
 写0号风扇 开

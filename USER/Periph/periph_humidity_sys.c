@@ -204,8 +204,13 @@ bool out_water(uint8_t liquid_road_list)
         //初始化状态机，重置状态机。
         //表现是 如果快速的退水，不会对系统有任何影响
         periph_humidity_sys_init();
+        //允许反复抽水，但是不允许，换水的过程中抽水
     }
 
+    if(injection_status == change_water_in_status  ){
+           return false;
+           //系统处于正在进水的状态，不允许此时做抽水操作
+       }
     for (i = 0; i < WATER_ROAD_NUM; i++)
     {
         if (liquid_road_list & (0x01 << i))

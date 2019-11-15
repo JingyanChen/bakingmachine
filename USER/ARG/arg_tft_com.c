@@ -16,7 +16,6 @@
 #include <stdio.h>
 
 void arg_tft_com_init(void){
-
 }
 
 static const unsigned char TabH[]={  
@@ -218,7 +217,7 @@ static void open_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
         }
     }
 
-    temp_control_pra.control_num = (uint8_t)need_change_water_pra;
+    temp_control_pra.control_num = (uint8_t)temp_control_num;
     
     //目前按对来处理温控任务
     //0-1 一对  2-3一对 以此类推
@@ -278,29 +277,52 @@ static void close_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
     //关闭所有温控，并且决定是否需要把水抽干
     //直接操作arg_pid里面的操作函数，关闭所有pid控制
     //通过湿度系统开启一次抽水
-    //指令格式 bool
+    //指令格式  operate id 0-4 bool
 
     uint16_t need_out_water=0;
-    uint8_t i=0;
+    uint16_t operate_id = 0;
     uint16_t respond[50];
+		uint8_t debug[50];
+    bool out_succ = false;
 
-    need_out_water = tft_mcu_pro_data->load[0];
+    operate_id = tft_mcu_pro_data->load[0];
+    operate_id <<= 8;
+    operate_id |=tft_mcu_pro_data->load[1];
+
+    need_out_water = tft_mcu_pro_data->load[2];
     need_out_water <<= 8;
-    need_out_water |=tft_mcu_pro_data->load[1];
+    need_out_water |=tft_mcu_pro_data->load[3];
 
-    for(i=0;i<5;i++){
-        set_pid_con_sw(i,false);          
+    if(operate_id > 4){
+
+        if(get_tft_com_transmit_sw() == true){
+            debug_sender_str("id pra error\r\n");
+            delay_ms(10);
+        }  
+
+        respond[0] = 0x01;
+        respond[1] = pra_error;
+        quick_resond_func(open_temp_control,respond,2);
+        return ;
     }
 
+    set_pid_con_sw(operate_id * 2,false);  
+    set_pid_con_sw(operate_id * 2 + 1,false);          
+
     if(get_tft_com_transmit_sw() == true){
-        debug_sender_str("close temp control success!\r\n");
+        sprintf((char *)debug,"close temp control  %d success!", operate_id);
+        debug_sender_str(debug);
         delay_ms(10);
     }  
 
     if(need_out_water == 1){
-        out_water(0xff);
+        out_succ = out_water(0xff);
         if(get_tft_com_transmit_sw() == true){
-            debug_sender_str("start out water success!\r\n");
+            if(out_succ){
+                debug_sender_str("start out water success!\r\n");
+            }else{
+                debug_sender_str("error:Is in the state of water injection into pumping failure, resource conflict \r\n");
+            }
             delay_ms(10);
         }  
     }
