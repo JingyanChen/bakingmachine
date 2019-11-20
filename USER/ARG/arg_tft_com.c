@@ -119,8 +119,8 @@ static void quick_resond_func(uint16_t cmd , uint16_t * load ,uint16_t load_len)
     respond_buf[index ++] = (uint8_t)crc;
 
     respond_buf[index ++] = 0xff;
-    respond_buf[index ++] = 0xfe;
     respond_buf[index ++] = 0xfd;
+    respond_buf[index ++] = 0xfe;
     respond_buf[index ++] = 0xff;
 
     lcd_sender(respond_buf , index);
@@ -503,8 +503,8 @@ static void lcd_tft_cmd_decode(void){
             //检查1 ，是否检测到有效的帧尾
 
             if(lcd_uart_rx_buf[(i+tft_mcu_pro_data_rec.len+5) % LCD_UART_MAX_LEN] == 0xff &&
-               lcd_uart_rx_buf[(i+tft_mcu_pro_data_rec.len+6) % LCD_UART_MAX_LEN] == 0xfe &&
-               lcd_uart_rx_buf[(i+tft_mcu_pro_data_rec.len+7) % LCD_UART_MAX_LEN] == 0xfd &&
+               lcd_uart_rx_buf[(i+tft_mcu_pro_data_rec.len+6) % LCD_UART_MAX_LEN] == 0xfd &&
+               lcd_uart_rx_buf[(i+tft_mcu_pro_data_rec.len+7) % LCD_UART_MAX_LEN] == 0xfe &&
                lcd_uart_rx_buf[(i+tft_mcu_pro_data_rec.len+8) % LCD_UART_MAX_LEN] == 0xff){
 
                    //已经检查到了有效的帧尾
