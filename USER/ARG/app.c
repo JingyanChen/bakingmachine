@@ -271,129 +271,96 @@ static void arg_box_push_pop_handle(void)
     }
 }
 
-temp_control_t tc;
-static bool arg_temp_config_done = false;
+//温控委托框架下的实现队列实体以及访问方法enqueue & dequeue
+static event_t event_queue[MAX_EVENT_QUEUE_DEPTH + 1];
+static uint16_t queue_front=0;
+static uint16_t queue_rear =0;
 
-//提供给与TFT屏交互的通讯代码，访问整体的温控/湿控模块功能
-//输入参数填满 temp_contorl_t 类型
-error_t config_temp_control_machine(temp_control_t *temp_control)
-{
+static bool is_queue_full(void){
+    return (queue_rear + 1) % (MAX_EVENT_QUEUE_DEPTH + 1) == queue_front;
+}
+static bool is_queue_empty(void){
+    return queue_rear == queue_front;
+}
+bool enqueue_event(event_t e){
 
-    uint8_t i = 0;
-
-    if (temp_control->control_num == 0)
-        return pid_temp_control_pra_error;
-
-    //打开换水进程
-    //可以考虑集体换水，给所有路换水
-
-    if (temp_control->need_change_water == true)
-    {
-        change_water(0xff);
+    if(is_queue_full())
+        return false;
+    
+    if (is_queue_empty()){
+        event_queue[queue_front].event_type = e.event_type;
+        event_queue[queue_front].road_id = e.road_id;
+        event_queue[queue_front].target_temp = e.target_temp;
+        event_queue[queue_front].need_change_water = e.need_change_water;        
     }
 
-    //将几路温度保存，不使用的PID控制器完全关闭
-    //也就是说此函数也是关闭函数
+    event_queue[queue_rear].event_type = e.event_type;
+    event_queue[queue_rear].road_id = e.road_id;
+    event_queue[queue_rear].target_temp = e.target_temp;
+    event_queue[queue_rear].need_change_water = e.need_change_water; 
 
-    //赋值给全局变量tc
+    queue_rear = (queue_rear + 1) % (MAX_EVENT_QUEUE_DEPTH + 1);
 
-    tc.control_num = temp_control->control_num;
-    tc.need_change_water = temp_control->need_change_water;
-    memcpy(tc.control_sw, temp_control->control_sw, 10);
-    memcpy(tc.control_temp, temp_control->control_temp, 10);
+    return true;
+}
+bool dequeue_event(event_t * e){
 
-    //关闭没用到的PID控制器
+    if(is_queue_empty())
+        return false;
 
-    for (i = 0; i < CONTROL_TEMP_NUM; i++)
-    {
-        if (tc.control_sw[i] == false)
-        {
-            set_pid_con_sw(i, false);
-        }
+    e->event_type = event_queue[queue_front].event_type;
+    e->road_id = event_queue[queue_front].road_id;
+    e->target_temp = event_queue[queue_front].target_temp;
+    e->need_change_water = event_queue[queue_front].need_change_water;
+
+    queue_front = (queue_front + 1) % (MAX_EVENT_QUEUE_DEPTH + 1);
+
+    return true;
+
+}
+event_t get_front_queue_ele(void){
+    event_t event_rlt;
+
+    memcpy((uint8_t *)&event_rlt,(uint8_t *)&event_queue[queue_front],sizeof(event_t));
+
+    return event_rlt;
+
+}
+uint16_t get_queue_size(void){
+    return (queue_rear - queue_front);
+}
+//end
+
+
+//温控委托框架下的状态机系统
+temp_control_status_t temp_control_status[TEMP_CONTROL_NUM];
+static void init_temp_control_status(void){
+    uint8_t i=0;
+    for(i=0;i<TEMP_CONTROL_NUM;i++){
+        temp_control_status[i] = TEMP_CONTORL_STOP;
     }
-
-    arg_temp_config_done = false;
-
-    return no_error;
 }
-
-void close_all_temp_controller(void)
-{
-    temp_control_t tempctl;
-
-    tempctl.control_num = 0;
-    memset(tempctl.control_sw, false, 10);
-    memset(tempctl.control_temp, 0xffff, 10);
+void set_temp_control_status(uint8_t road_id ,temp_control_status_t status){
+    temp_control_status[road_id % TEMP_CONTROL_NUM] = status;
 }
-
-temp_control_t get_temp_control_machine_status(void)
-{
-    return tc;
+temp_control_status_t get_temp_control_status(uint8_t road_id){
+    return temp_control_status[road_id % TEMP_CONTROL_NUM];
 }
+//end温控委托框架下的状态机系统
 
-//温度控制算法，自动水阀控制，控温之前自动加湿状态机
+//温控算法
 static void arg_temp_control_init(void)
 {
-    close_all_temp_controller();
-    arg_temp_config_done = true;
+    //清空队列状态机
+    queue_front = 0;
+    queue_rear = 0;
+
+    //
+		init_temp_control_status();
 }
 
 static void arg_temp_control_handle(void)
 {
-
-    uint8_t i = 0;
-
-    if (arg_temp_config_done == true)
-        return;
-
-    //判断换水是否完成，如果完成了则可以开始所有pid控温
-    //先判断有没有换水控温的任务
-
-    for (i = 0; i < 10; i++)
-    {
-        if (tc.control_sw[i] == true)
-            //至少有一路换水控温的任务
-            goto VAILD_TASK_PRA;
-    }
-
-    return;
-
-VAILD_TASK_PRA:
-
-    //判断换水是否完成
-    if (tc.need_change_water == true)
-    {
-        if (get_water_injection_status() == change_water_done)
-        {
-
-            //换水完毕
-            set_water_injection_status(no_injection_task);
-            //初始化一下，使得此if仅进入一次
-            //if 进入一次的好处在于，条件成立的次数与调用periph_water_injection一致
-
-            //配置一次PID控制器
-
-            for (i = 0; i < 10; i++)
-            {
-                if (tc.control_sw[i] == true)
-                    start_pid_controller_as_target_temp(i, tc.control_temp[i]);
-            }
-
-            arg_temp_config_done = true;
-        }
-    }
-    else
-    {
-        //直接更新配置一次PID控制器
-
-        for (i = 0; i < 10; i++)
-        {
-            if (tc.control_sw[i] == true)
-                start_pid_controller_as_target_temp(i, tc.control_temp[i]);
-        }
-
-        arg_temp_config_done = true;
-    }
 }
 
 void arg_app_init(void)

@@ -146,7 +146,7 @@ static void open_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
     uint8_t debug_buf[100];
     uint16_t respond[50];
 
-    temp_control_t temp_control_pra;
+    //temp_control_t temp_control_pra;
 
     temp_control_num = tft_mcu_pro_data->load[0];
     temp_control_num <<= 8;
@@ -217,20 +217,20 @@ static void open_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
         }
     }
 
-    temp_control_pra.control_num = (uint8_t)temp_control_num;
+    //temp_control_pra.control_num = (uint8_t)temp_control_num;
     
     //目前按对来处理温控任务
     //0-1 一对  2-3一对 以此类推
 
     for(i=0;i<5;i++){
         if(temp_target[i] == 0xff){
-           temp_control_pra.control_sw[i * 2] = false;
-           temp_control_pra.control_sw[i * 2 + 1] = false; 
+           //temp_control_pra.control_sw[i * 2] = false;
+           //temp_control_pra.control_sw[i * 2 + 1] = false; 
         }else{
-            temp_control_pra.control_sw[i * 2] = true;
-            temp_control_pra.control_sw[i * 2 + 1] = true;
-            temp_control_pra.control_temp[i * 2] = temp_target[i]; 
-            temp_control_pra.control_temp[i * 2 + 1] = temp_target[i]; 
+            //temp_control_pra.control_sw[i * 2] = true;
+            //temp_control_pra.control_sw[i * 2 + 1] = true;
+            //temp_control_pra.control_temp[i * 2] = temp_target[i]; 
+            //temp_control_pra.control_temp[i * 2 + 1] = temp_target[i]; 
 
             if(get_tft_com_transmit_sw() == true){
                 sprintf((char *)debug_buf,"set %d roads as %d /10 du \r\n",i,temp_target[i]);
@@ -241,16 +241,16 @@ static void open_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
         }
     }
 
-    temp_control_pra.need_change_water = (bool)need_change_water_pra;
+    //temp_control_pra.need_change_water = (bool)need_change_water_pra;
 
     if(get_tft_com_transmit_sw() == true){
-        if(temp_control_pra.need_change_water == true){
-            debug_sender_str("need change water\r\n");
-            delay_ms(10);   
-        }else{
-            debug_sender_str("no need change water\r\n");
-            delay_ms(10);               
-        }
+        //if(temp_control_pra.need_change_water == true){
+            //debug_sender_str("need change water\r\n");
+            //delay_ms(10);   
+        //}else{
+            //debug_sender_str("no need change water\r\n");
+            //delay_ms(10);               
+        //}
     }
 
     //换水操作一定成功，逻辑如下
@@ -258,7 +258,7 @@ static void open_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
      * 如果出现了正在换水，但是又一次触发换水操作，状态机重置
      * 上一次的状态对此操作无影响，此操作一定成功
      */
-    config_temp_control_machine(&temp_control_pra);
+    //config_temp_control_machine(&temp_control_pra);
 
     if(get_tft_com_transmit_sw() == true){
         debug_sender_str("operate success!\r\n");
@@ -451,16 +451,16 @@ static void read_now_temp_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
 }
 
 static void read_now_temp_target_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
-    uint16_t respond[50];
-    uint8_t i=0;
+    //uint16_t respond[50];
+    //uint8_t i=0;
 
     //两两一组做平均
 
-    for(i=0;i<5;i++){
-       respond[i] = (tc.control_temp[i * 2] + tc.control_temp[ i * 2 + 1]) / 2 ;
-    }
+    //for(i=0;i<5;i++){
+    //   respond[i] = (tc.control_temp[i * 2] + tc.control_temp[ i * 2 + 1]) / 2 ;
+    //}
 
-    quick_resond_func(read_now_temp_target,respond,5);    
+    //quick_resond_func(read_now_temp_target,respond,5);    
 }
 
 

@@ -89,7 +89,7 @@ static void csp_100_ms_handle(void){
     _1000ms_tick ++;
 
 }
-#define BEEP PBout(8)	 
+ 
 static void csp_1000_ms_handle(void){
     if(_1000ms_tick < 10)
         return ;

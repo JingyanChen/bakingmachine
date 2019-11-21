@@ -650,9 +650,9 @@ static void get_pid_sw(void){
 
     for(i=0;i<10;i++){
         if(get_pid_con_sw(i))
-            sprintf((char *)sender_buf,">>> pid controller %d is on target temp %d \r\n" , i,tc.control_temp[i]);
+            sprintf((char *)sender_buf,">>> pid controller %d is on target temp %d \r\n" , i,get_pid_con_sw(i));
         else
-            sprintf((char *)sender_buf,">>> pid controller %d is off target temp %d\r\n" ,  i,tc.control_temp[i]);
+            sprintf((char *)sender_buf,">>> pid controller %d is off target temp %d\r\n" ,  i,get_pid_con_sw(i));
         debug_sender_str(sender_buf);
         delay_ms(10);
     }    
@@ -725,7 +725,7 @@ static void start_pid(void){
 
     //打开PID 算法
 
-    start_pid_controller_as_target_temp(pra1,pra2);
+    //start_pid_controller_as_target_temp(pra1,pra2);
 
     sprintf((char *)send_buf,"start pid controller %d target %d is success\r\n",pra1,pra2);
     debug_sender_str(send_buf);    
@@ -1040,18 +1040,7 @@ static void get_box_status_func(void){
 
 }
 static void start_pid_test(void){
-    temp_control_t temp_control_pra;
 
-    temp_control_pra.control_num =2;
-    temp_control_pra.control_sw[0]= true;
-    temp_control_pra.control_sw[1]= true;
-
-    temp_control_pra.control_temp[0]= 800;
-    temp_control_pra.control_temp[1]= 800;
-
-    temp_control_pra.need_change_water = false;
-
-    config_temp_control_machine(&temp_control_pra);
 }
 
 debug_func_list_t debug_func_list[] = {
