@@ -324,7 +324,14 @@ event_t get_front_queue_ele(void){
     memcpy((uint8_t *)&event_rlt,(uint8_t *)&event_queue[queue_front],sizeof(event_t));
 
     return event_rlt;
+}
 
+event_t get_pos_queue_ele(uint8_t pos){
+    event_t event_rlt;
+
+    memcpy((uint8_t *)&event_rlt,(uint8_t *)&event_queue[(queue_front+pos)%(MAX_EVENT_QUEUE_DEPTH+1)],sizeof(event_t));
+
+    return event_rlt;    
 }
 uint16_t get_queue_size(void){
     return (queue_rear - queue_front);
@@ -333,18 +340,28 @@ uint16_t get_queue_size(void){
 
 
 //温控委托框架下的状态机系统
-temp_control_status_t temp_control_status[TEMP_CONTROL_NUM];
+static event_t now_running_event_task;
+static temp_control_status_t temp_control_status[TEMP_CONTROL_NUM];
 static void init_temp_control_status(void){
     uint8_t i=0;
     for(i=0;i<TEMP_CONTROL_NUM;i++){
         temp_control_status[i] = TEMP_CONTORL_STOP;
     }
+    memset((uint8_t *)&now_running_event_task,0,sizeof(event_t));
 }
 void set_temp_control_status(uint8_t road_id ,temp_control_status_t status){
     temp_control_status[road_id % TEMP_CONTROL_NUM] = status;
 }
 temp_control_status_t get_temp_control_status(uint8_t road_id){
     return temp_control_status[road_id % TEMP_CONTROL_NUM];
+}
+void set_now_running_event_task(event_t e){
+    memcpy((uint8_t *)&now_running_event_task,(uint8_t *)&e,sizeof(event_t));
+}
+event_t get_now_running_event_task(void){
+    event_t e;
+    memcpy((uint8_t *)&e,(uint8_t *)&now_running_event_task,sizeof(event_t));
+    return e;
 }
 //end温控委托框架下的状态机系统
 
@@ -356,7 +373,7 @@ static void arg_temp_control_init(void)
     queue_rear = 0;
 
     //
-		init_temp_control_status();
+	init_temp_control_status();
 }
 
 static void arg_temp_control_handle(void)

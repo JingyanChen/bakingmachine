@@ -92,6 +92,9 @@ static void help(void){
     debug_sender_str(" 33 close_box_speed_debug\r\n");debug_send_nop();
     debug_sender_str(" 34 get_box_status_func\r\n");debug_send_nop();
     debug_sender_str(" 35 start_pid_test\r\n");debug_send_nop();
+    debug_sender_str(" 36 run_temp_control Note : id 0-4 target_temp 250 - 1000 bool 0/1\r\n");debug_send_nop();
+    debug_sender_str(" 37 stop_temp_control Note : id 0-4 target_temp 250 - 1000 bool 0/1\r\n");debug_send_nop();
+    debug_sender_str(" 38 get_task_machine_status\r\n");debug_send_nop();
 }
 
 static void get_csp_adc(void){
@@ -668,7 +671,7 @@ static void start_pid(void){
     uint8_t pra_str1[20];
     uint8_t pra_str2[20];
 
-    uint8_t send_buf[100];
+    //uint8_t send_buf[100];
     uint16_t pra1=0,pra2=0;
 
     //确定空格符号的位置
@@ -726,9 +729,9 @@ static void start_pid(void){
     //打开PID 算法
 
     //start_pid_controller_as_target_temp(pra1,pra2);
-
-    sprintf((char *)send_buf,"start pid controller %d target %d is success\r\n",pra1,pra2);
-    debug_sender_str(send_buf);    
+    debug_sender_str("this cmd is not supported after version V1.0\r\n");  
+    //sprintf((char *)send_buf,"start pid controller %d target %d is success\r\n",pra1,pra2);
+    //debug_sender_str(send_buf);    
 }
 static void set_motor(void){
     //继续分析数据包，debug_uart_rx_buf,debug_uart_rec_len
@@ -1043,6 +1046,249 @@ static void start_pid_test(void){
 
 }
 
+static void run_temp_control(void){
+    uint8_t i=0;
+    uint8_t k_pos[10];
+    uint8_t k=0;
+    uint8_t j=0;
+
+    uint8_t pra_str1[20];
+    uint8_t pra_str2[20];
+    uint8_t pra_str3[20];
+
+    uint8_t send_buf[100];
+    uint16_t pra1=0,pra2=0,pra3=0;
+
+    event_t temp_event;
+
+    bool dequeue_result=false;
+    //确定空格符号的位置
+    for(i=0;i<debug_uart_rec_len;i++){
+        if(debug_uart_rx_buf[i] == ' '){
+            k_pos[k] = i;
+            k++;
+        }
+    }
+
+    if(k != 3){
+        debug_sender_str("command error\r\n");
+        return ;
+    }
+        
+    
+    for(i=k_pos[0]+1;i<k_pos[1];i++){
+        pra_str1[j] = debug_uart_rx_buf[i];
+        if(pra_str1[j] <'0' || pra_str1[j] >'9'){
+            debug_sender_str("command error\r\n");
+            return ;            
+        }
+        j++;
+    }
+		pra_str1[j] = '\0';
+    j=0;
+
+    for(i=k_pos[1]+1;i<k_pos[2];i++){
+        pra_str2[j] = debug_uart_rx_buf[i];
+        if(pra_str2[j] <'0' || pra_str2[j] >'9'){
+            debug_sender_str("command error\r\n");
+            return ;            
+        }        
+        j++;
+    }    
+		pra_str2[j] = '\0';
+
+
+    j=0;
+
+    for(i=k_pos[2]+1;i<debug_uart_rec_len-2;i++){
+        pra_str3[j] = debug_uart_rx_buf[i];
+        if(pra_str3[j] <'0' || pra_str3[j] >'9'){
+            debug_sender_str("command error\r\n");
+            return ;            
+        }        
+        j++;
+    }    
+		pra_str3[j] = '\0';
+
+    pra1 = atoi((const char *)pra_str1);
+    pra2 = atoi((const char *)pra_str2);
+    pra3 = atoi((const char *)pra_str3);
+
+    if(pra1 > 4){
+        debug_sender_str("id pra error ,please input 0-4");
+        return ;
+    }
+        
+
+    if(pra2 > 1000 || pra2 < 250){
+        debug_sender_str("temp error ,please input 250-1000");
+        return ;        
+    }
+
+    if(pra3 !=0 && pra3 !=1){
+        debug_sender_str("need_change_water pra error 0/1");
+        return ;        
+    }
+
+    temp_event.event_type = START_CONTROL_TEMP_EVENT;
+    temp_event.road_id = pra1;
+    temp_event.target_temp = pra2;
+    temp_event.need_change_water = pra3;
+
+    dequeue_result = enqueue_event(temp_event);
+    
+    if(dequeue_result){
+        sprintf((char *)send_buf,"dequeue event: START_CONTROL_TEMP_EVENT road_id: %d target_temp: %d change_water %d success\r\n",pra1,pra2,pra3);
+    }else{
+        sprintf((char *)send_buf,"dequeue event: START_CONTROL_TEMP_EVENT failed ! queue full\r\n");
+    }
+
+    debug_sender_str(send_buf);   
+}
+static void stop_temp_control(void){
+    //模拟一个显示屏 停止被按下的事件
+    uint8_t i=0;
+    uint8_t k_pos[10];
+    uint8_t k=0;
+    uint8_t j=0;
+
+    uint8_t pra_str1[20];
+    uint8_t pra_str2[20];
+    uint8_t pra_str3[20];
+
+    uint8_t send_buf[100];
+    uint16_t pra1=0,pra2=0,pra3=0;
+
+    event_t temp_event;
+
+    bool dequeue_result=false;
+    //确定空格符号的位置
+    for(i=0;i<debug_uart_rec_len;i++){
+        if(debug_uart_rx_buf[i] == ' '){
+            k_pos[k] = i;
+            k++;
+        }
+    }
+
+    if(k != 3){
+        debug_sender_str("command error\r\n");
+        return ;
+    }
+        
+    
+    for(i=k_pos[0]+1;i<k_pos[1];i++){
+        pra_str1[j] = debug_uart_rx_buf[i];
+        if(pra_str1[j] <'0' || pra_str1[j] >'9'){
+            debug_sender_str("command error\r\n");
+            return ;            
+        }
+        j++;
+    }
+		pra_str1[j] = '\0';
+    j=0;
+
+    for(i=k_pos[1]+1;i<k_pos[2];i++){
+        pra_str2[j] = debug_uart_rx_buf[i];
+        if(pra_str2[j] <'0' || pra_str2[j] >'9'){
+            debug_sender_str("command error\r\n");
+            return ;            
+        }        
+        j++;
+    }    
+		pra_str2[j] = '\0';
+
+
+    j=0;
+
+    for(i=k_pos[2]+1;i<debug_uart_rec_len-2;i++){
+        pra_str3[j] = debug_uart_rx_buf[i];
+        if(pra_str3[j] <'0' || pra_str3[j] >'9'){
+            debug_sender_str("command error\r\n");
+            return ;            
+        }        
+        j++;
+    }    
+		pra_str3[j] = '\0';
+
+    pra1 = atoi((const char *)pra_str1);
+    pra2 = atoi((const char *)pra_str2);
+    pra3 = atoi((const char *)pra_str3);
+
+    if(pra1 > 4){
+        debug_sender_str("id pra error ,please input 0-4");
+        return ;
+    }
+        
+
+    if(pra2 > 1000 || pra2 < 250){
+        debug_sender_str("temp error ,please input 250-1000");
+        return ;        
+    }
+
+    if(pra3 !=0 && pra3 !=1){
+        debug_sender_str("need_change_water pra error 0/1");
+        return ;        
+    }
+
+    temp_event.event_type = STOP_CONTROL_TEMP_EVEN;
+    temp_event.road_id = pra1;
+    temp_event.target_temp = pra2;
+    temp_event.need_change_water = pra3;
+
+    dequeue_result = enqueue_event(temp_event);
+    
+    if(dequeue_result){
+        sprintf((char *)send_buf,"dequeue event: STOP_CONTROL_TEMP_EVEN road_id: %d target_temp: %d change_water %d success\r\n",pra1,pra2,pra3);
+    }else{
+        sprintf((char *)send_buf,"dequeue event: STOP_CONTROL_TEMP_EVEN failed ! queue full\r\n");
+    }
+
+    debug_sender_str(send_buf);       
+}
+static void get_task_machine_status(void){
+    //获得当前的运行状态，哪些被执行，哪些没被执行当前处于什么状态
+    //这个函数是算法核心
+
+    /*
+     * 此DEBUG的作用指示当前的任务运行管理状态
+     * 包括，目前已经接收了哪些任务，当前正在执行的是什么任务
+     * 
+     */
+    
+    uint8_t debug_sender[200];
+    uint16_t all_task_num=0;
+    event_t now_running_task;
+    uint8_t i=0;
+    
+    all_task_num = get_queue_size();
+    now_running_task = get_now_running_event_task();
+
+    if(all_task_num == 0 && now_running_task.target_temp ==0){
+        debug_sender_str("no task running\r\n");
+        return ;
+    }
+
+    if( now_running_task.target_temp !=0){
+        //仅有一个运行态的任务
+        sprintf((char*)debug_sender,"runningTask:\r\ntaskType:%d\r\ntaskRoadId:%d\r\ntaskTargetTemp:%d\r\ntaskNeedChangeWater:%d\r\n\r\n\r\n",now_running_task.event_type,now_running_task.road_id,now_running_task.target_temp,now_running_task.need_change_water);
+        debug_sender_str(debug_sender);
+        debug_send_nop();
+    }
+
+    if(all_task_num !=0 ){
+        sprintf((char*)debug_sender,"wait list num %d",all_task_num);
+        debug_sender_str(debug_sender);
+				debug_send_nop();  
+			
+        for(i=0;i<all_task_num;i++){
+        sprintf((char*)debug_sender,"TaskList[%d]:\r\n[\r\ntaskType:%d\r\ntaskRoadId:%d\r\ntaskTargetTemp:%d\r\ntaskNeedChangeWater:%d\r\n]\r\n",i,now_running_task.event_type,now_running_task.road_id,now_running_task.target_temp,now_running_task.need_change_water);
+        debug_sender_str(debug_sender);
+        debug_send_nop();            
+        }
+    }
+
+}
+
 debug_func_list_t debug_func_list[] = {
 
     {help,"help"},{help,"?"},{help,"HELP"},
@@ -1086,6 +1332,9 @@ debug_func_list_t debug_func_list[] = {
     {close_box_speed_debug,"close_box_speed_debug"},{close_box_speed_debug,"33"},
     {get_box_status_func,"get_box_status_func"},{get_box_status_func,"34"},
     {start_pid_test,"start_pid_test"},{start_pid_test,"35"},
+    {run_temp_control,"run_temp_control"},{run_temp_control,"36"},
+    {stop_temp_control,"stop_temp_control"},{stop_temp_control,"37"},
+    {get_task_machine_status,"get_task_machine_status"},{get_task_machine_status,"38"},
 };
 
 

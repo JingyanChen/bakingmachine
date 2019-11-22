@@ -115,6 +115,14 @@ bool dequeue_event(event_t * e);
 event_t get_front_queue_ele(void);
 
 /*
+ * brief : get postion element 
+ * Note :谨慎使用此函数，有可能回复的并不是队列里的数据而是空数据
+ *       用此函数之前应当查询队列的总长度
+ *       此函数逻辑不严谨，仅允许用在debug作用
+ */
+event_t get_pos_queue_ele(uint8_t pos);
+
+/*
  * brief : get queue size
  * return queu size
  */
@@ -149,6 +157,10 @@ void set_temp_control_status(uint8_t road_id ,temp_control_status_t status);
  * return status
  */
 temp_control_status_t get_temp_control_status(uint8_t road_id);
+
+
+void set_now_running_event_task(event_t e);
+event_t get_now_running_event_task(void);
 
 //end温控委托框架下的状态机系统
 

@@ -58,7 +58,7 @@
 void csp_adc_init(void);
 void csp_adc_handle(void);
 
-#define DEFAULT_REF_MV 3300
+#define DEFAULT_REF_MV 2500
 
 /*
  * brief: 获取单路电压测量的API函数，获得对应的电压值，通过输入基准换算，单位mv

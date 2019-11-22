@@ -80,4 +80,17 @@ typedef enum{
     pra_error,//参数错误
 }open_temp_control_error_t;
 
+
+//适配新的温控逻辑框架 TFT需要做的改进
+
+/*
+ * 温控算法，系统接受两种输入
+ * 执行 -- 停止
+ * 
+ * 一旦解析到这两类指令，TFT驱动应当调用
+ * enqueue_event 函数将事件压入队列，给后级APP分析做对应操作
+ */
+
+
+//end 适配新的温控逻辑框架 TFT需要做的改进
 #endif

@@ -339,6 +339,7 @@ void concentrate_control_mode_handle(void)
 
         //自动切换进入分散温度控制模式
         set_temp_control_mode(DECENTRALIZED_CONTROL_MODE);
+        
         concentrate_condition_done = true;
        }
 }

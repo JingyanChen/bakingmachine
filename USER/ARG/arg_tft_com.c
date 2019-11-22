@@ -141,12 +141,12 @@ static void open_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
     uint16_t temp_control_num =0;
     uint16_t temp_list=0;
     uint16_t temp_target[5];
-    uint16_t need_change_water_pra;
+    uint16_t need_change_water_pra=0;
     uint8_t i=0,j=0,k=0;
     uint8_t debug_buf[100];
     uint16_t respond[50];
-
-    //temp_control_t temp_control_pra;
+    bool dequeue_result=false;
+    event_t temp_event;
 
     temp_control_num = tft_mcu_pro_data->load[0];
     temp_control_num <<= 8;
@@ -156,7 +156,7 @@ static void open_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
     temp_list <<= 8;
     temp_list |= tft_mcu_pro_data->load[3]; 
 
-    if(temp_control_num > 5 )
+    if(temp_control_num != 1 ) // 现在num仅固定为1是合法值
         return ;
 
     need_change_water_pra = tft_mcu_pro_data->load[4+ temp_control_num * 2]; 
@@ -224,16 +224,14 @@ static void open_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
 
     for(i=0;i<5;i++){
         if(temp_target[i] == 0xff){
-           //temp_control_pra.control_sw[i * 2] = false;
-           //temp_control_pra.control_sw[i * 2 + 1] = false; 
+
         }else{
-            //temp_control_pra.control_sw[i * 2] = true;
-            //temp_control_pra.control_sw[i * 2 + 1] = true;
-            //temp_control_pra.control_temp[i * 2] = temp_target[i]; 
-            //temp_control_pra.control_temp[i * 2 + 1] = temp_target[i]; 
+            temp_event.event_type = START_CONTROL_TEMP_EVENT;
+            temp_event.road_id = i;
+            temp_event.target_temp = temp_target[i];
 
             if(get_tft_com_transmit_sw() == true){
-                sprintf((char *)debug_buf,"set %d roads as %d /10 du \r\n",i,temp_target[i]);
+                sprintf((char *)debug_buf,"set %d roads as %d /10 du \r\n",temp_event.road_id,temp_event.target_temp);
                 debug_sender_str(debug_buf);
                 delay_ms(10);
             }  
@@ -241,35 +239,33 @@ static void open_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
         }
     }
 
-    //temp_control_pra.need_change_water = (bool)need_change_water_pra;
+    temp_event.need_change_water = (bool)need_change_water_pra;
 
     if(get_tft_com_transmit_sw() == true){
-        //if(temp_control_pra.need_change_water == true){
-            //debug_sender_str("need change water\r\n");
-            //delay_ms(10);   
-        //}else{
-            //debug_sender_str("no need change water\r\n");
-            //delay_ms(10);               
-        //}
+        if(need_change_water_pra == true){
+            debug_sender_str("need change water\r\n");
+            delay_ms(10);   
+        }else{
+            debug_sender_str("no need change water\r\n");
+            delay_ms(10);               
+        }
     }
 
-    //换水操作一定成功，逻辑如下
-    /*
-     * 如果出现了正在换水，但是又一次触发换水操作，状态机重置
-     * 上一次的状态对此操作无影响，此操作一定成功
-     */
-    //config_temp_control_machine(&temp_control_pra);
+    //压入队列
+    dequeue_result = enqueue_event(temp_event);
 
     if(get_tft_com_transmit_sw() == true){
-        debug_sender_str("operate success!\r\n");
+        if(dequeue_result)
+            debug_sender_str("operate success!\r\n");
+        else
+            debug_sender_str("operate failed queue full\r\n");
+
         delay_ms(10);
     }    
 
     respond[0] = 0x00;
     respond[1] = operate_succ;
     quick_resond_func(open_temp_control,respond,2);
-
-
 
 }
 
@@ -282,8 +278,11 @@ static void close_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
     uint16_t need_out_water=0;
     uint16_t operate_id = 0;
     uint16_t respond[50];
-		uint8_t debug[50];
-    bool out_succ = false;
+	uint8_t debug[50];
+    //bool out_succ = false;
+    bool enqueue_succ=false;
+
+    event_t temp_event;
 
     operate_id = tft_mcu_pro_data->load[0];
     operate_id <<= 8;
@@ -306,8 +305,12 @@ static void close_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
         return ;
     }
 
-    set_pid_con_sw(operate_id * 2,false);  
-    set_pid_con_sw(operate_id * 2 + 1,false);          
+    temp_event.event_type = STOP_CONTROL_TEMP_EVEN;
+    temp_event.road_id = operate_id;
+    temp_event.need_change_water = (bool)need_out_water;
+
+    //set_pid_con_sw(operate_id * 2,false);  
+    //set_pid_con_sw(operate_id * 2 + 1,false);          
 
     if(get_tft_com_transmit_sw() == true){
         sprintf((char *)debug,"close temp control  %d success!", operate_id);
@@ -315,6 +318,7 @@ static void close_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
         delay_ms(10);
     }  
 
+    /*
     if(need_out_water == 1){
         out_succ = out_water(0xff);
         if(get_tft_com_transmit_sw() == true){
@@ -326,9 +330,15 @@ static void close_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
             delay_ms(10);
         }  
     }
+    */
+    enqueue_succ = enqueue_event(temp_event);
 
     if(get_tft_com_transmit_sw() == true){
-        debug_sender_str("operate success!\r\n");
+        if(enqueue_succ)
+            debug_sender_str("operate success!\r\n");
+        else
+            debug_sender_str("operate faild queue full!\r\n");
+
         delay_ms(10);
     }    
 
