@@ -90,6 +90,61 @@
  * 
  * 这个算法将会嵌入到集中控温模式中，在新版本中体现此算法。
  */
+
+/*
+ * PID控制器针对应用的核心算法3
+ * Author : Jingyan Chen @ ComeGene 2019.11.25
+ * 
+ * 目前停止操作不再与退水操作有任何联系，统一的退水操作委托给关机时统一去做
+ * 且停止操作不会进入顺序任务队列，而是做如下两件事
+ * 1 立刻做出响应关闭对应的温控SW
+ * 2 检查当前的温控任务是否是相同的road_id 如果相同，立刻结束当前的温控任务
+ * 
+ *
+ * 温度控制操作有三种可能
+ * 
+ * 1 大差距升温，一般的过程是 是否换水->集中升温->停温算法->分散控温->结束
+ * 2 小差距升温，一般过程是 是否换水->分散控温->结束
+ * 3 降温, 一般过程是 是否换水->打开降温阀->分散控温->结束
+ * 
+ * 值得思考的是 
+ * 1 大温差升温需要加入停温算法 
+ * 2 小温差升温 不需要停温算法
+ * 3 降温不需要进入集中升温过程，因为降温不需要访问紧俏的温度系统
+ * 
+ * 于是 得出结论，只有大差距升温条件才会顺序执行，这里的温差可以暂时设置为
+ * 30摄氏度，如果需要升的温度大于30摄氏度，认为是大温差升温。
+ * 
+ * 综合考虑，仅区分 升温/降温
+ * 
+ * 升温任务，一定是顺序执行
+ * 降温任务，如果不需要换水，不进入任务队列，如果需要换水，则进入队列，等待湿度释放资源。
+ * 
+ * 大范围升温算法：
+ *       换水->集中升温->停温算法->分散控温->结束
+ * 小范围升温算法 只要超过SMALL_RANGE_UP_TEMP度，就会进入集中控温，要不然
+ *      只会依靠分散控温来小范围升温。
+ * 
+ * 这样操作，简化流程，提升效率，更改SMALL_RANGE_UP_TEMP来区分大范围/小范围的界限
+ */
+/*
+ * 大范围升温定义参数：
+ *      系统认为，如果需要升的温度小于SMALL_RANGE_UP_TEMP/10 摄氏度，那么不需要进入队列，从而
+ *      完成集中升温-分散控温这些复杂的流程，而是直接由分散模式处理。
+ */
+#define SMALL_RANGE_UP_TEMP 200
+/*
+ * 大范围降温定义参数
+ *      系统认为，当需要降的温度大于SMALL_RANGE_DOWN_TEMP/10 摄氏度时，需要委托水冷系统处理降温
+ *      任务。
+ */
+#define SMALL_RANGE_DOWN_TEMP 200
+/*
+ * 提前关闭水冷参数
+ *      系统认为，当当前温度到达目标温度+WATER_COOL_TEMP_OFFSET时会停下
+ */
+#define WATER_COOL_TEMP_OFFSET 500
+
 #define PID_CONTORLLER_NUM 10
 //#define DEBUG_PID_SW 
 
@@ -100,7 +155,7 @@ typedef enum{
 
 
 
-#define P 35.0
+#define P 3
 #define D -5.0
 
 void arg_pid_init(void);
@@ -110,6 +165,17 @@ void arg_pid_handle(void);
 bool get_pid_con_sw(uint8_t id);
 void set_pid_con_sw(uint8_t id , bool sw);
 
+
+/*
+ * brief : 快速工具函数，获得0-4路的平均温度
+ * return : temp
+ */
+uint16_t get_road_temp(uint8_t road_id);
+/*
+ * brief : 无条件关闭road_id的温控开关，执行此函数时，温控一定会处于分散控制
+ *         模式，所以关闭了温控开关，就等于取消注册了分散温控模式
+ */
+void no_reason_stop_temp_control(uint8_t road_id);
 /*
  * brief : 注册pid控制器分散温控器温度事件，打开温控sw，配置目标温度
  *          注意，此函数仅仅是将此id的温度控制器打开
@@ -133,10 +199,13 @@ bool set_pid_controller_mode_as_concentrate(uint8_t road_id,uint16_t target_temp
  * brief : 委托一个水冷降温任务，状态机会打开水冷泵，一直到温度低于target_temp，关闭泵
  * pra @ id : 0-4 为了简化程序，把0-1设为一对 2-3 设为一对
  * pra @ target:每一层的目标温度
- * return 开始是否成功
  */
 void start_water_cool(uint8_t road_id ,uint16_t target_temp);
-
+/*
+ * brief : 关闭水冷委托事件
+ * pra @ id : 0-4 为了简化程序，把0-1设为一对 2-3 设为一对
+ */
+void stop_water_cool(uint8_t road_id);
 /*
  * concentrate_condition_done 指示集中控温模式是否结束
  * true为结束，false为未结束，结束后自动切换到分散控温模式

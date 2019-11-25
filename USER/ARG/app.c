@@ -342,12 +342,16 @@ uint16_t get_queue_size(void){
 //温控委托框架下的状态机系统
 static event_t now_running_event_task;
 static temp_control_status_t temp_control_status[TEMP_CONTROL_NUM];
+static task_machine_status_t task_machine_status;
 static void init_temp_control_status(void){
     uint8_t i=0;
     for(i=0;i<TEMP_CONTROL_NUM;i++){
         temp_control_status[i] = TEMP_CONTORL_STOP;
     }
     memset((uint8_t *)&now_running_event_task,0,sizeof(event_t));
+    now_running_event_task.task_running_over = true;
+
+    task_machine_status = task_machine_idle;
 }
 void set_temp_control_status(uint8_t road_id ,temp_control_status_t status){
     temp_control_status[road_id % TEMP_CONTROL_NUM] = status;
@@ -363,6 +367,52 @@ event_t get_now_running_event_task(void){
     memcpy((uint8_t *)&e,(uint8_t *)&now_running_event_task,sizeof(event_t));
     return e;
 }
+void set_task_machine_status(task_machine_status_t status){
+    task_machine_status = status;
+}
+
+task_machine_status_t get_task_machine_status(void){
+    return task_machine_status;
+}
+
+void queue_task_handle(void){
+    /*
+     * 检查队列中是否有元素，如果有，那么就将其推送到正在执行的变量里
+     * 等待外部给予任务结束标志
+     */
+    event_t e;
+    if(now_running_event_task.task_running_over==true){
+        //上一个任务已经执行完成
+        if(get_queue_size() !=0 ){
+            //队列非空
+            if(dequeue_event(&e)){
+                //成功获取到了一个队首任务
+                set_now_running_event_task(e);
+
+                //设置状态机为激活状态
+                set_task_machine_status(task_machine_running);
+            }
+        }else{
+            //最后一个任务结束，并且任务队列空，认为所有任务执行完毕
+            set_task_machine_status(task_machine_idle);
+        }
+    }
+}
+
+static void queue_task_deal_handle(void){
+
+    if(get_task_machine_status() == task_machine_idle)
+        return ;//无任务执行
+
+    //根据最新的PID控制器算法核心3，仅有大范围升温任务或者有换水要求的任务会进入此状态机器
+    //本状态机会根据当前的任务类型来分配资源
+    if(now_running_event_task.event_type == START_CONTROL_TEMP_EVENT){
+
+    }
+
+}
+
+
 //end温控委托框架下的状态机系统
 
 //温控算法
@@ -378,6 +428,8 @@ static void arg_temp_control_init(void)
 
 static void arg_temp_control_handle(void)
 {
+    queue_task_handle();
+    queue_task_deal_handle();
 }
 
 void arg_app_init(void)

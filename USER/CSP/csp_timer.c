@@ -11,7 +11,7 @@ void csp_timer_init(void)
 
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE);
 
-    TIM_TimeBaseStructure.TIM_Period = 7199; //FRE = 72000000/72000 = 1000HZ
+    TIM_TimeBaseStructure.TIM_Period = 719; //FRE = 72000000/7200 = 10000HZ
     TIM_TimeBaseStructure.TIM_Prescaler = 9;
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
@@ -33,14 +33,28 @@ void TIM5_IRQHandler(void)
 {
     if (TIM_GetITStatus(TIM5, TIM_IT_Update) != RESET)
     {
-        _TIMER_1_MS_PASS = true;
+        _TIMER_100US_PASS = true;
         TIM_ClearITPendingBit(TIM5, TIM_IT_Update);
     }
 }
 
+static uint16_t _100us_tick = 0;
 static uint16_t _10ms_tick = 0;
 static uint16_t _100ms_tick = 0;
 static uint16_t _1000ms_tick = 0;
+
+static void csp_100_us_handle(void){
+    if(_TIMER_100US_PASS == false)
+        return ;   
+    _TIMER_100US_PASS = false; 
+    _PLUSE_MAKER_FLAG = true;
+    _100us_tick++;
+
+    if(_100us_tick > 10){
+        _100us_tick = 0;
+        _TIMER_1_MS_PASS = true;
+    }
+}
 static void csp_1_ms_handle(void){
     if(_TIMER_1_MS_PASS == false)
         return ;
@@ -48,7 +62,6 @@ static void csp_1_ms_handle(void){
     _TIMER_1_MS_PASS = false;
 
     // 1 ms code
-    _PLUSE_MAKER_FLAG = true;
     //
     _MOTOR_ACC_CON_FLAG = true;
     
@@ -104,6 +117,7 @@ static void csp_1000_ms_handle(void){
 
 void csp_timer_handle(void)
 {
+    csp_100_us_handle();
     csp_1_ms_handle();
     csp_10_ms_handle();
     csp_100_ms_handle();

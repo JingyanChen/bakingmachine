@@ -53,7 +53,7 @@ static void copyright(void){
 }
 
 static void author(void){
-    debug_sender_str("Name Jingyan Chen\r\n E-mail xqchendream@163.com\r\nAll code author\r\n");
+    debug_sender_str("Name:Jingyan Chen\r\nE-mail:xqchendream@163.com\r\nAll Right reserves\r\n");
 }
 static void help(void){
     debug_sender_str("\r\n\r\n\r\n help cmd list >>>>>>>\r\n");debug_send_nop();
@@ -95,6 +95,7 @@ static void help(void){
     debug_sender_str(" 36 run_temp_control Note : id 0-4 target_temp 250 - 1000 bool 0/1\r\n");debug_send_nop();
     debug_sender_str(" 37 stop_temp_control Note : id 0-4 target_temp 250 - 1000 bool 0/1\r\n");debug_send_nop();
     debug_sender_str(" 38 get_task_machine_status\r\n");debug_send_nop();
+    debug_sender_str(" 39 get_road_status\r\n");debug_send_nop();
 }
 
 static void get_csp_adc(void){
@@ -1062,6 +1063,7 @@ static void run_temp_control(void){
     event_t temp_event;
 
     bool dequeue_result=false;
+    
     //确定空格符号的位置
     for(i=0;i<debug_uart_rec_len;i++){
         if(debug_uart_rx_buf[i] == ' '){
@@ -1134,16 +1136,75 @@ static void run_temp_control(void){
     temp_event.road_id = pra1;
     temp_event.target_temp = pra2;
     temp_event.need_change_water = pra3;
+    temp_event.task_running_over = false;
 
-    dequeue_result = enqueue_event(temp_event);
-    
-    if(dequeue_result){
-        sprintf((char *)send_buf,"dequeue event: START_CONTROL_TEMP_EVENT road_id: %d target_temp: %d change_water %d success\r\n",pra1,pra2,pra3);
+    /*
+     * 三个条件下的控温任务不会进入队列
+     * 
+     * 1 小范围降温 & 无换水操作 = 不委托水冷，不进入队列
+     * 2 小范围升温 & 无换水操作 = 不进入队列
+     * 3 大范围降温 & 无换水操作 = 委托水冷，不进入队列
+     * 4 大范围升温 = 进入队列
+     * 
+     */
+
+    //下述代码是是否需要将温度控制任务压入顺序任务队列的识别代码，识别的原则见ARG_PID.H的核心算法3
+
+    if(temp_event.need_change_water == true){
+        //如果需要换水，那没话说必须进入队列一个一个处理
+        dequeue_result = enqueue_event(temp_event);
+
+        if(dequeue_result){
+            sprintf((char *)send_buf,"dequeue event: START_CONTROL_TEMP_EVENT road_id: %d target_temp: %d change_water %d success\r\n",pra1,pra2,pra3);
+        }else{
+            sprintf((char *)send_buf,"dequeue event: START_CONTROL_TEMP_EVENT failed ! queue full\r\n");
+        }
+
+        debug_sender_str(send_buf);   
+
     }else{
-        sprintf((char *)send_buf,"dequeue event: START_CONTROL_TEMP_EVENT failed ! queue full\r\n");
-    }
+        //如果不需要换水，判断是否是降温
+        if(get_road_temp(temp_event.road_id) > temp_event.target_temp){
+            //降温
+            set_temp_control_status(temp_event.road_id,TEMP_CONTROL_WAIT);
+            set_pid_controller_mode_as_decentralize(temp_event.road_id,temp_event.target_temp);
+            if(get_road_temp(temp_event.road_id) > temp_event.target_temp + SMALL_RANGE_DOWN_TEMP){
+                //大范围降温，需要委托水冷线程
+                start_water_cool(temp_event.road_id,temp_event.target_temp);
+                sprintf((char *)send_buf,"road %d is big cooling control.cooling dump running\r\n",temp_event.road_id);
+                debug_sender_str(send_buf); 
+            }else{
+                //小范围的降温，依靠自然冷却+分散温控
+                sprintf((char *)send_buf,"road %d is small cooling control.cooling dump stop\r\n",temp_event.road_id);
+                debug_sender_str(send_buf); 
+            }
 
-    debug_sender_str(send_buf);   
+        }else{
+            //升温
+            if(get_road_temp(temp_event.road_id) + SMALL_RANGE_UP_TEMP < temp_event.target_temp){
+                //大范围升温，压入队列慢慢处理
+                dequeue_result = enqueue_event(temp_event);
+
+                if(dequeue_result){
+                    sprintf((char *)send_buf,"dequeue event: START_CONTROL_TEMP_EVENT road_id: %d target_temp: %d change_water %d success\r\n",pra1,pra2,pra3);
+                }else{
+                    sprintf((char *)send_buf,"dequeue event: START_CONTROL_TEMP_EVENT failed ! queue full\r\n");
+                }
+
+                debug_sender_str(send_buf);   
+            }else{
+                //小范围的升温，单单分散温控处理
+                set_pid_controller_mode_as_decentralize(temp_event.road_id,temp_event.target_temp);
+                set_temp_control_status(temp_event.road_id,TEMP_CONTROL_WAIT);
+
+                sprintf((char *)send_buf,"road %d is small heating control.opearate done\r\n",temp_event.road_id);
+                debug_sender_str(send_buf); 
+            }            
+        }
+        
+    }
+    
+
 }
 static void stop_temp_control(void){
     //模拟一个显示屏 停止被按下的事件
@@ -1160,8 +1221,8 @@ static void stop_temp_control(void){
     uint16_t pra1=0,pra2=0,pra3=0;
 
     event_t temp_event;
+    event_t now_running_e;
 
-    bool dequeue_result=false;
     //确定空格符号的位置
     for(i=0;i<debug_uart_rec_len;i++){
         if(debug_uart_rx_buf[i] == ' '){
@@ -1234,18 +1295,72 @@ static void stop_temp_control(void){
     temp_event.road_id = pra1;
     temp_event.target_temp = pra2;
     temp_event.need_change_water = pra3;
+    temp_event.task_running_over = false;
 
-    dequeue_result = enqueue_event(temp_event);
+    //dequeue_result = enqueue_event(temp_event);
     
-    if(dequeue_result){
-        sprintf((char *)send_buf,"dequeue event: STOP_CONTROL_TEMP_EVEN road_id: %d target_temp: %d change_water %d success\r\n",pra1,pra2,pra3);
-    }else{
-        sprintf((char *)send_buf,"dequeue event: STOP_CONTROL_TEMP_EVEN failed ! queue full\r\n");
+    /*
+     * 停止操作不再会压入队列，而是做如下两件事
+     * 1 立刻无理由关闭当前的温控开关
+     * 2 检查当前的运行任务是否是road_id 如果是立刻结束当前的任务
+     */
+
+    no_reason_stop_temp_control(temp_event.road_id);//无条件关闭温控
+    stop_water_cool(temp_event.road_id);//无条件关闭水泵
+
+    if(get_task_machine_status() == task_machine_running){
+        if( get_now_running_event_task().road_id == temp_event.road_id){
+            now_running_e.task_running_over = true;
+            set_now_running_event_task(now_running_e);
+            queue_task_handle();
+        }
     }
 
+    sprintf((char *)send_buf,"dequeue event: STOP_CONTROL_TEMP_EVEN road_id: %d target_temp: %d change_water %d success\r\n",pra1,pra2,pra3);
     debug_sender_str(send_buf);       
 }
-static void get_task_machine_status(void){
+static void print_task_nop(void){
+    csp_wtd_handle();
+    delay_ms(5);
+}
+static void print_task_info(uint8_t event_index , bool is_running_task ,event_t * e){
+    uint8_t debug_sender_buf[100];
+
+    if(is_running_task){
+        debug_sender_str("\r\n-----Running Task-----\r\n");
+        print_task_nop();
+    }else{
+        sprintf((char*)debug_sender_buf,"\r\n-----list %d-----\r\n",event_index);
+        debug_sender_str(debug_sender_buf);
+        print_task_nop();
+    }
+
+    if(e->event_type == START_CONTROL_TEMP_EVENT){
+        debug_sender_str("Task Type: START_CONTROL_TEMP_EVENT\r\n");
+    }else{
+        debug_sender_str("Task Type: STOP_CONTROL_TEMP_EVEN\r\n");
+    }
+    print_task_nop();
+
+    sprintf((char*)debug_sender_buf,"Operate Road Id : %d\r\n" , e->road_id);
+    debug_sender_str(debug_sender_buf);
+    print_task_nop();
+
+    if(e->event_type == START_CONTROL_TEMP_EVENT){
+        sprintf((char*)debug_sender_buf,"Target Temputure: %d\r\n",e->target_temp);
+        debug_sender_str(debug_sender_buf);
+        print_task_nop();
+    }
+
+
+    sprintf((char*)debug_sender_buf,"Water Operate Sw: %d\r\n",e->need_change_water);
+    debug_sender_str(debug_sender_buf);
+    print_task_nop();
+
+    debug_sender_str("----------");
+    
+}
+static void get_task_machine_status_debug(void){
     //获得当前的运行状态，哪些被执行，哪些没被执行当前处于什么状态
     //这个函数是算法核心
 
@@ -1254,41 +1369,45 @@ static void get_task_machine_status(void){
      * 包括，目前已经接收了哪些任务，当前正在执行的是什么任务
      * 
      */
-    
-    uint8_t debug_sender[200];
     uint16_t all_task_num=0;
     event_t now_running_task;
+    event_t list_task;
     uint8_t i=0;
     
     all_task_num = get_queue_size();
     now_running_task = get_now_running_event_task();
 
-    if(all_task_num == 0 && now_running_task.target_temp ==0){
+    if(all_task_num == 0 && get_task_machine_status() == task_machine_idle){
         debug_sender_str("no task running\r\n");
         return ;
     }
 
-    if( now_running_task.target_temp !=0){
-        //仅有一个运行态的任务
-        sprintf((char*)debug_sender,"runningTask:\r\ntaskType:%d\r\ntaskRoadId:%d\r\ntaskTargetTemp:%d\r\ntaskNeedChangeWater:%d\r\n\r\n\r\n",now_running_task.event_type,now_running_task.road_id,now_running_task.target_temp,now_running_task.need_change_water);
-        debug_sender_str(debug_sender);
-        debug_send_nop();
-    }
+    print_task_info(0,true,&now_running_task);
 
-    if(all_task_num !=0 ){
-        sprintf((char*)debug_sender,"wait list num %d",all_task_num);
-        debug_sender_str(debug_sender);
-				debug_send_nop();  
-			
-        for(i=0;i<all_task_num;i++){
-        sprintf((char*)debug_sender,"TaskList[%d]:\r\n[\r\ntaskType:%d\r\ntaskRoadId:%d\r\ntaskTargetTemp:%d\r\ntaskNeedChangeWater:%d\r\n]\r\n",i,now_running_task.event_type,now_running_task.road_id,now_running_task.target_temp,now_running_task.need_change_water);
-        debug_sender_str(debug_sender);
-        debug_send_nop();            
-        }
+    for(i=0;i<all_task_num;i++){
+        list_task = get_pos_queue_ele(i);
+        print_task_info(i,false,&list_task);  
     }
 
 }
 
+void get_road_status(void){
+    uint8_t i =0;
+    uint8_t send_buf[50];
+    for(i=0;i<5;i++){
+        sprintf((char *)send_buf,">>> %d road status :",i);
+        debug_sender_str(send_buf);
+        print_task_nop();
+
+        switch(get_temp_control_status(i)){
+            case 0:debug_sender_str("TEMP_CONTORL_STOP\r\n");print_task_nop();break;
+            case 1:debug_sender_str("TEMP_CONTROL_CHANGE_WATER\r\n");print_task_nop();break;
+            case 2:debug_sender_str("TEMP_CONTROL_UP_DOWN_QUICK_STATUS\r\n");print_task_nop();break;
+            case 3:debug_sender_str("TEMP_CONTROL_CONSTANT\r\n");print_task_nop();break;
+            case 4:debug_sender_str("TEMP_CONTROL_WAIT\r\n");print_task_nop();break;
+        }
+    }
+}
 debug_func_list_t debug_func_list[] = {
 
     {help,"help"},{help,"?"},{help,"HELP"},
@@ -1334,7 +1453,8 @@ debug_func_list_t debug_func_list[] = {
     {start_pid_test,"start_pid_test"},{start_pid_test,"35"},
     {run_temp_control,"run_temp_control"},{run_temp_control,"36"},
     {stop_temp_control,"stop_temp_control"},{stop_temp_control,"37"},
-    {get_task_machine_status,"get_task_machine_status"},{get_task_machine_status,"38"},
+    {get_task_machine_status_debug,"get_task_machine_status"},{get_task_machine_status_debug,"38"},
+    {get_road_status,"get_road_status"},{get_road_status,"39"},
 };
 
 

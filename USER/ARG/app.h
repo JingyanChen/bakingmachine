@@ -87,11 +87,17 @@ typedef enum{
     STOP_CONTROL_TEMP_EVEN,
 }user_event_type_t;
 
+typedef enum{
+    task_machine_idle=0,
+    task_machine_running,
+}task_machine_status_t;
+
 typedef struct{
     user_event_type_t event_type;
     uint8_t road_id;
     uint16_t target_temp;
     bool need_change_water;
+    bool task_running_over; //创建此对象的时候，必须初始化其为FALSE
 }event_t;
 
 /*
@@ -136,6 +142,19 @@ uint16_t get_queue_size(void);
 //温控委托框架下的状态机系统
 
 #define TEMP_CONTROL_NUM 5
+
+/*
+ * 下述状态会通过常规的读温度指令指示每一路的运行状态
+ * TEMP_CONTORL_STOP：停止状态，此路未做任何控温/换水操作
+ * TEMP_CONTROL_CHANGE_WATER：此路正在执行换水/退水操作
+ * TEMP_CONTROL_UP_DOWN_QUICK_STATUS：此路在执行集中升温控制
+ * TEMP_CONTROL_CONSTANT：此路正在分散控温，并且温度已经到达指定温度
+ * TEMP_CONTROL_WAIT：此路正在等待其他路完成集中升温控制，本路在这一段时间得不到任何温度资源
+ *                    由于一些原因温度暂时没有得到控制，从而跌落的状态。
+ *                    正在控温，但是温度没有到达指定温度
+ * 
+ * 集中在温度指令中得以体现
+ */
 typedef enum{
     TEMP_CONTORL_STOP=0,
     TEMP_CONTROL_CHANGE_WATER,
@@ -159,8 +178,27 @@ void set_temp_control_status(uint8_t road_id ,temp_control_status_t status);
 temp_control_status_t get_temp_control_status(uint8_t road_id);
 
 
+/*
+ * brief : 读写存放当前被任务队列推出来的执行任务信息
+ */
 void set_now_running_event_task(event_t e);
+
+/*
+ * brief : 读写存放当前被任务队列推出来的执行任务信息
+ */
 event_t get_now_running_event_task(void);
+
+/*
+ * 只要有一个任务从队列中被推出，那么任务状态机都是被激活的状态
+ * 当所有任务都完成的时候，任务状态机处于idle状态
+ */
+void set_task_machine_status(task_machine_status_t status);
+task_machine_status_t get_task_machine_status(void);
+
+/*
+ * brief : 检查当前任务是否结束，如果结束了切换下一个任务
+ */
+void queue_task_handle(void);
 
 //end温控委托框架下的状态机系统
 

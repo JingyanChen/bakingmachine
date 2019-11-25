@@ -1,4 +1,5 @@
 #include "csp_uart.h"
+#include "app.h"
 #include "csp_timer.h"
 #include "arg_debug_pro.h"
 #include "delay.h"
@@ -457,7 +458,13 @@ static void read_now_temp_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
        respond[i] = (temp[i * 2] + temp[ i * 2 + 1]) / 2 ;
     }
 
-    quick_resond_func(read_now_temp,respond,5);  
+    //2019.11.25
+    //在数据的末端加入了五个字节每路状态指示
+    for(i=0;i<5;i++){
+        respond[5+i] = (uint16_t)get_temp_control_status(i);
+    }
+
+    quick_resond_func(read_now_temp,respond,10);  
 }
 
 static void read_now_temp_target_func(tft_mcu_pro_data_t * tft_mcu_pro_data){

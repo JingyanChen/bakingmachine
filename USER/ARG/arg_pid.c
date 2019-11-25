@@ -1,4 +1,5 @@
 #include "arg_pid.h"
+#include "app.h"
 #include "csp_adc.h"
 #include "csp_timer.h"
 #include "csp_pwm.h"
@@ -244,9 +245,10 @@ void decentralized_control_mode_handle(void)
         {
             if(pid_temp_error[i] < 10)
             {
-
+                set_temp_control_status(i,TEMP_CONTROL_CONSTANT);
             }else{
                 decentralize_busy_flag = true;
+                set_temp_control_status(i,TEMP_CONTROL_WAIT);
                 return ;
             } 
         }
@@ -360,36 +362,59 @@ static bool have_temp_control_task(void)
     return false;
 }
 
-static uint16_t water_cool_road_id =0;
-static uint16_t water_cool_target_temp=0;
-static bool water_cool_check_start=false;
+static uint16_t water_cool_target_temp[5];
+static bool water_cool_sw[5];
+void stop_water_cool(uint8_t road_id){
+    water_cool_pump_control(road_id % 5, 1 );//关闭水冷降温
+    water_cool_target_temp[road_id % 5] = false;    
+}
 void start_water_cool(uint8_t road_id ,uint16_t target_temp){
 
     water_cool_pump_control(road_id % 5, 0 );//打开水冷降温
-    water_cool_road_id = road_id;
-    water_cool_check_start = true;
+    water_cool_target_temp[road_id % 5] = true;
 
 }
 void water_cool_init(void){
-    water_cool_check_start = false;
-    water_cool_road_id = 0;
-    water_cool_target_temp = 0;
+    uint8_t i=0;
+    for(i=0;i<5;i++){
+        water_cool_target_temp[i] = 0;
+        water_cool_sw[i] = false;
+    }
 }
-void water_cool_handle(void){
+
+uint16_t get_road_temp(uint8_t road_id){
     uint16_t water_cool_road_temp = 0;
-
-    if(water_cool_check_start == false)
-        return ;
-
-    water_cool_road_temp += adc_temp_data[water_cool_road_id % 10];
-    water_cool_road_temp += adc_temp_data[(water_cool_road_id * 2 + 1) % 10];
+    
+    water_cool_road_temp += adc_temp_data[road_id % 10];
+    water_cool_road_temp += adc_temp_data[(road_id * 2 + 1) % 10];    
 
     water_cool_road_temp /= 2;
 
+    return water_cool_road_temp;
+}
+void water_cool_handle(void){
+    uint16_t water_cool_road_temp = 0;
+    uint8_t i=0;
 
-    if(water_cool_road_temp < water_cool_target_temp){
-        water_cool_pump_control(water_cool_road_id % 5, 1 );//关闭水冷降温
-        water_cool_init();
+    if(water_cool_sw[0] == false &&
+        water_cool_sw[1] == false &&
+        water_cool_sw[2] == false &&
+        water_cool_sw[3] == false &&
+        water_cool_sw[4] == false)
+        return ;
+
+    for(i=0;i<5;i++){
+        if(water_cool_sw[i] == true){
+            water_cool_road_temp += adc_temp_data[i % 10];
+            water_cool_road_temp += adc_temp_data[(i * 2 + 1) % 10];
+
+            water_cool_road_temp /= 2;
+
+            if(water_cool_road_temp < water_cool_target_temp[i] + WATER_COOL_TEMP_OFFSET){
+                water_cool_pump_control(i % 5, 1 );//关闭水冷降温
+                water_cool_sw[i] = false;
+            }
+        }
     }
 }
 
@@ -405,13 +430,17 @@ void arg_pid_init(void)
         pid_controller_sw[i] = false;
     }
 
-    set_temp_control_mode(CONCENTRATE_CONTROL_MODE);
+    set_temp_control_mode(DECENTRALIZED_CONTROL_MODE);
     concentrate_condition_done = false;
     decentralize_busy_flag = false;
 
     water_cool_init();
 }
 
+void no_reason_stop_temp_control(uint8_t road_id){
+    set_pid_con_sw(road_id % 10,false);
+    set_pid_con_sw((road_id * 2 + 1) % 10,false);
+}
 //100ms进行一次pid运算
 void arg_pid_handle(void)
 {

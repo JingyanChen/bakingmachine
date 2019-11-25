@@ -193,10 +193,21 @@ static void access_pwm_gpio_v(uint8_t id , bool sw){
 
 //per 1ms make once pluses
 static uint16_t pwm_maker_period_tick_ms=0;
+/*
+ * 2019.11.25 加入保护代码，同一时刻仅允许两个GPIO置1，否则会出现功率过大的问题
+ * 
+ * 11.25之前的版本，使用的PWM波形周期是1S ，但是分散控温模式，每一次切换，仅给了
+ * 100ms的时间，所以PID控制器只能显示1/10的效能，感觉不合理，所以在11.25版本之后
+ * PWM的周期改为100ms，使得每一次切换的时候PID控制器都可以发挥最大效能。
+ * 
+ * 系统的SYS_TICK由1ms 提速到100us
+ * 更改见于 csp_timer.c/.h
+ */
 void csp_pwm_handle(void)
 {
     uint8_t i=0;
-
+    uint8_t gpio_high_tick=0;
+     
     if(_PLUSE_MAKER_FLAG == false)
         return ;
     
@@ -204,13 +215,18 @@ void csp_pwm_handle(void)
     
     for(i=0;i<10;i++){
         if(pwm_maker_percent[i] != 0){
+
+            gpio_high_tick++;
+            if(gpio_high_tick > 2)
+                break;
+
             if(pwm_maker_period_tick_ms < get_pwm_maker_percent(i))
                 access_pwm_gpio_v(i,true);
             else
                 access_pwm_gpio_v(i,false);
         }else{
-					      access_pwm_gpio_v(i,false);
-				}
+				access_pwm_gpio_v(i,false);
+		}
     }
 
     pwm_maker_period_tick_ms++;

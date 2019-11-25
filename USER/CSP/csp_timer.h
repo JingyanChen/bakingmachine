@@ -30,20 +30,21 @@ SE timer_flag_2;
 
 extern bakingMachine_t  bakingMachine_flag;
 
-#define _TIMER_1_MS_PASS bakingMachine_flag.timer_flag.se0
-#define _PLUSE_MAKER_FLAG bakingMachine_flag.timer_flag.se1
-#define _UART_PT100_10MS_FLAG bakingMachine_flag.timer_flag.se2
-#define _UART_LCD_10MS_FLAG bakingMachine_flag.timer_flag.se3
-#define _UPDATE_ADC_DATA_FLAG bakingMachine_flag.timer_flag.se4
-#define _PID_CONTROL_UP_FALG bakingMachine_flag.timer_flag.se5
-#define _MOTOR_ACC_CON_FLAG bakingMachine_flag.timer_flag.se6
-#define _UPLOAD_TEMP_GUI_FLAG bakingMachine_flag.timer_flag.se7
+#define _TIMER_100US_PASS bakingMachine_flag.timer_flag.se0
+#define _TIMER_1_MS_PASS bakingMachine_flag.timer_flag.se1
+#define _PLUSE_MAKER_FLAG bakingMachine_flag.timer_flag.se2
+#define _UART_PT100_10MS_FLAG bakingMachine_flag.timer_flag.se3
+#define _UART_LCD_10MS_FLAG bakingMachine_flag.timer_flag.se4
+#define _UPDATE_ADC_DATA_FLAG bakingMachine_flag.timer_flag.se5
+#define _PID_CONTROL_UP_FALG bakingMachine_flag.timer_flag.se6
+#define _MOTOR_ACC_CON_FLAG bakingMachine_flag.timer_flag.se7
 
-#define _KEY_EVENT_CHECK_FLAG bakingMachine_flag.timer_flag_2.se0
-#define _APP_UPDATE_FLAG  bakingMachine_flag.timer_flag_2.se1
-#define _HUMIDITY_CONTROL_FLAG bakingMachine_flag.timer_flag_2.se2
-#define _TFT_COM_UPDATE_FLAG bakingMachine_flag.timer_flag_2.se3
-#define _MOTOR_LIMIT_UPDATE_FLAG bakingMachine_flag.timer_flag_2.se4
+#define _UPLOAD_TEMP_GUI_FLAG bakingMachine_flag.timer_flag_2.se0
+#define _KEY_EVENT_CHECK_FLAG bakingMachine_flag.timer_flag_2.se1
+#define _APP_UPDATE_FLAG  bakingMachine_flag.timer_flag_2.se2
+#define _HUMIDITY_CONTROL_FLAG bakingMachine_flag.timer_flag_2.se3
+#define _TFT_COM_UPDATE_FLAG bakingMachine_flag.timer_flag_2.se4
+#define _MOTOR_LIMIT_UPDATE_FLAG bakingMachine_flag.timer_flag_2.se5
 
 void csp_timer_init(void);
 void csp_timer_handle(void);
