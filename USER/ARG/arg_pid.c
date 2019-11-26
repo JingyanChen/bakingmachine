@@ -9,7 +9,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
-
+#include "arg_debug_pro.h"
 /*
  * 目标温度只可能在0-100.0度之间，不会出现零下情况，也不会出现100度
  * 以上的情况，所以当目标温度为0的时候默认不打开PID算法。
@@ -25,12 +25,12 @@ static int16_t pid_temp_error_last[PID_CONTORLLER_NUM];
 
 temp_control_mode_t temp_control_mode;
 
-static void set_temp_control_mode(temp_control_mode_t mode)
+void set_temp_control_mode(temp_control_mode_t mode)
 {
     temp_control_mode = mode;
 }
 
-static temp_control_mode_t get_temp_control_mode(void)
+temp_control_mode_t get_temp_control_mode(void)
 {
     return temp_control_mode;
 }
@@ -47,6 +47,14 @@ void set_pid_con_sw(uint8_t id, bool sw)
     pid_controller_sw[id] = sw;
 }
 
+int16_t get_target_temp(uint8_t road_id){
+     int16_t sum_target_temp=0;
+
+     sum_target_temp = pid_target_temp[road_id % 10] + pid_target_temp[(road_id *2 + 1) % 10];
+     sum_target_temp /= 2;
+
+     return sum_target_temp;
+}
 void set_pid_controller_mode_as_decentralize(uint8_t id, uint16_t target_temp)
 {
 
@@ -59,6 +67,17 @@ void set_pid_controller_mode_as_decentralize(uint8_t id, uint16_t target_temp)
     set_temp_control_mode(DECENTRALIZED_CONTROL_MODE);
 }
 
+void set_pid_controller_mode_as_decentralize_without_set_mode(uint8_t id, uint16_t target_temp)
+{
+
+    pid_target_temp[(id) % 10] = target_temp + 5;
+    pid_target_temp[(id * 2 + 1) % 10] = target_temp + 5;
+
+    set_pid_con_sw(id % 10, true);
+    set_pid_con_sw((id * 2 + 1) % 10, true);
+}
+
+
 static uint16_t concentrate_control_mode_road_id[2];
 static bool concentrate_condition_done = false;
 static bool decentralize_busy_flag = false;
@@ -70,6 +89,53 @@ bool get_decentralize_busy_flag(void){
     return decentralize_busy_flag;
 }
 
+/*
+ * 2019.11.26
+ * 在集中控温模式中加入停温算法，因为停温算法是待验证的，是为了增加板子温度均匀性但是损失了
+ * 升温效率的操作，所以本代码用宏定义的方式给予整段代码作用/不作用
+ * 
+ * 停温算法的两个核心参数：
+ * PRA1 停温温度 STOP_TEMP ：集中升温到STOP_TEMP，会屏蔽PID输出
+ * PRA2 屏蔽PID输出时间 STOP_TIM :停温时间
+ * 
+ */
+
+#if defined (STOP_TEMP_ARG)
+static uint16_t stop_temp_pra=0;
+static uint16_t stop_tim_pra=0;
+static bool stop_arg_bool_1=false;
+static bool stop_arg_bool_2=false;
+static uint16_t stop_arg_tick_1=0;
+static uint16_t stop_arg_tick_2=0;
+static bool pwm_out1_lock = false;
+static bool pwm_out2_lock = false;
+bool set_pid_controller_mode_as_concentrate(uint8_t road_id, uint16_t target_temp,uint16_t stop_temp,uint16_t stop_tim)
+{
+    if(decentralize_busy_flag == true){
+        return false;
+    }
+
+    set_pid_controller_mode_as_decentralize(road_id, target_temp);
+    set_temp_control_mode(CONCENTRATE_CONTROL_MODE);
+
+    concentrate_control_mode_road_id[0] = road_id;
+    concentrate_control_mode_road_id[1] = road_id * 2 + 1;
+
+    concentrate_condition_done  = false;
+
+    stop_temp_pra = stop_temp;
+    stop_tim_pra = stop_tim;
+    stop_arg_bool_1 = false;
+    stop_arg_bool_2 = false;
+    pwm_out1_lock = false;
+    pwm_out2_lock = false;
+
+    stop_arg_tick_1 = 0;
+    stop_arg_tick_2 = 0;
+    
+    return true;
+}
+#else
 bool set_pid_controller_mode_as_concentrate(uint8_t road_id, uint16_t target_temp)
 {
     if(decentralize_busy_flag == true){
@@ -86,7 +152,7 @@ bool set_pid_controller_mode_as_concentrate(uint8_t road_id, uint16_t target_tem
 
     return true;
 }
-
+#endif
 
 
 /*
@@ -110,10 +176,12 @@ void decentralized_control_mode_handle(void)
     uint16_t pwm_out1 = 0;
     uint16_t pwm_out2 = 0;
 
-    #ifdef DEBUG_PID_SW
-    uint8_t debug_sender_buf[200];
-    #endif
+    float p_cal1_f = 0;
+    float d_cal1_f = 0;
+    float p_cal2_f = 0;
+    float d_cal2_f = 0;  
 
+    uint8_t debug_buf[200];
     //更新一次所有温度的误差数据
 
     for (i = 0; i < PID_CONTORLLER_NUM; i++)
@@ -173,14 +241,15 @@ void decentralized_control_mode_handle(void)
         running_pid_id[1] = error_max_id;
     }
 
-    //需要操控的id是running_pid_id[0] running_pid_id[1]两路，如果是0xff 0xff那么说明没有需要控制的PD控制器
 
     if (get_pid_con_sw(running_pid_id[0] % 10))
     {
         if (pid_temp_error[running_pid_id[0] % 10] > 0)
         {
             //开始计算PWM占空比，使用PD算法
-            pwm_out1_f = (float)P * (float)pid_temp_error[running_pid_id[0] % 10] + (float)D * ((float)pid_temp_error_last[running_pid_id[0] % 10] - (float)pid_temp_error[running_pid_id[0]]);
+            p_cal1_f = (float)P * (float)pid_temp_error[running_pid_id[0] % 10];
+            d_cal1_f = (float)D * ((float)pid_temp_error_last[running_pid_id[0] % 10] - (float)pid_temp_error[running_pid_id[0]]);
+            pwm_out1_f =  p_cal1_f + d_cal1_f;
 
             pid_temp_error_last[running_pid_id[0] % 10] = pid_temp_error[running_pid_id[0] % 10];
 
@@ -204,7 +273,9 @@ void decentralized_control_mode_handle(void)
         if (pid_temp_error[running_pid_id[1] % 10] > 0)
         {
             //开始计算PWM占空比，使用PD算法
-            pwm_out2_f = (float)P * (float)pid_temp_error[running_pid_id[1] % 10] + (float)D * ((float)pid_temp_error_last[running_pid_id[1] % 10] - (float)pid_temp_error[running_pid_id[1]]);
+            p_cal2_f = (float)P * (float)pid_temp_error[running_pid_id[1] % 10];
+            d_cal2_f = (float)D * ((float)pid_temp_error_last[running_pid_id[1] % 10] - (float)pid_temp_error[running_pid_id[1]]);
+            pwm_out2_f =  p_cal2_f + d_cal2_f;
 
             pid_temp_error_last[running_pid_id[1] % 10] = pid_temp_error[running_pid_id[1] % 10];
 
@@ -222,18 +293,6 @@ void decentralized_control_mode_handle(void)
         }
     }
 
-    #ifdef DEBUG_PID_SW
-    sprintf((char *)debug_sender_buf,
-            "pid running controller num is %d\r\n \
-				,I : id is %d ,now temp = %d,target_temp = %d,control pwm = %d   \
-				|||| II : id is %d ,now temp = %d,target_temp = %d,control pwm = %d\r\n",
-            pid_running_num,
-            running_pid_id[0], pid_now_temp[running_pid_id[0]], pid_target_temp[running_pid_id[0]], pwm_out1,
-            running_pid_id[1], pid_now_temp[running_pid_id[1]], pid_target_temp[running_pid_id[1]], pwm_out2);
-    debug_sender_str(debug_sender_buf);
-    #endif
-
-    
     //判断所有打开的温度控制路，是否都处于控温状态了，如果是的，把BUSY位置0，告诉上级，处于NO BUSY状态
     //可以响应新的升温任务
     //对控温状态的定义：目标温度 - 当前温度   < 1.0摄氏度
@@ -245,106 +304,174 @@ void decentralized_control_mode_handle(void)
         {
             if(pid_temp_error[i] < 10)
             {
-                set_temp_control_status(i,TEMP_CONTROL_CONSTANT);
             }else{
                 decentralize_busy_flag = true;
-                set_temp_control_status(i,TEMP_CONTROL_WAIT);
-                return ;
+                goto exit;
             } 
         }
     }
 
     decentralize_busy_flag = false;
 
+    exit:
+    //上报代码段
+    if(get_pid_debug_sw() == true){
+        sprintf((char *)debug_buf,"| decentralized Mode | ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d)\r\n",
+                running_pid_id[0],p_cal1_f,d_cal1_f,pwm_out1,pid_now_temp[running_pid_id[0]],pid_target_temp[running_pid_id[0]],
+                running_pid_id[1],p_cal2_f,d_cal2_f,pwm_out2,pid_now_temp[running_pid_id[1]],pid_target_temp[running_pid_id[1]]);
+        debug_sender_str(debug_buf);
+    }
 }
 
 /*
  * 集中升温模式
  * 触发此模式，必须实现配置好需要集中控制的road id号
  * 此升温模式是暂时的短暂的升温模式，只要一次到达目标温度，那么升温模式就结束了
+ * 19.11.26 重新整理报文输出，通过打开PID控制器状态报文来指示
  */
 void concentrate_control_mode_handle(void)
 {
-    uint8_t i = 0;
-
     float pwm_out1_f = 0;
     float pwm_out2_f = 0;
+    float p_cal1_f = 0;
+    float d_cal1_f = 0;
+    float p_cal2_f = 0;
+    float d_cal2_f = 0;    
 
     uint16_t pwm_out1 = 0;
     uint16_t pwm_out2 = 0;
+    uint16_t id1=0;
+    uint16_t id2=0;
 
-    #ifdef DEBUG_PID_SW
-    uint8_t debug_sender_buf[200];
-    #endif
+    //上传报文使用
+    uint8_t debug_buf[200];
+    
 
-    //更新一次所有温度的误差数据
+    id1 = concentrate_control_mode_road_id[0] % 10;
+    id2 = concentrate_control_mode_road_id[1] % 10;
 
-    for (i = 0; i < PID_CONTORLLER_NUM; i++)
-    {
-        pid_now_temp[i] = adc_temp_data[i];
+    //仅更新集中两路的温度
+    pid_now_temp[id1] = adc_temp_data[id1];
+    pid_now_temp[id2] = adc_temp_data[id2];
 
-        //仅更新集中体现的error
-        if (i == concentrate_control_mode_road_id[0] ||
-            i == concentrate_control_mode_road_id[1])
-        {
-            pid_temp_error[i] = pid_target_temp[i] - pid_now_temp[i];
+    pid_temp_error[id1] = pid_target_temp[id1] - pid_now_temp[id1];
+    pid_temp_error[id2] = pid_target_temp[id2] - pid_now_temp[id2];
+
+
+    #if defined (STOP_TEMP_ARG)
+
+    if(stop_arg_bool_1 == false){
+        if(pid_now_temp[id1] > stop_temp_pra){
+            //出现一个瞬间 温度超过停止温度
+            //锁上pwm1
+            //以后不再判断
+            pwm_out1_lock = true;
+            stop_arg_bool_1 = true;
         }
     }
+
+    if(stop_arg_bool_2 == false){
+        if(pid_now_temp[id2] > stop_temp_pra){
+            pwm_out2_lock = true;
+            stop_arg_bool_2 = true;
+        }
+    }
+
+    //计时锁定时间 自动解锁
+    if(pwm_out1_lock){
+        stop_arg_tick_1 ++;
+        if(stop_arg_tick_1 > stop_tim_pra * 10){
+            stop_arg_tick_1 = 0;
+            pwm_out1_lock = false;//unlock
+        }
+    }
+
+    if(pwm_out2_lock){
+        stop_arg_tick_2 ++;
+        if(stop_arg_tick_2 > stop_tim_pra * 10){
+            stop_arg_tick_2 = 0;
+            pwm_out2_lock = false;//unlock
+        }
+    }
+    #endif
 
     //开始PID控温
     if (pid_temp_error[concentrate_control_mode_road_id[0] % 10] > 0)
     {
+        p_cal1_f = (float)P * (float)pid_temp_error[id1];
+        d_cal1_f = (float)D * ((float)pid_temp_error_last[id1] - (float)pid_temp_error[id1]);
 
-        pwm_out1_f = (float)P * (float)pid_temp_error[concentrate_control_mode_road_id[0] % 10] + (float)D * ((float)pid_temp_error_last[concentrate_control_mode_road_id[0] % 10] - (float)pid_temp_error[concentrate_control_mode_road_id[0]]);
+        pwm_out1_f = p_cal1_f + d_cal1_f;
 
-        pid_temp_error_last[concentrate_control_mode_road_id[0] % 10] = pid_temp_error[concentrate_control_mode_road_id[0] % 10];
+        pid_temp_error_last[id1] = pid_temp_error[id1];
 
         pwm_out1 = (uint16_t)pwm_out1_f;
 
         if (pwm_out1 > 1000)
             pwm_out1 = 1000;
 
-        set_software_pwm(concentrate_control_mode_road_id[0], pwm_out1);
+        #if defined (STOP_TEMP_ARG)
+        if(pwm_out1_lock)
+            set_software_pwm(id1, 0); 
+        else
+            set_software_pwm(id1, pwm_out1);
+        #else
+        set_software_pwm(id1, pwm_out1);
+        #endif
     }else
     {
         pwm_out1 = 0;
 
-        set_software_pwm(concentrate_control_mode_road_id[0], pwm_out1);        
+        set_software_pwm(id1, pwm_out1);        
     }
 
-    if (pid_temp_error[concentrate_control_mode_road_id[1] % 10] > 0)
+    if (pid_temp_error[id2] > 0)
     {
-        pwm_out2_f = (float)P * (float)pid_temp_error[concentrate_control_mode_road_id[1] % 10] + (float)D * ((float)pid_temp_error_last[concentrate_control_mode_road_id[1] % 10] - (float)pid_temp_error[concentrate_control_mode_road_id[1]]);
+        p_cal2_f = (float)P * (float)pid_temp_error[id2];
+        d_cal2_f = (float)D * ((float)pid_temp_error_last[id2] - (float)pid_temp_error[id2]);
 
-        pid_temp_error_last[concentrate_control_mode_road_id[1] % 10] = pid_temp_error[concentrate_control_mode_road_id[1] % 10];
+        pwm_out2_f = p_cal2_f + d_cal2_f;
+        pid_temp_error_last[id2] = pid_temp_error[id2];
 
         pwm_out2 = (uint16_t)pwm_out2_f;
 
         if (pwm_out2 > 1000)
             pwm_out2 = 1000;
 
-        set_software_pwm(concentrate_control_mode_road_id[1], pwm_out2);
+        #if defined (STOP_TEMP_ARG)
+        if(pwm_out2_lock)
+            set_software_pwm(id2, 0); 
+        else
+            set_software_pwm(id2, pwm_out2);
+        #else
+        set_software_pwm(id2, pwm_out2);
+        #endif
+
     }else{
 
         pwm_out2 = 0;
 
-        set_software_pwm(concentrate_control_mode_road_id[0], pwm_out1);            
+        set_software_pwm(id2, pwm_out2);            
     }
 
     //TODO 目前集中升温模式的结束标志仅仅是瞬间到达目标温度
     //后期可以再考虑结束的标志，结束标志决定是否进入控温态
-    if(pid_temp_error[concentrate_control_mode_road_id[0] % 10] < 0 &&
-       pid_temp_error[concentrate_control_mode_road_id[1] % 10] < 0 ){
+    if(pid_temp_error[id1] < 0 &&
+       pid_temp_error[id2] < 0 ){
 
         //两个都到达温度了，集中温度模式结束
         concentrate_condition_done = true;
-
-        //自动切换进入分散温度控制模式
-        set_temp_control_mode(DECENTRALIZED_CONTROL_MODE);
-        
-        concentrate_condition_done = true;
        }
-}
+    
+    //报文上传代码段，将此次的信息报给上位机
+
+    if(get_pid_debug_sw() == true){
+        sprintf((char *)debug_buf,"| concentrate Mode | ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d)\r\n",
+                id1,p_cal1_f,d_cal1_f,pwm_out1,pid_now_temp[id1],pid_target_temp[id1],
+                id2,p_cal2_f,d_cal2_f,pwm_out2,pid_now_temp[id2],pid_target_temp[id2]);
+        debug_sender_str(debug_buf);
+    }
+} 
 
 static bool have_temp_control_task(void)
 {

@@ -78,7 +78,13 @@
  * 
  */
 
+#define STOP_TEMP_ARG //打开核心算法2
 
+//暂停温度设置为 目标温度 (target_temp - now_temp) * STOP_TEMP_CAL_K +  target_temp
+//假设由30 ->80 则升温到65°会停温，暂时设置为0.7
+#define STOP_TEMP_CAL_K 0.7
+
+#define STOP_TIM_DEFAULT 10 //暂停时间设为10S
 /*
  * PID控制器针对应用的核心算法2
  * Author : Jingyan Chen @ ComeGene 2019.11.22
@@ -90,6 +96,7 @@
  * 
  * 这个算法将会嵌入到集中控温模式中，在新版本中体现此算法。
  */
+
 
 /*
  * PID控制器针对应用的核心算法3
@@ -145,8 +152,29 @@
  */
 #define WATER_COOL_TEMP_OFFSET 500
 
+
+
+/*
+ * PID控制器针对应用的核心算法4
+ * Author : Jingyan Chen @ ComeGene 2019.11.26
+ * 
+ * 适度系统与集中控温模式应当同时执行，取消换水状态
+ * 是否换水仅体现在开始做任务的时候是否打开换水状态机
+ * 要注意，结束当前的任务之前，要判断换水状态机是否结束，以避免温度控制时间过段
+ * 使得换水操作还没结束，就开始下一个任务。
+ * 
+ * 外部获得
+ * TEMP_CONTROL_CONSTANT状态
+ * 说明你需要控制的那一路已经到温度了，可以开始倒计时
+ * 
+ * 外部获得
+ * TEMP_CONTROL_ALL_READY
+ * 说明不仅你需要控制的那一路到温，系统也已经补偿完了由集中模式带来的温度损失
+ * 
+ */
+
 #define PID_CONTORLLER_NUM 10
-//#define DEBUG_PID_SW 
+
 
 typedef enum{
     DECENTRALIZED_CONTROL_MODE=0,
@@ -164,7 +192,11 @@ void arg_pid_handle(void);
 
 bool get_pid_con_sw(uint8_t id);
 void set_pid_con_sw(uint8_t id , bool sw);
+int16_t get_target_temp(uint8_t road_id);
 
+//设置/读取控制模式，集中/分散
+void set_temp_control_mode(temp_control_mode_t mode);
+temp_control_mode_t get_temp_control_mode(void);
 
 /*
  * brief : 快速工具函数，获得0-4路的平均温度
@@ -187,6 +219,32 @@ void no_reason_stop_temp_control(uint8_t road_id);
 void set_pid_controller_mode_as_decentralize(uint8_t id , uint16_t target_temp);
 
 /*
+ * brief : 注册pid控制器分散温控器温度事件，打开温控sw，配置目标温度
+ *          注意，此函数仅仅是将此id的温度控制器打开
+ *         这个函数给小范围升温用，他不会改变状态机的控制模式
+ *         也就是说，不会抢占集中控温模式的时间，小任务可以放心使用
+ * pra @ id : 0-4 为了简化程序，把0-1设为一对 2-3 设为一对
+ * pra @ target:每一层的目标温度
+ * Note: 当有升温温控需求，注册此函数是必要的，因为在集中控制之后，回到分散模式
+ *       系统需要知道哪些路需要控制。
+ *       这个函数仅仅注册了分散控温模式需要控温的路而已。
+ */
+void set_pid_controller_mode_as_decentralize_without_set_mode(uint8_t id, uint16_t target_temp);
+
+
+#if defined (STOP_TEMP_ARG)
+/*
+ * brief : 配置集中温度控制器参数,带停温算法
+ * pra @ id : 0-4 为了简化程序，把0-1设为一对 2-3 设为一对
+ * pra @ target:每一层的目标温度
+ * pra @ stop_temp : 停止温度 保留一位小数 250-1000
+ * pra @ stop_tim : 暂停时间 单位是 S
+ * return 开始是否成功
+ * Note : 当有升温需求后，首先进入concentrate模式，集中升温，然后回到分散模式
+ */
+bool set_pid_controller_mode_as_concentrate(uint8_t road_id, uint16_t target_temp,uint16_t stop_temp,uint16_t stop_tim);
+#else
+/*
  * brief : 配置集中温度控制器参数
  * pra @ id : 0-4 为了简化程序，把0-1设为一对 2-3 设为一对
  * pra @ target:每一层的目标温度
@@ -194,7 +252,7 @@ void set_pid_controller_mode_as_decentralize(uint8_t id , uint16_t target_temp);
  * Note : 当有升温需求后，首先进入concentrate模式，集中升温，然后回到分散模式
  */
 bool set_pid_controller_mode_as_concentrate(uint8_t road_id,uint16_t target_temp) ;
-
+#endif
 /*
  * brief : 委托一个水冷降温任务，状态机会打开水冷泵，一直到温度低于target_temp，关闭泵
  * pra @ id : 0-4 为了简化程序，把0-1设为一对 2-3 设为一对

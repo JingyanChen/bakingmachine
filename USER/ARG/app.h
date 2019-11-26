@@ -146,22 +146,22 @@ uint16_t get_queue_size(void);
 /*
  * 下述状态会通过常规的读温度指令指示每一路的运行状态
  * TEMP_CONTORL_STOP：停止状态，此路未做任何控温/换水操作
- * TEMP_CONTROL_CHANGE_WATER：此路正在执行换水/退水操作
  * TEMP_CONTROL_UP_DOWN_QUICK_STATUS：此路在执行集中升温控制
  * TEMP_CONTROL_CONSTANT：此路正在分散控温，并且温度已经到达指定温度
- * TEMP_CONTROL_WAIT：此路正在等待其他路完成集中升温控制，本路在这一段时间得不到任何温度资源
- *                    由于一些原因温度暂时没有得到控制，从而跌落的状态。
- *                    正在控温，但是温度没有到达指定温度
- * 
+ * TEMP_CONTROL_ALL_READY: 不仅此路温度控制完成，而且所有正在控制的问题都是处于可控状态
+ * TEMP_CONTROL_SPECIAL_WAIT:适用于不进入任务队列的温度控制路，此状态可以被集中任务打断
+ *                           但是不能打断集中任务 ,专门会有一个handle为其服务。
+ *                          换言之 如果当前没有集中升温任务，小任务会快速的并行执行。
  * 集中在温度指令中得以体现
  */
 typedef enum{
     TEMP_CONTORL_STOP=0,
-    TEMP_CONTROL_CHANGE_WATER,
     TEMP_CONTROL_UP_DOWN_QUICK_STATUS,
     TEMP_CONTROL_CONSTANT,
-    TEMP_CONTROL_WAIT,
+    TEMP_CONTROL_ALL_READY,
+    TEMP_CONTROL_SPECIAL_WAIT,
 }temp_control_status_t;
+
 
 /*
  * brief : write temp control status

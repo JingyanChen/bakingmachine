@@ -144,7 +144,7 @@ static void open_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
     uint16_t temp_target[5];
     uint16_t need_change_water_pra=0;
     uint8_t i=0,j=0,k=0;
-    uint8_t debug_buf[100];
+    uint8_t send_buf[100];
     uint16_t respond[50];
     bool dequeue_result=false;
     event_t temp_event;
@@ -201,8 +201,8 @@ static void open_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
             if(get_box_status(i) != box_off){
 
                 if(get_tft_com_transmit_sw() == true){
-                    sprintf((char *)debug_buf,"box %d not closed error! \r\n",i);
-                    debug_sender_str(debug_buf);
+                    sprintf((char *)send_buf,"box %d not closed error! \r\n",i);
+                    debug_sender_str(send_buf);
                     delay_ms(10);
                 }  
 
@@ -232,8 +232,8 @@ static void open_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
             temp_event.target_temp = temp_target[i];
 
             if(get_tft_com_transmit_sw() == true){
-                sprintf((char *)debug_buf,"set %d roads as %d /10 du \r\n",temp_event.road_id,temp_event.target_temp);
-                debug_sender_str(debug_buf);
+                sprintf((char *)send_buf,"set %d roads as %d /10 du \r\n",temp_event.road_id,temp_event.target_temp);
+                debug_sender_str(send_buf);
                 delay_ms(10);
             }  
 
@@ -252,17 +252,70 @@ static void open_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
         }
     }
 
-    //压入队列
-    dequeue_result = enqueue_event(temp_event);
+    temp_event.task_running_over = false;
 
-    if(get_tft_com_transmit_sw() == true){
-        if(dequeue_result)
-            debug_sender_str("operate success!\r\n");
-        else
-            debug_sender_str("operate failed queue full\r\n");
+    if(temp_event.need_change_water == true){
+        //如果需要换水，那没话说必须进入队列一个一个处理
+        dequeue_result = enqueue_event(temp_event);
+        if(get_tft_com_transmit_sw()){
+            if(dequeue_result){
+                sprintf((char *)send_buf,"dequeue event: START_CONTROL_TEMP_EVENT road_id: %d target_temp: %d change_water %d success\r\n",temp_event.road_id,temp_event.target_temp,temp_event.need_change_water);
+            }else{
+                sprintf((char *)send_buf,"dequeue event: START_CONTROL_TEMP_EVENT failed ! queue full\r\n");
+            }
+        }
+        debug_sender_str(send_buf);   
 
-        delay_ms(10);
-    }    
+    }else{
+        //如果不需要换水，判断是否是降温
+        if(get_road_temp(temp_event.road_id) > temp_event.target_temp){
+            //降温
+            set_temp_control_status(temp_event.road_id,TEMP_CONTROL_SPECIAL_WAIT);
+            set_pid_controller_mode_as_decentralize_without_set_mode(temp_event.road_id,temp_event.target_temp);//仅注册分散
+            if(get_road_temp(temp_event.road_id) > temp_event.target_temp + SMALL_RANGE_DOWN_TEMP){
+                //大范围降温，需要委托水冷线程
+                start_water_cool(temp_event.road_id,temp_event.target_temp);
+                if(get_tft_com_transmit_sw()){
+                    sprintf((char *)send_buf,"road %d is big cooling control.cooling dump running\r\n",temp_event.road_id);
+                    debug_sender_str(send_buf); 
+                }
+            }else{
+                //小范围的降温，依靠自然冷却+分散温控
+                if(get_tft_com_transmit_sw()){
+                    sprintf((char *)send_buf,"road %d is small cooling control.cooling dump stop\r\n",temp_event.road_id);
+                    debug_sender_str(send_buf); 
+                }
+            }
+
+        }else{
+            //升温
+            if(get_road_temp(temp_event.road_id) + SMALL_RANGE_UP_TEMP < temp_event.target_temp){
+                //大范围升温，压入队列慢慢处理
+                dequeue_result = enqueue_event(temp_event);
+
+                if(get_tft_com_transmit_sw()){
+                    if(dequeue_result){
+                        sprintf((char *)send_buf,"dequeue event: START_CONTROL_TEMP_EVENT road_id: %d target_temp: %d change_water %d success\r\n",temp_event.road_id,temp_event.target_temp,temp_event.need_change_water);
+                    }else{
+                        sprintf((char *)send_buf,"dequeue event: START_CONTROL_TEMP_EVENT failed ! queue full\r\n");
+                    }
+                    debug_sender_str(send_buf); 
+                }
+
+
+            }else{
+                //小范围的升温，单单分散温控处理
+                set_pid_controller_mode_as_decentralize_without_set_mode(temp_event.road_id,temp_event.target_temp);
+                set_temp_control_status(temp_event.road_id,TEMP_CONTROL_SPECIAL_WAIT);
+
+                if(get_tft_com_transmit_sw()){
+                    sprintf((char *)send_buf,"road %d is small heating control.opearate done\r\n",temp_event.road_id);
+                    debug_sender_str(send_buf); 
+                }
+            }            
+        }
+        
+    }   
 
     respond[0] = 0x00;
     respond[1] = operate_succ;
@@ -282,7 +335,8 @@ static void close_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
 	uint8_t debug[50];
     //bool out_succ = false;
     bool enqueue_succ=false;
-
+    event_t now_running_e;
+    
     event_t temp_event;
 
     operate_id = tft_mcu_pro_data->load[0];
@@ -319,20 +373,16 @@ static void close_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
         delay_ms(10);
     }  
 
-    /*
-    if(need_out_water == 1){
-        out_succ = out_water(0xff);
-        if(get_tft_com_transmit_sw() == true){
-            if(out_succ){
-                debug_sender_str("start out water success!\r\n");
-            }else{
-                debug_sender_str("error:Is in the state of water injection into pumping failure, resource conflict \r\n");
-            }
-            delay_ms(10);
-        }  
+    no_reason_stop_temp_control(temp_event.road_id);//无条件关闭温控
+    stop_water_cool(temp_event.road_id);//无条件关闭水泵
+
+    if(get_task_machine_status() == task_machine_running){
+        if( get_now_running_event_task().road_id == temp_event.road_id){
+            now_running_e.task_running_over = true;
+            set_now_running_event_task(now_running_e);
+            queue_task_handle();
+        }
     }
-    */
-    enqueue_succ = enqueue_event(temp_event);
 
     if(get_tft_com_transmit_sw() == true){
         if(enqueue_succ)

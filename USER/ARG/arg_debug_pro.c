@@ -22,14 +22,15 @@
 static bool temp_gui_upload_sw  = false;
 static bool tft_com_transmit_sw = false;
 static bool box_running_debug_sw = false;
-
+static bool pid_debug_sw = false;
 void arg_debug_pro_init(void){
     uint8_t welcom_string[200];
 
     temp_gui_upload_sw = false;
     tft_com_transmit_sw = false;
     box_running_debug_sw = false;
-    
+    pid_debug_sw = false;
+
     sprintf((char *)welcom_string,"\r\nWelcome to comegene debug instruction systems.Version %d.%d.%d [make_time:%s_%s] \r\nType ""help"",""?"",""copyright"" or ""author"" for more information.\r\n",MAIN_VERSION,SECOND_VERSION,IS_RELEASE,__DATE__, __TIME__);
     debug_sender_str(welcom_string);
 
@@ -43,6 +44,9 @@ bool get_box_running_debug_sw(void){
     return box_running_debug_sw;
 }
 
+bool get_pid_debug_sw(void){
+    return pid_debug_sw;
+}
 static void debug_send_nop(void){
     csp_wtd_handle();
     delay_ms(10);
@@ -96,6 +100,8 @@ static void help(void){
     debug_sender_str(" 37 stop_temp_control Note : id 0-4 target_temp 250 - 1000 bool 0/1\r\n");debug_send_nop();
     debug_sender_str(" 38 get_task_machine_status\r\n");debug_send_nop();
     debug_sender_str(" 39 get_road_status\r\n");debug_send_nop();
+    debug_sender_str(" 40 open_pid_debug\r\n");debug_send_nop();
+    debug_sender_str(" 41 get_task_sys_bool\r\n");debug_send_nop();
 }
 
 static void get_csp_adc(void){
@@ -1166,8 +1172,8 @@ static void run_temp_control(void){
         //如果不需要换水，判断是否是降温
         if(get_road_temp(temp_event.road_id) > temp_event.target_temp){
             //降温
-            set_temp_control_status(temp_event.road_id,TEMP_CONTROL_WAIT);
-            set_pid_controller_mode_as_decentralize(temp_event.road_id,temp_event.target_temp);
+            set_temp_control_status(temp_event.road_id,TEMP_CONTROL_SPECIAL_WAIT);
+            set_pid_controller_mode_as_decentralize_without_set_mode(temp_event.road_id,temp_event.target_temp);//仅注册分散
             if(get_road_temp(temp_event.road_id) > temp_event.target_temp + SMALL_RANGE_DOWN_TEMP){
                 //大范围降温，需要委托水冷线程
                 start_water_cool(temp_event.road_id,temp_event.target_temp);
@@ -1194,8 +1200,8 @@ static void run_temp_control(void){
                 debug_sender_str(send_buf);   
             }else{
                 //小范围的升温，单单分散温控处理
-                set_pid_controller_mode_as_decentralize(temp_event.road_id,temp_event.target_temp);
-                set_temp_control_status(temp_event.road_id,TEMP_CONTROL_WAIT);
+                set_pid_controller_mode_as_decentralize_without_set_mode(temp_event.road_id,temp_event.target_temp);
+                set_temp_control_status(temp_event.road_id,TEMP_CONTROL_SPECIAL_WAIT);
 
                 sprintf((char *)send_buf,"road %d is small heating control.opearate done\r\n",temp_event.road_id);
                 debug_sender_str(send_buf); 
@@ -1400,13 +1406,32 @@ void get_road_status(void){
         print_task_nop();
 
         switch(get_temp_control_status(i)){
-            case 0:debug_sender_str("TEMP_CONTORL_STOP\r\n");print_task_nop();break;
-            case 1:debug_sender_str("TEMP_CONTROL_CHANGE_WATER\r\n");print_task_nop();break;
-            case 2:debug_sender_str("TEMP_CONTROL_UP_DOWN_QUICK_STATUS\r\n");print_task_nop();break;
-            case 3:debug_sender_str("TEMP_CONTROL_CONSTANT\r\n");print_task_nop();break;
-            case 4:debug_sender_str("TEMP_CONTROL_WAIT\r\n");print_task_nop();break;
+            case TEMP_CONTORL_STOP:debug_sender_str("TEMP_CONTORL_STOP\r\n");print_task_nop();break;
+            case TEMP_CONTROL_UP_DOWN_QUICK_STATUS:debug_sender_str("TEMP_CONTROL_UP_DOWN_QUICK_STATUS\r\n");print_task_nop();break;
+            case TEMP_CONTROL_CONSTANT:debug_sender_str("TEMP_CONTROL_CONSTANT\r\n");print_task_nop();break;
+            case TEMP_CONTROL_ALL_READY:debug_sender_str("TEMP_CONTROL_ALL_READY\r\n");print_task_nop();break;
+            case TEMP_CONTROL_SPECIAL_WAIT:debug_sender_str("TEMP_CONTROL_SPECIAL_WAIT\r\n");print_task_nop();break;
         }
     }
+}
+
+void open_pid_debug(void){
+    pid_debug_sw = true;
+    debug_sender_str("pid debug is start...\r\n");
+}
+
+void get_task_sys_bool(void){
+    
+    uint8_t debug_buf[100];
+
+    bool concen_flag= false;
+    bool decen_flag = false;
+
+    concen_flag = get_concentrate_status();
+    decen_flag = get_decentralize_busy_flag();
+
+    sprintf((char *)debug_buf,"concentrate flag : %d\r\ndecentralize flag : %d",concen_flag,decen_flag);
+    debug_sender_str(debug_buf);
 }
 debug_func_list_t debug_func_list[] = {
 
@@ -1455,6 +1480,8 @@ debug_func_list_t debug_func_list[] = {
     {stop_temp_control,"stop_temp_control"},{stop_temp_control,"37"},
     {get_task_machine_status_debug,"get_task_machine_status"},{get_task_machine_status_debug,"38"},
     {get_road_status,"get_road_status"},{get_road_status,"39"},
+    {open_pid_debug,"open_pid_debug"},{open_pid_debug,"40"},
+    {get_task_sys_bool,"get_task_sys_bool"},{get_task_sys_bool,"41"},
 };
 
 
@@ -1468,6 +1495,7 @@ static void arg_debug_packet_decode(uint8_t * buf , uint16_t len){
     if(len ==  2 && buf[0] == 0x0d && buf[1] == 0x0a){
         debug_sender_str("comegene command:");
         temp_gui_upload_sw = false;//回车关闭一直上报
+        pid_debug_sw = false;
         return ;
     }
 

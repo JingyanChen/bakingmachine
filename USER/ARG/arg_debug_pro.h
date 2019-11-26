@@ -48,4 +48,9 @@ bool get_tft_com_transmit_sw(void);
  * 获得box运动时的变速信息，方便调试使用,目前仅支持查看第一路的信息
  */
 bool get_box_running_debug_sw(void);
+
+/*
+ * 获得当前的PID控制状态
+ */
+bool get_pid_debug_sw(void);
 #endif

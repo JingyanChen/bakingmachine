@@ -7,7 +7,7 @@
 
 
 #define MAIN_VERSION    1
-#define SECOND_VERSION  2
+#define SECOND_VERSION  3
 #define IS_RELEASE      0
 
 
@@ -90,6 +90,12 @@
  * 然后要把流程图写好，然后逐步完成队列处理函数，委托给V1.3版本。
  * 
  * 更换了KEY 与 LIQUID_FEEDBACK的引脚定义，不再使用液位传感器开关了。
+ * 
+ * 
+ * V1.3 版本
+ * 
+ * 完成了所有的任务相关代码框架，待测试
+ * 具体更新见PID核心算法4
  */
 
 void get_version_str(uint8_t * str,uint16_t len);

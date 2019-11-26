@@ -399,15 +399,150 @@ void queue_task_handle(void){
     }
 }
 
+/*
+ * 任务的处理框架由两个函数构成
+ * queue_task_deal_handle函数负责做对应状态应当做的操作准备
+ * queue_task_deal_wait_handle函数，负责等待事件，从而改变状态机
+ * 两个函数切换执行，需要等待事件的时候，启动wait函数，wait 满足要求，进入切换函数
+ */
+bool queue_task_deal_hang_up = false;
+static void queue_task_deal_init(void){
+    queue_task_deal_hang_up = false;
+}
 static void queue_task_deal_handle(void){
+
+    uint8_t change_water_road=0x01;
+
+    #if defined (STOP_TEMP_ARG) 
+    float stop_temp_f = 0;
+    uint16_t now_temp=0;
+    #endif
+
+    if(queue_task_deal_hang_up)
+        return ;
 
     if(get_task_machine_status() == task_machine_idle)
         return ;//无任务执行
 
-    //根据最新的PID控制器算法核心3，仅有大范围升温任务或者有换水要求的任务会进入此状态机器
+    //根据最新的PID控制器算法核心3，仅有大范围升温任务或者有换水要求的任务会进入此状态机
     //本状态机会根据当前的任务类型来分配资源
+
     if(now_running_event_task.event_type == START_CONTROL_TEMP_EVENT){
 
+
+        #if defined (STOP_TEMP_ARG) 
+            now_temp = get_road_temp(now_running_event_task.road_id);
+            stop_temp_f = ((float)now_running_event_task.target_temp - (float)now_temp) * STOP_TEMP_CAL_K + (float)now_running_event_task.target_temp;
+            //尝试进入集中控温模式，有可能会失败，失败的原因是分散控温模式未达到ready状态，有几路没控制好
+            if(set_pid_controller_mode_as_concentrate(now_running_event_task.road_id,now_running_event_task.target_temp,(uint16_t)stop_temp_f,STOP_TIM_DEFAULT)){
+                set_temp_control_status(now_running_event_task.road_id,TEMP_CONTROL_UP_DOWN_QUICK_STATUS);   
+                
+                //配置换水任务
+                if(now_running_event_task.need_change_water == true){
+                    /*
+                    * SETP1 : 处理湿度系统，换水任务，然后配置进入集中控温模式
+                    */   
+                    change_water_road = change_water_road << now_running_event_task.road_id ;
+
+                    //打开换水状态机后，通过get_water_injection_status获得状态，当状态变为change_water_done时
+                    //认为换水结束
+                    change_water(change_water_road);
+
+                    //配置进入等待模式
+                    queue_task_deal_hang_up = true;                    
+            }             
+            }else{
+                //进入失败，那么，本次执行任务失败，继续等待,下一次从新尝试
+                queue_task_deal_hang_up = false;
+                set_temp_control_status(now_running_event_task.road_id,TEMP_CONTORL_STOP);   
+            }
+        #else
+            if(set_pid_controller_mode_as_concentrate(now_running_event_task.road_id,now_running_event_task.target_temp)){
+                set_temp_control_status(TEMP_CONTROL_UP_DOWN_QUICK_STATUS);   
+                //配置换水任务
+                if(now_running_event_task.need_change_water == true){
+                    /*
+                    * SETP1 : 处理湿度系统，换水任务，然后配置进入集中控温模式
+                    */   
+                    change_water_road = change_water_road << now_running_event_task.road_id ;
+
+                    //打开换水状态机后，通过get_water_injection_status获得状态，当状态变为change_water_done时
+                    //认为换水结束
+                    change_water(change_water_road); 
+
+                    //配置进入等待模式
+                    queue_task_deal_hang_up = true;
+            }else{
+                queue_task_deal_hang_up = false;
+                set_temp_control_status(TEMP_CONTORL_STOP);  
+            }
+        #endif
+
+    }
+}
+
+static void queue_task_deal_wait_handle(void){
+    
+    if(queue_task_deal_hang_up == true)
+        return ;
+
+    switch(get_temp_control_status(now_running_event_task.road_id)){
+        case TEMP_CONTORL_STOP: queue_task_deal_hang_up = false; break;
+        case TEMP_CONTROL_UP_DOWN_QUICK_STATUS:
+            //集中升温模式的结束的条件是，集中控制的两路有一瞬间到达目标温度
+            //对于系统来说，明显的标记是 concentrate_condition_done == true 
+            //系统一直查询此标志位，如果查到其为true，认为集中模式结束
+            if(get_concentrate_status()== true){
+                set_temp_control_mode(DECENTRALIZED_CONTROL_MODE);//切换控制方式变为分散控温模式
+                set_temp_control_status(now_running_event_task.road_id,TEMP_CONTROL_CONSTANT);   //指示现在该路已经进入了分散控温模式
+            }
+            break;
+        case TEMP_CONTROL_CONSTANT:
+
+            //检查分散控温模式是否处于ready状态，如果出于ready状态，检查湿度系统是否完成工作，
+            //两个条件如果都满足了，那就意味着可以放行，执行下一个任务了，否则需要继续等待。
+            if(get_decentralize_busy_flag()== false &&
+                get_water_injection_status()!=change_water_out_status &&
+                get_water_injection_status()!=change_water_in_status){
+                    //经历过了集中控温模式，并且分散控温模式的条件也达到了，所以可以执行下一个大温度队列任务
+                    //分散控温模式需要给他一段时间补偿之前因为某个集中控温模式而丢下来的温度
+                    //分散控温模式如果给出busy==false的结论，说明此时所有打开的温度控制器都是处于可控状态
+                    //这样可以避免第一路集中立刻第二路集中立刻第三路集中第四路集中，不间断的集中任务，导致第一路温度下滑太多
+                    set_temp_control_status(now_running_event_task.road_id,TEMP_CONTROL_ALL_READY);   //不仅你需要控制的那一路到温，系统也已经补偿完了由集中模式带来的温度损失
+                    //这种状态下可以接收新的任务
+                }
+            break;
+        case TEMP_CONTROL_ALL_READY:
+                //进入此状态后，可以执行下一个任务
+                now_running_event_task.task_running_over = true;
+                queue_task_handle();
+                queue_task_deal_hang_up = false;
+                queue_task_deal_handle();
+
+            break; 
+    }
+}
+
+/*
+ * 消耗很小的小型任务，比如降温任务，或者小范围的升温任务
+ * 将会使得road_status进入 SPECIAL_WAIT模式
+ * 此模式会注册温度控制任务到分散控温状态
+ * 不会抢占当前集中控温状态，因为集中控温状态一定会结束。
+ * 所以会有一个handle监控是否有SPEACIAL_WAIT状态任务，有的话检查其是否到温，到温切换其为ALL_READY状态
+ * 
+ */
+static void special_wait_status_server_handle(void){
+    uint8_t i =0;
+    int16_t error_temp=0;
+
+    for(i=0;i<5;i++){
+        if(get_temp_control_status(i) == TEMP_CONTROL_SPECIAL_WAIT){
+            //辅助判断一下是否到温
+            error_temp = get_target_temp(i) - get_road_temp(i);
+            if(error_temp > -10 && error_temp < 10){
+                set_temp_control_status(i,TEMP_CONTROL_ALL_READY);
+            }
+        }
     }
 
 }
@@ -424,12 +559,16 @@ static void arg_temp_control_init(void)
 
     //
 	init_temp_control_status();
+	queue_task_deal_init();
 }
 
 static void arg_temp_control_handle(void)
 {
     queue_task_handle();
     queue_task_deal_handle();
+    queue_task_deal_wait_handle();
+
+    special_wait_status_server_handle();
 }
 
 void arg_app_init(void)
