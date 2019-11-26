@@ -244,8 +244,8 @@ void set_pwm(uint8_t pwm_id , float percent){
     pwm = (uint16_t)((float)TIMER_PERIOD * percent);
 
     switch(pwm_id){
-        case 0:TIM_SetCompare2(TIM3,pwm);break;
-        case 1:TIM_SetCompare2(TIM2,pwm);break;
+        case 0:TIM_SetCompare2(TIM2,pwm);break;        
+        case 1:TIM_SetCompare2(TIM3,pwm);break;
         case 2:TIM_SetCompare1(TIM4,pwm);break;
         case 3:TIM_SetCompare2(TIM4,pwm);break;
         case 4:TIM_SetCompare4(TIM4,pwm);break;
@@ -256,8 +256,8 @@ void set_pwm(uint8_t pwm_id , float percent){
 //待示波器测试，不输出脉冲的时候最好保持低电平
 void close_pwm(uint8_t pwm_id){
     switch(pwm_id){
-        case 0:TIM_SetCompare2(TIM3,0);break;
-        case 1:TIM_SetCompare2(TIM2,0);break;
+        case 0:TIM_SetCompare2(TIM2,0);break;        
+        case 1:TIM_SetCompare2(TIM3,0);break;
         case 2:TIM_SetCompare1(TIM4,0);break;
         case 3:TIM_SetCompare2(TIM4,0);break;
         case 4:TIM_SetCompare4(TIM4,0);break;

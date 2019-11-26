@@ -37,10 +37,10 @@
 
 
 //下列的引脚定义不允许修改，因为和底层硬件定义紧密相连
-#define MOTOR_CONTROL_PORT_0    GPIOB
-#define MOTOR_CONTROL_PIN_0     GPIO_Pin_5
-#define MOTOR_CONTROL_PORT_1    GPIOA 
-#define MOTOR_CONTROL_PIN_1     GPIO_Pin_1
+#define MOTOR_CONTROL_PORT_0    GPIOA
+#define MOTOR_CONTROL_PIN_0     GPIO_Pin_1
+#define MOTOR_CONTROL_PORT_1    GPIOB
+#define MOTOR_CONTROL_PIN_1     GPIO_Pin_5
 #define MOTOR_CONTROL_PORT_2    GPIOB
 #define MOTOR_CONTROL_PIN_2     GPIO_Pin_6
 #define MOTOR_CONTROL_PORT_3    GPIOB

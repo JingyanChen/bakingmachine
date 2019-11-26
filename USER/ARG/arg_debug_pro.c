@@ -77,31 +77,32 @@ static void help(void){
     debug_sender_str(" 14 set_acc_motor id dir t Note id 0-4 dir 0/1 t 2000-65535\r\n");debug_send_nop();
     debug_sender_str(" 15 change_water_all \r\n");debug_send_nop();
     debug_sender_str(" 16 out_water_all \r\n");debug_send_nop();
-    debug_sender_str(" 17 get_temp \r\n");debug_send_nop();     
-    debug_sender_str(" 18 get_pid_sw \r\n");debug_send_nop();   
-    debug_sender_str(" 19 start_pid id taget_temp Note id 0-9 target_temp 25 - 100\r\n");debug_send_nop();  
-    debug_sender_str(" 20 open_temp_gui  open_temp_gui Note press Enter to Stop\r\n");debug_send_nop();
-    debug_sender_str(" 21 version\r\n");debug_send_nop();
-    debug_sender_str(" 22 open_tft_com_debug  Note tft com will transmit to debug port\r\n");debug_send_nop();
-    debug_sender_str(" 23 close_tft_com_debug  Note close tft com transmit\r\n");debug_send_nop();
-    debug_sender_str(" 24 read_box_status\r\n");debug_send_nop();
-    debug_sender_str(" 25 read_fan_status\r\n");debug_send_nop();
-    debug_sender_str(" 26 power_on\r\n");debug_send_nop();  
-    debug_sender_str(" 27 power_off\r\n");debug_send_nop();  
-    debug_sender_str(" 28 get_power_status\r\n");debug_send_nop();   
-    debug_sender_str(" 29 wtd_test\r\n");debug_send_nop();  
-    debug_sender_str(" 30 copyright\r\n");debug_send_nop();   
-    debug_sender_str(" 31 author\r\n");debug_send_nop();  
-    debug_sender_str(" 32 open_box_speed_debug\r\n");debug_send_nop();
-    debug_sender_str(" 33 close_box_speed_debug\r\n");debug_send_nop();
-    debug_sender_str(" 34 get_box_status_func\r\n");debug_send_nop();
-    debug_sender_str(" 35 start_pid_test\r\n");debug_send_nop();
-    debug_sender_str(" 36 run_temp_control Note : id 0-4 target_temp 250 - 1000 bool 0/1\r\n");debug_send_nop();
-    debug_sender_str(" 37 stop_temp_control Note : id 0-4 target_temp 250 - 1000 bool 0/1\r\n");debug_send_nop();
-    debug_sender_str(" 38 get_task_machine_status\r\n");debug_send_nop();
-    debug_sender_str(" 39 get_road_status\r\n");debug_send_nop();
-    debug_sender_str(" 40 open_pid_debug\r\n");debug_send_nop();
-    debug_sender_str(" 41 get_task_sys_bool\r\n");debug_send_nop();
+    debug_sender_str(" 17 get_humidity_status \r\n");debug_send_nop();    
+    debug_sender_str(" 18 get_temp \r\n");debug_send_nop();     
+    debug_sender_str(" 19 get_pid_sw \r\n");debug_send_nop();   
+    debug_sender_str(" 20 start_pid id taget_temp Note id 0-9 target_temp 25 - 100\r\n");debug_send_nop();  
+    debug_sender_str(" 21 open_temp_gui  open_temp_gui Note press Enter to Stop\r\n");debug_send_nop();
+    debug_sender_str(" 22 version\r\n");debug_send_nop();
+    debug_sender_str(" 23 open_tft_com_debug  Note tft com will transmit to debug port\r\n");debug_send_nop();
+    debug_sender_str(" 24 close_tft_com_debug  Note close tft com transmit\r\n");debug_send_nop();
+    debug_sender_str(" 25 read_box_status\r\n");debug_send_nop();
+    debug_sender_str(" 26 read_fan_status\r\n");debug_send_nop();
+    debug_sender_str(" 27 power_on\r\n");debug_send_nop();  
+    debug_sender_str(" 28 power_off\r\n");debug_send_nop();  
+    debug_sender_str(" 29 get_power_status\r\n");debug_send_nop();   
+    debug_sender_str(" 30 wtd_test\r\n");debug_send_nop();  
+    debug_sender_str(" 31 copyright\r\n");debug_send_nop();   
+    debug_sender_str(" 32 author\r\n");debug_send_nop();  
+    debug_sender_str(" 33 open_box_speed_debug\r\n");debug_send_nop();
+    debug_sender_str(" 34 close_box_speed_debug\r\n");debug_send_nop();
+    debug_sender_str(" 35 get_box_status_func\r\n");debug_send_nop();
+    debug_sender_str(" 36 start_pid_test\r\n");debug_send_nop();
+    debug_sender_str(" 37 run_temp_control Note : id 0-4 target_temp 250 - 1000 bool 0/1\r\n");debug_send_nop();
+    debug_sender_str(" 38 stop_temp_control Note : id 0-4 target_temp 250 - 1000 bool 0/1\r\n");debug_send_nop();
+    debug_sender_str(" 39 get_task_machine_status\r\n");debug_send_nop();
+    debug_sender_str(" 40 get_road_status\r\n");debug_send_nop();
+    debug_sender_str(" 41 open_pid_debug\r\n");debug_send_nop();
+    debug_sender_str(" 42 get_task_sys_bool\r\n");debug_send_nop();
 }
 
 static void get_csp_adc(void){
@@ -1461,27 +1462,27 @@ debug_func_list_t debug_func_list[] = {
     {get_pid_sw,"get_pid_sw"},{get_pid_sw,"19"},
     {start_pid,"start_pid"},{start_pid,"20"},
     {open_temp_gui,"open_temp_gui"},{open_temp_gui,"21"},
-    {version,"version"},{version,"1"},
-    {open_tft_com_debug,"open_tft_com_debug"},{open_tft_com_debug,"22"},
-    {close_tft_com_debug,"close_tft_com_debug"},{close_tft_com_debug,"23"},
-    {read_box_status,"read_box_status"},{read_box_status,"24"},
-    {read_fan_status,"read_fan_status"},{read_fan_status,"25"},
-    {power_on,"power_on"},{power_on,"26"},
-    {power_off,"power_off"},{power_off,"27"},
-    {get_power_status,"get_power_status"},{get_power_status,"28"},
-    {wtd_test,"wtd_test"},{wtd_test,"29"},
-    {copyright,"copyright"},{copyright,"30"},
-    {author,"author"},{author,"31"},
-    {open_box_speed_debug,"open_box_speed_debug"},{open_box_speed_debug,"32"},
-    {close_box_speed_debug,"close_box_speed_debug"},{close_box_speed_debug,"33"},
-    {get_box_status_func,"get_box_status_func"},{get_box_status_func,"34"},
-    {start_pid_test,"start_pid_test"},{start_pid_test,"35"},
-    {run_temp_control,"run_temp_control"},{run_temp_control,"36"},
-    {stop_temp_control,"stop_temp_control"},{stop_temp_control,"37"},
-    {get_task_machine_status_debug,"get_task_machine_status"},{get_task_machine_status_debug,"38"},
-    {get_road_status,"get_road_status"},{get_road_status,"39"},
-    {open_pid_debug,"open_pid_debug"},{open_pid_debug,"40"},
-    {get_task_sys_bool,"get_task_sys_bool"},{get_task_sys_bool,"41"},
+    {version,"version"},{version,"22"},
+    {open_tft_com_debug,"open_tft_com_debug"},{open_tft_com_debug,"23"},
+    {close_tft_com_debug,"close_tft_com_debug"},{close_tft_com_debug,"24"},
+    {read_box_status,"read_box_status"},{read_box_status,"25"},
+    {read_fan_status,"read_fan_status"},{read_fan_status,"26"},
+    {power_on,"power_on"},{power_on,"27"},
+    {power_off,"power_off"},{power_off,"28"},
+    {get_power_status,"get_power_status"},{get_power_status,"29"},
+    {wtd_test,"wtd_test"},{wtd_test,"30"},
+    {copyright,"copyright"},{copyright,"31"},
+    {author,"author"},{author,"32"},
+    {open_box_speed_debug,"open_box_speed_debug"},{open_box_speed_debug,"33"},
+    {close_box_speed_debug,"close_box_speed_debug"},{close_box_speed_debug,"34"},
+    {get_box_status_func,"get_box_status_func"},{get_box_status_func,"35"},
+    {start_pid_test,"start_pid_test"},{start_pid_test,"36"},
+    {run_temp_control,"run_temp_control"},{run_temp_control,"37"},
+    {stop_temp_control,"stop_temp_control"},{stop_temp_control,"38"},
+    {get_task_machine_status_debug,"get_task_machine_status"},{get_task_machine_status_debug,"39"},
+    {get_road_status,"get_road_status"},{get_road_status,"40"},
+    {open_pid_debug,"open_pid_debug"},{open_pid_debug,"41"},
+    {get_task_sys_bool,"get_task_sys_bool"},{get_task_sys_bool,"42"},
 };
 
 

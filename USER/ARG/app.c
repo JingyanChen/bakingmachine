@@ -79,10 +79,10 @@ void key_box_logic(uint8_t box_id)
             box_status[box_id] = box_running_backward;
             break;
     case box_running_backward:
-            debug_sender_str("key_happend \r\n");
+            //debug_sender_str("key_happend \r\n");
             start_motor_acc_arg_return(box_id);
             box_status[box_id] = box_running_forward;
-            debug_sender_str("key_happend end1\r\n");
+            //debug_sender_str("key_happend end1\r\n");
             break;
     case box_unknown:
         break;
@@ -91,7 +91,7 @@ void key_box_logic(uint8_t box_id)
         break;
     }
 
-    debug_sender_str("key_happend \r\n");
+    //debug_sender_str("key_happend \r\n");
 }
 static void key_handle_0(void) { key_box_logic(0); }
 static void key_handle_1(void) { key_box_logic(1); }
@@ -517,7 +517,7 @@ static void queue_task_deal_wait_handle(void){
                 now_running_event_task.task_running_over = true;
                 queue_task_handle();
                 queue_task_deal_hang_up = false;
-                queue_task_deal_handle();
+                queue_task_deal_handle();//开始部署下一个任务，尝试部署下一个任务
 
             break; 
     }
