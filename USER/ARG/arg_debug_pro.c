@@ -1427,11 +1427,13 @@ void get_task_sys_bool(void){
 
     bool concen_flag= false;
     bool decen_flag = false;
+    bool queue_task_deal_hang_up = false;
 
+    queue_task_deal_hang_up = get_queue_task_deal_hang_up();
     concen_flag = get_concentrate_status();
     decen_flag = get_decentralize_busy_flag();
 
-    sprintf((char *)debug_buf,"concentrate flag : %d\r\ndecentralize flag : %d",concen_flag,decen_flag);
+    sprintf((char *)debug_buf,"concentrate flag : %d\r\ndecentralize flag : %d\r\nget_queue_task_deal_hang_up : %d\r\n",concen_flag,decen_flag,queue_task_deal_hang_up);
     debug_sender_str(debug_buf);
 }
 debug_func_list_t debug_func_list[] = {

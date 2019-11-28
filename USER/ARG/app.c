@@ -406,12 +406,16 @@ void queue_task_handle(void){
  * 两个函数切换执行，需要等待事件的时候，启动wait函数，wait 满足要求，进入切换函数
  */
 bool queue_task_deal_hang_up = false;
+bool get_queue_task_deal_hang_up(void){
+    return queue_task_deal_hang_up;
+}
 static void queue_task_deal_init(void){
     queue_task_deal_hang_up = false;
 }
 static void queue_task_deal_handle(void){
 
     uint8_t change_water_road=0x01;
+    //uint8_t debug_buf[100];
 
     #if defined (STOP_TEMP_ARG) 
     float stop_temp_f = 0;
@@ -432,10 +436,18 @@ static void queue_task_deal_handle(void){
 
         #if defined (STOP_TEMP_ARG) 
             now_temp = get_road_temp(now_running_event_task.road_id);
-            stop_temp_f = ((float)now_running_event_task.target_temp - (float)now_temp) * STOP_TEMP_CAL_K + (float)now_running_event_task.target_temp;
+            stop_temp_f = ((float)now_running_event_task.target_temp - (float)now_temp) * STOP_TEMP_CAL_K + (float)now_temp;
+            //sprintf((char *)debug_buf,"target_temp : %0.2f , now_temp : %0.2f ,stop_temp_f : %0.2f",(float)now_running_event_task.target_temp,(float)now_temp,stop_temp_f);
+            //debug_sender_str(debug_buf);
+
             //尝试进入集中控温模式，有可能会失败，失败的原因是分散控温模式未达到ready状态，有几路没控制好
             if(set_pid_controller_mode_as_concentrate(now_running_event_task.road_id,now_running_event_task.target_temp,(uint16_t)stop_temp_f,STOP_TIM_DEFAULT)){
                 set_temp_control_status(now_running_event_task.road_id,TEMP_CONTROL_UP_DOWN_QUICK_STATUS);   
+
+                /*
+                 * 如果是有换水需求的降温任务，在这边解析
+                 */
+                start_water_cool(now_running_event_task.road_id,now_running_event_task.target_temp);
                 
                 //配置换水任务
                 if(now_running_event_task.need_change_water == true){
@@ -447,7 +459,7 @@ static void queue_task_deal_handle(void){
                     //打开换水状态机后，通过get_water_injection_status获得状态，当状态变为change_water_done时
                     //认为换水结束
                     change_water(change_water_road);
-
+										
                     //配置进入等待模式
                     queue_task_deal_hang_up = true;                    
             }             
@@ -483,9 +495,12 @@ static void queue_task_deal_handle(void){
 
 static void queue_task_deal_wait_handle(void){
     
-    if(queue_task_deal_hang_up == true)
+    if(queue_task_deal_hang_up == false)
         return ;
-
+		
+    if(get_task_machine_status() == task_machine_idle)
+        return ;//无任务执行
+		
     switch(get_temp_control_status(now_running_event_task.road_id)){
         case TEMP_CONTORL_STOP: queue_task_deal_hang_up = false; break;
         case TEMP_CONTROL_UP_DOWN_QUICK_STATUS:
@@ -517,9 +532,10 @@ static void queue_task_deal_wait_handle(void){
                 now_running_event_task.task_running_over = true;
                 queue_task_handle();
                 queue_task_deal_hang_up = false;
-                queue_task_deal_handle();//开始部署下一个任务，尝试部署下一个任务
+                queue_task_deal_handle();//开始部署下一个任务
 
             break; 
+				default: break;
     }
 }
 

@@ -136,7 +136,8 @@ uint16_t get_queue_size(void);
 
 //#end 温控委托框架下的实现队列实体以及访问方法enqueue & dequeue
 
-
+//获得重要的BOOL值
+bool get_queue_task_deal_hang_up(void);
 
 
 //温控委托框架下的状态机系统

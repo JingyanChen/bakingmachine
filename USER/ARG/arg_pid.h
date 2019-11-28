@@ -150,7 +150,7 @@
  * 提前关闭水冷参数
  *      系统认为，当当前温度到达目标温度+WATER_COOL_TEMP_OFFSET时会停下
  */
-#define WATER_COOL_TEMP_OFFSET 500
+#define WATER_COOL_TEMP_OFFSET 0
 
 
 

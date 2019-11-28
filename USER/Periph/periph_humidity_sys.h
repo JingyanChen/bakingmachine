@@ -69,10 +69,10 @@
 #define WATER_ROAD_NUM 5
 
 //算法重要参数，默认抽水 OUT_WATER_FIXED_TIM * 100 ms
-#define OUT_WATER_FIXED_TIM 200
+#define OUT_WATER_FIXED_TIM 80
 
 //算法重要参数，默认注水 IN_WATER_FIXED_TIM * 100 ms
-#define IN_WATER_FIXED_TIM 50
+#define IN_WATER_FIXED_TIM 25
 
 void periph_humidity_sys_init(void);
 void periph_humidity_sys_handle(void);

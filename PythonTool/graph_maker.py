@@ -2,10 +2,12 @@ import matplotlib.pyplot as plt
 from pylab import *
 
 def square_output(dat):
-    for i in range(0,len(dat)):
 
+    print("const uint16_t motor_acc_list[ACC_LIST_LEN]={\r\n    ")
+
+    for i in range(0,len(dat)):
         if(i % 10 == 0):
-            print("\r\n",end='')
+            print("\r\n    ",end='')
 
         if(int(dat[i]) < 10):
             print("  ",end='')  
@@ -16,6 +18,8 @@ def square_output(dat):
 
         print(int(dat[i]),end='')
         print(",",end='')
+
+    print("\r\n\r\n};\r\n")
 
 
 #make trapezoid graph
@@ -75,4 +79,4 @@ def trapezoid_graph_maker(min_speed,max_speed,lasting_tim,tim_total,needshow=Fal
 
 
 if __name__ == "__main__":
-    trapezoid_graph_maker(0,100,50,100,False)
+    trapezoid_graph_maker(400,900,50,100,False)

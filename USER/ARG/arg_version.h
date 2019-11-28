@@ -7,7 +7,7 @@
 
 
 #define MAIN_VERSION    1
-#define SECOND_VERSION  3
+#define SECOND_VERSION  4
 #define IS_RELEASE      0
 
 
@@ -96,6 +96,11 @@
  * 
  * 完成了所有的任务相关代码框架，待测试
  * 具体更新见PID核心算法4
+ * 
+ * V1.4 版本
+ * 
+ * 修正若干BUG，是单层的BONE版本
+ * 
  */
 
 void get_version_str(uint8_t * str,uint16_t len);

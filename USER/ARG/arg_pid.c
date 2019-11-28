@@ -323,6 +323,13 @@ void decentralized_control_mode_handle(void)
     }
 }
 
+static bool temp_in_range(int16_t range_up , int16_t range_down,int16_t error){
+    if(error > range_down && error < range_up){
+        return true;
+    }else{
+        return false;
+    }
+}
 /*
  * 集中升温模式
  * 触发此模式，必须实现配置好需要集中控制的road id号
@@ -456,20 +463,31 @@ void concentrate_control_mode_handle(void)
 
     //TODO 目前集中升温模式的结束标志仅仅是瞬间到达目标温度
     //后期可以再考虑结束的标志，结束标志决定是否进入控温态
-    if(pid_temp_error[id1] < 0 &&
-       pid_temp_error[id2] < 0 ){
-
-        //两个都到达温度了，集中温度模式结束
+    if(temp_in_range(10,-10,pid_temp_error[id1]) == true&&
+        temp_in_range(10,-10,pid_temp_error[id2] == true)){
         concentrate_condition_done = true;
-       }
-    
+        }
+
     //报文上传代码段，将此次的信息报给上位机
 
     if(get_pid_debug_sw() == true){
+        #if defined (STOP_TEMP_ARG)
+        if(pwm_out1_lock && pwm_out2_lock){
+            sprintf((char *)debug_buf,"| concentrate Mode | ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) !!!!!LOCKING!!!!!\r\n",
+                    id1,p_cal1_f,d_cal1_f,pwm_out1,pid_now_temp[id1],pid_target_temp[id1],
+                    id2,p_cal2_f,d_cal2_f,pwm_out2,pid_now_temp[id2],pid_target_temp[id2]);
+        }else{
+            sprintf((char *)debug_buf,"| concentrate Mode | ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d)\r\n",
+                    id1,p_cal1_f,d_cal1_f,pwm_out1,pid_now_temp[id1],pid_target_temp[id1],
+                    id2,p_cal2_f,d_cal2_f,pwm_out2,pid_now_temp[id2],pid_target_temp[id2]);            
+        }
+        debug_sender_str(debug_buf);
+        #else
         sprintf((char *)debug_buf,"| concentrate Mode | ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d)\r\n",
                 id1,p_cal1_f,d_cal1_f,pwm_out1,pid_now_temp[id1],pid_target_temp[id1],
                 id2,p_cal2_f,d_cal2_f,pwm_out2,pid_now_temp[id2],pid_target_temp[id2]);
         debug_sender_str(debug_buf);
+        #endif
     }
 } 
 
@@ -498,7 +516,8 @@ void stop_water_cool(uint8_t road_id){
 void start_water_cool(uint8_t road_id ,uint16_t target_temp){
 
     water_cool_pump_control(road_id % 5, 0 );//打开水冷降温
-    water_cool_target_temp[road_id % 5] = true;
+    water_cool_target_temp[road_id % 5] = target_temp;
+    water_cool_sw[road_id % 5] = true;
 
 }
 void water_cool_init(void){
@@ -567,6 +586,14 @@ void arg_pid_init(void)
 void no_reason_stop_temp_control(uint8_t road_id){
     set_pid_con_sw(road_id % 10,false);
     set_pid_con_sw((road_id * 2 + 1) % 10,false);
+
+    concentrate_condition_done = false;
+    decentralize_busy_flag = false;
+
+    //关闭温控的同时也需要关闭软件PWM
+
+    set_software_pwm(road_id % 10, 0); 
+    set_software_pwm((road_id*2 + 1) % 10, 0); 
 }
 //100ms进行一次pid运算
 void arg_pid_handle(void)
@@ -576,6 +603,9 @@ void arg_pid_handle(void)
         return;
 
     _PID_CONTROL_UP_FALG = false;
+
+
+    water_cool_handle();
 
     if (have_temp_control_task() == false)
         return;
@@ -589,5 +619,5 @@ void arg_pid_handle(void)
         decentralized_control_mode_handle();
     }
 
-    water_cool_handle();
+
 }
