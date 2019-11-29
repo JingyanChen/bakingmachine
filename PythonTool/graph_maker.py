@@ -79,4 +79,4 @@ def trapezoid_graph_maker(min_speed,max_speed,lasting_tim,tim_total,needshow=Fal
 
 
 if __name__ == "__main__":
-    trapezoid_graph_maker(400,900,50,100,False)
+    trapezoid_graph_maker(300,700,1,100,False)

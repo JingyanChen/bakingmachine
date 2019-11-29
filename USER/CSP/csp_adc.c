@@ -164,7 +164,7 @@ void csp_adc_handle(void)
          * 4mA - 480mv   20mA - 24000mV
          * 0摄氏度 - 480mV   100摄氏度 - 2400mV
          */
-        adc_temp_data[i] = (uint16_t)((float)( (float)adc_mv_data[i] - (float)480 ) / 1.92);
+            adc_temp_data[i] = (uint16_t)((float)( (float)adc_mv_data[i] - (float)480 ) / 1.92);
     }
 }
 
