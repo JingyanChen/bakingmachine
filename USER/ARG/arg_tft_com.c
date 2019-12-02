@@ -274,6 +274,7 @@ static void open_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
             set_pid_controller_mode_as_decentralize_without_set_mode(temp_event.road_id,temp_event.target_temp);//仅注册分散
             if(get_road_temp(temp_event.road_id) > temp_event.target_temp + SMALL_RANGE_DOWN_TEMP){
                 //大范围降温，需要委托水冷线程
+                set_water_pump_delay_tim(temp_event.road_id,(uint16_t)((float)(get_road_temp(temp_event.road_id) - temp_event.target_temp) * WATER_PUMP_DELAY_K + WATER_PUMP_DELAY_B));
                 start_water_cool(temp_event.road_id,temp_event.target_temp);
                 if(get_tft_com_transmit_sw()){
                     sprintf((char *)send_buf,"road %d is big cooling control.cooling dump running\r\n",temp_event.road_id);

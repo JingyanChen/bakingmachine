@@ -145,7 +145,7 @@
  *      系统认为，当需要降的温度大于SMALL_RANGE_DOWN_TEMP/10 摄氏度时，需要委托水冷系统处理降温
  *      任务。
  */
-#define SMALL_RANGE_DOWN_TEMP 200
+#define SMALL_RANGE_DOWN_TEMP 50
 /*
  * 提前关闭水冷参数
  *      系统认为，当当前温度到达目标温度+WATER_COOL_TEMP_OFFSET时会停下
@@ -169,9 +169,42 @@
  * 
  * 外部获得
  * TEMP_CONTROL_ALL_READY
- * 说明不仅你需要控制的那一路到温，系统也已经补偿完了由集中模式带来的温度损失
+ * 说明不仅你需
+ * 要控制的那一路到温，系统也已经补偿完了由集中模式带来的温度损失
  * 
  */
+
+/*
+ * PID控制器针对应用的核心算法5
+ * Author : Jingyan Chen @ ComeGene 2019.12.2
+ * 
+ * 大范围降温任务的时候，水泵泵到指定温度后，需要延时WATER_PUMP_DELAY_TIM * 100ms的时间生效
+ * 
+ * 以此来减小温度短时间内的上升
+ * 
+ * 水泵运作时间由降温程度来判断，不用固定参数。
+ * DELAY_TIM = WATER_PUMP_DELAY_K * ERROR + WATER_PUMP_DELAY_B
+ * 目前的原则
+ * 降温50.0度 保持40.0S
+ * 降温10.0度 保持8.0S
+ * 
+ * 在冷却的过程中 无条件LOCK 分散控制模式的 PWM输出
+ * 
+ * 增加了 给予外界无条件关闭某路的PWM输出的方法 代码段
+ * 
+ * 实现降温时 无条件停止某路PWM参与控制的方法
+ * 
+ */
+
+#define WATER_PUMP_DELAY_K  0.4
+#define WATER_PUMP_DELAY_B  0
+/*
+ * brief : 设置每一路的水泵降温停止时间，默认是10S
+ * pra @ id : 操作的水路ID
+ * pra @ delayTim : 停止时间 * 100ms
+ */
+void set_water_pump_delay_tim(uint8_t id ,uint16_t delayTim);
+
 
 #define PID_CONTORLLER_NUM 10
 
@@ -183,8 +216,8 @@ typedef enum{
 
 
 
-#define P 3
-#define D -5.0
+#define P 12.5
+#define D -5
 
 void arg_pid_init(void);
 void arg_pid_handle(void);

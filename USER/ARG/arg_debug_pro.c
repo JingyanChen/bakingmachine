@@ -1177,8 +1177,11 @@ static void run_temp_control(void){
             set_pid_controller_mode_as_decentralize_without_set_mode(temp_event.road_id,temp_event.target_temp);//仅注册分散
             if(get_road_temp(temp_event.road_id) > temp_event.target_temp + SMALL_RANGE_DOWN_TEMP){
                 //大范围降温，需要委托水冷线程
+                //大范围降温，计算水泵运行DELAY时间
+                set_water_pump_delay_tim(temp_event.road_id,(uint16_t)((float)(get_road_temp(temp_event.road_id) - temp_event.target_temp) * WATER_PUMP_DELAY_K + WATER_PUMP_DELAY_B));
+
                 start_water_cool(temp_event.road_id,temp_event.target_temp);
-                sprintf((char *)send_buf,"road %d is big cooling control.cooling dump running\r\n",temp_event.road_id);
+                sprintf((char *)send_buf,"road %d is big cooling control.cooling dump running delay Tim is %d\r\n",temp_event.road_id,(uint16_t)((float)(get_road_temp(temp_event.road_id) - temp_event.target_temp) * WATER_PUMP_DELAY_K + WATER_PUMP_DELAY_B));
                 debug_sender_str(send_buf); 
             }else{
                 //小范围的降温，依靠自然冷却+分散温控

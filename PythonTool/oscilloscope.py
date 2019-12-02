@@ -135,7 +135,7 @@ def addToDisplay():
 
 def ComRecvDeal():
 
-    t = InitCom('com3',115200) #串口号和波特率自行设置
+    t = InitCom('com9',115200) #串口号和波特率自行设置
 
     if(t.isOpen() == True):      
 

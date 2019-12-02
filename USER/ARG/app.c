@@ -412,7 +412,7 @@ bool get_queue_task_deal_hang_up(void){
 static void queue_task_deal_init(void){
     queue_task_deal_hang_up = false;
 }
-static void queue_task_deal_handle(void){
+static bool queue_task_deal_handle(void){
 
     uint8_t change_water_road=0x01;
     //uint8_t debug_buf[100];
@@ -423,10 +423,10 @@ static void queue_task_deal_handle(void){
     #endif
 
     if(queue_task_deal_hang_up)
-        return ;
+        return false;
 
     if(get_task_machine_status() == task_machine_idle)
-        return ;//无任务执行
+        return false;//无任务执行
 
     //根据最新的PID控制器算法核心3，仅有大范围升温任务或者有换水要求的任务会进入此状态机
     //本状态机会根据当前的任务类型来分配资源
@@ -445,10 +445,12 @@ static void queue_task_deal_handle(void){
                 set_temp_control_status(now_running_event_task.road_id,TEMP_CONTROL_UP_DOWN_QUICK_STATUS);   
 
                 /*
-                 * 如果是有换水需求的降温任务，在这边解析
+                 * 如果是有换水需求的大范围降温任务，在这边解析
                  */
-                start_water_cool(now_running_event_task.road_id,now_running_event_task.target_temp);
-                
+                 if(get_road_temp(now_running_event_task.road_id) > now_running_event_task.target_temp + SMALL_RANGE_DOWN_TEMP){
+                    start_water_cool(now_running_event_task.road_id,now_running_event_task.target_temp);
+                    set_water_pump_delay_tim(now_running_event_task.road_id,(uint16_t)((float)(get_road_temp(now_running_event_task.road_id) - now_running_event_task.target_temp) * WATER_PUMP_DELAY_K + WATER_PUMP_DELAY_B));                 
+                }
                 //配置换水任务
                 if(now_running_event_task.need_change_water == true){
                     /*
@@ -459,10 +461,10 @@ static void queue_task_deal_handle(void){
                     //打开换水状态机后，通过get_water_injection_status获得状态，当状态变为change_water_done时
                     //认为换水结束
                     change_water(change_water_road);
-										
-                    //配置进入等待模式
-                    queue_task_deal_hang_up = true;                    
-            }             
+										               
+            }   
+                //配置进入等待模式
+                queue_task_deal_hang_up = true;               
             }else{
                 //进入失败，那么，本次执行任务失败，继续等待,下一次从新尝试
                 queue_task_deal_hang_up = false;
@@ -491,6 +493,7 @@ static void queue_task_deal_handle(void){
         #endif
 
     }
+	return true;
 }
 
 static void queue_task_deal_wait_handle(void){
