@@ -165,13 +165,6 @@ void csp_adc_handle(void)
          * 0摄氏度 - 480mV   100摄氏度 - 2400mV
          */
             adc_temp_data[i] = (uint16_t)((float)( (float)adc_mv_data[i] - (float)480 ) / 1.92);
-
-        /*
-         * 19.12.2 出现第二路同一个4-20mA信号不同电压值问题，改换到第三第四路
-         */    
-
-        adc_temp_data[0] = adc_temp_data[2];
-        adc_temp_data[1] = adc_temp_data[3];
             
     }
 }
