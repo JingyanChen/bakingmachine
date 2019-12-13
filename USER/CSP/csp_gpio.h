@@ -76,9 +76,9 @@
 #define WATER_COOL_VAVLE_PORT_4 GPIOE
 #define WATER_COOL_VAVLE_PIN_4  GPIO_Pin_6
 #define WATER_COOL_VAVLE_PORT_5 GPIOG
-#define WATER_COOL_VAVLE_PIN_5  GPIO_Pin_2
+#define WATER_COOL_VAVLE_PIN_5  GPIO_Pin_14
 #define WATER_COOL_VAVLE_PORT_6 GPIOG
-#define WATER_COOL_VAVLE_PIN_6  GPIO_Pin_3
+#define WATER_COOL_VAVLE_PIN_6  GPIO_Pin_15
 
 #define WATER_COOL_LIQUID_FEEDBACK_PORT_0   GPIOD
 #define WATER_COOL_LIQUID_FEEDBACK_PIN_0    GPIO_Pin_9
@@ -94,9 +94,9 @@
 
 //humidity system
 
-#define HUMIDITY_CONTROL_PORT_0 GPIOB
+#define HUMIDITY_CONTROL_PORT_0 GPIOD
 #define HUMIDITY_CONTROL_PIN_0  GPIO_Pin_14
-#define HUMIDITY_CONTROL_PORT_1 GPIOB
+#define HUMIDITY_CONTROL_PORT_1 GPIOD
 #define HUMIDITY_CONTROL_PIN_1  GPIO_Pin_15
 
 
@@ -124,32 +124,32 @@
 #define MOTOR_LIMIT_PIN_9   GPIO_Pin_6
 
 
-#define MOTOR_DIR_PORT_0    GPIOE
-#define MOTOR_DIR_PIN_0     GPIO_Pin_11
-#define MOTOR_DIR_PORT_1    GPIOE
-#define MOTOR_DIR_PIN_1     GPIO_Pin_12
-#define MOTOR_DIR_PORT_2    GPIOE
-#define MOTOR_DIR_PIN_2     GPIO_Pin_13
-#define MOTOR_DIR_PORT_3    GPIOE
-#define MOTOR_DIR_PIN_3     GPIO_Pin_14
-#define MOTOR_DIR_PORT_4    GPIOE
-#define MOTOR_DIR_PIN_4     GPIO_Pin_15
+#define MOTOR_DIR_PORT_0    GPIOG
+#define MOTOR_DIR_PIN_0     GPIO_Pin_9
+#define MOTOR_DIR_PORT_1    GPIOG
+#define MOTOR_DIR_PIN_1     GPIO_Pin_10
+#define MOTOR_DIR_PORT_2    GPIOG
+#define MOTOR_DIR_PIN_2     GPIO_Pin_11
+#define MOTOR_DIR_PORT_3    GPIOG
+#define MOTOR_DIR_PIN_3     GPIO_Pin_12
+#define MOTOR_DIR_PORT_4    GPIOG
+#define MOTOR_DIR_PIN_4     GPIO_Pin_13
 
 //key system
 
 
-#define KEY_IN_PORT_0   GPIOG//GPIOD
-#define KEY_IN_PIN_0    GPIO_Pin_9//GPIO_Pin_9
-#define KEY_IN_PORT_1   GPIOG//GPIOD
-#define KEY_IN_PIN_1    GPIO_Pin_10//GPIO_Pin_10
-#define KEY_IN_PORT_2   GPIOG//GPIOD
-#define KEY_IN_PIN_2    GPIO_Pin_11//GPIO_Pin_11
-#define KEY_IN_PORT_3   GPIOG//GPIOD
-#define KEY_IN_PIN_3    GPIO_Pin_12//GPIO_Pin_12
-#define KEY_IN_PORT_4   GPIOG//GPIOD
-#define KEY_IN_PIN_4    GPIO_Pin_13//GPIO_Pin_13
+#define KEY_IN_PORT_0   GPIOB
+#define KEY_IN_PIN_0    GPIO_Pin_12
+#define KEY_IN_PORT_1   GPIOB
+#define KEY_IN_PIN_1    GPIO_Pin_13
+#define KEY_IN_PORT_2   GPIOB
+#define KEY_IN_PIN_2    GPIO_Pin_14
+#define KEY_IN_PORT_3   GPIOB
+#define KEY_IN_PIN_3    GPIO_Pin_15
+#define KEY_IN_PORT_4   GPIOD
+#define KEY_IN_PIN_4    GPIO_Pin_8
 #define KEY_POWER_PORT  GPIOE
-#define KEY_POWER_PIN   GPIO_Pin_1
+#define KEY_POWER_PIN   GPIO_Pin_15
 
 
 //fan system
@@ -167,18 +167,23 @@
 
 //RS485 system
 
-#define RS485_EN_PORT   GPIOA
-#define RS485_EN_PIN    GPIO_Pin_11
+#define RS485_EN_PORT   GPIOC
+#define RS485_EN_PIN    GPIO_Pin_13
 
 //LED 
 
 #define LED_PORT   GPIOE
-#define LED_PIN    GPIO_Pin_0
+#define LED_PIN    GPIO_Pin_14
 
 //LCD POWER
 
-#define LCD_POWER_PORT  GPIOG
-#define LCD_POWER_PIN   GPIO_Pin_15 
+#define LCD_POWER_PORT  GPIOC
+#define LCD_POWER_PIN   GPIO_Pin_6
+
+//MOTOR RUNNING ENABLE 
+#define MOTOR_ENABLE_PORT GPIOE
+#define MOTOR_ENABLE_PIN  GPIO_Pin_0
+
 
 void csp_gpio_init(void);
 void csp_gpio_handle(void);
@@ -238,5 +243,8 @@ void motor_dir_set(uint8_t id , bool sw);
  * set lcd power 
  */
 void lcd_power_control(bool sw);
-
+/*
+ * set motor enable port 
+ */
+void motor_enable_control(bool sw);
 #endif

@@ -38,6 +38,8 @@ GPIO_TypeDef *OUTPUT_PORT_LIST[] = {
 
     LCD_POWER_PORT,
 
+    MOTOR_ENABLE_PORT,
+
 };
 
 uint16_t OUTPUT_PIN_LIST[] = {
@@ -75,6 +77,8 @@ uint16_t OUTPUT_PIN_LIST[] = {
     MOTOR_DIR_PIN_4,
 
     LCD_POWER_PIN,
+
+    MOTOR_ENABLE_PIN,
 };
 
 GPIO_TypeDef *INPUT_PORT_LIST[] = {
@@ -139,7 +143,7 @@ void csp_gpio_init(void){
 
     //output set
 
-    for (i = 0; i < 27; i++)
+    for (i = 0; i < 28; i++)
     {
 
         GPIO_InitStructure.GPIO_Pin = OUTPUT_PIN_LIST[i];
@@ -181,9 +185,8 @@ void csp_gpio_init(void){
     humidity_control(0,true);
     humidity_control(1,true);
 
-
     //
-
+    motor_enable_control(true);
 }
 
 void csp_gpio_handle(void){
@@ -238,18 +241,26 @@ void rs485_enbale_control(bool sw){
 
 void power_led_control(bool sw){
     if(sw){
-        GPIO_SetBits(LED_PORT , LED_PIN);
-    }else{
         GPIO_ResetBits(LED_PORT , LED_PIN);
+    }else{
+        GPIO_SetBits(LED_PORT , LED_PIN);
     }      
 }
 
 void lcd_power_control(bool sw){
     if(sw){
-        GPIO_SetBits(LCD_POWER_PORT , LCD_POWER_PIN);
-    }else{
         GPIO_ResetBits(LCD_POWER_PORT , LCD_POWER_PIN);
+    }else{
+        GPIO_SetBits(LCD_POWER_PORT , LCD_POWER_PIN);
     } 
+}
+
+void motor_enable_control(bool sw){
+    if(sw){
+        GPIO_SetBits(MOTOR_ENABLE_PORT , MOTOR_ENABLE_PIN);
+    }else{
+        GPIO_ResetBits(MOTOR_ENABLE_PORT , MOTOR_ENABLE_PIN);
+    }     
 }
 
 #define MOTOR_DIR_CONTROL_OFFSET 21

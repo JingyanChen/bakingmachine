@@ -130,11 +130,15 @@ const uint16_t motor_acc_list[ACC_LIST_LEN]={
 
 #endif
 void periph_motor_init(void){
+    
     uint8_t i=0;
+
     for(i=0;i<MOTOR_NUM;i++){
         motor_status[i] = no_running;
         clear_motor_acc_arg(i);
     }
+
+    motor_enable_control(false);
 }
 
 static void motor_limit_handle(void){
