@@ -6,8 +6,8 @@
 #include <stdio.h>
 
 
-#define MAIN_VERSION    1
-#define SECOND_VERSION  5
+#define MAIN_VERSION    2
+#define SECOND_VERSION  0
 #define IS_RELEASE      0
 
 
