@@ -103,6 +103,8 @@ static void help(void){
     debug_sender_str(" 40 get_road_status\r\n");debug_send_nop();
     debug_sender_str(" 41 open_pid_debug\r\n");debug_send_nop();
     debug_sender_str(" 42 get_task_sys_bool\r\n");debug_send_nop();
+    debug_sender_str(" 43 press_run_key\r\n");debug_send_nop();
+    
 }
 
 static void get_csp_adc(void){
@@ -1439,6 +1441,10 @@ void get_task_sys_bool(void){
     sprintf((char *)debug_buf,"concentrate flag : %d\r\ndecentralize flag : %d\r\nget_queue_task_deal_hang_up : %d\r\n",concen_flag,decen_flag,queue_task_deal_hang_up);
     debug_sender_str(debug_buf);
 }
+
+void press_run_key(void){
+    key_box_logic(0);
+}
 debug_func_list_t debug_func_list[] = {
 
     {help,"help"},{help,"?"},{help,"HELP"},
@@ -1488,6 +1494,7 @@ debug_func_list_t debug_func_list[] = {
     {get_road_status,"get_road_status"},{get_road_status,"40"},
     {open_pid_debug,"open_pid_debug"},{open_pid_debug,"41"},
     {get_task_sys_bool,"get_task_sys_bool"},{get_task_sys_bool,"42"},
+    {press_run_key,"press_run_key"},{press_run_key,"43"},
 };
 
 

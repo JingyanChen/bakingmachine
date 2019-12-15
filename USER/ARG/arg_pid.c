@@ -639,8 +639,12 @@ static void close_water_pump_handle(void){
     for(i=0;i<5;i++){
         if(get_close_water_pump_sw(i)){
             close_tick[i]++;
+            
+            if(close_tick[i] > WATER_PUMP_DELAY_TIM[i] / 2){
+                 water_cool_pump_control(i % 5, 1 );//关闭水冷降温            
+            }            
+
             if(close_tick[i] > WATER_PUMP_DELAY_TIM[i]){
-                 water_cool_pump_control(i % 5, 1 );//关闭水冷降温
                  close_tick[i] = 0;
                  water_cool_sw[i] = false;
                  set_close_water_pump_sw(i,false);
@@ -680,7 +684,8 @@ void water_cool_handle(void){
 
             //sprintf((char *)debug_buf,"max_temp: %d target_temp %d \r\n",road_temp_min , water_cool_target_temp[i]);
             //debug_sender_str(debug_buf);
-            delay_ms(10);
+            //delay_ms(10);
+
             if(road_temp_min < water_cool_target_temp[i] + WATER_COOL_TEMP_OFFSET){
                 //debug_sender_str("LOW TEMP HAPPEND\r\n");
                 delay_ms(10);

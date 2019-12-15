@@ -7,8 +7,8 @@
 
 
 #define MAIN_VERSION    2
-#define SECOND_VERSION  0
-#define IS_RELEASE      0
+#define SECOND_VERSION  1
+#define IS_RELEASE      1
 
 
 /*
@@ -125,6 +125,12 @@
  * V2.0版本
  * 
  * 修修改了GPIO定义以适应最新的电路板
+ * 
+ * V2.1版本
+ * 
+ * 优化了降温算法，降温超越时间，也就是打开水冷使得温度低于目标温度后持续的时间，被一分为二
+ * 前段时间继续打开水冷 处理余温，后一段时间不打开PID控制器，使得其自己缓一会，内部处理温差
+ * 然后再外力介入，控制温度。
  * 
  */
 
