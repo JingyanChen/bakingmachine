@@ -7,7 +7,7 @@
 
 
 #define MAIN_VERSION    2
-#define SECOND_VERSION  1
+#define SECOND_VERSION  2
 #define IS_RELEASE      1
 
 
@@ -131,6 +131,10 @@
  * 优化了降温算法，降温超越时间，也就是打开水冷使得温度低于目标温度后持续的时间，被一分为二
  * 前段时间继续打开水冷 处理余温，后一段时间不打开PID控制器，使得其自己缓一会，内部处理温差
  * 然后再外力介入，控制温度。
+ * 
+ * V2.2版本
+ * 
+ * 加入了分段PID算法，见"PID控制器针对应用的核心算法7"
  * 
  */
 
