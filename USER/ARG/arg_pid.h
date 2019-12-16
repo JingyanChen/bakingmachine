@@ -236,8 +236,36 @@ typedef enum{
  */
 
 
-#define P 12.5
-#define D -5
+
+/*
+ * PID控制器针对应用的核心算法7
+ * 
+ * 分段PID算法，再低温控制的时候，降低P参数
+ * 
+ * 判断条件：当前温度<30 度 且目标温度<45度
+ * 
+ * 否则采用大型的PID参数
+ * 
+ * 把参数由常量转换为变量
+ * 
+ * 增加pd参数选择线程 pd_pra_sel_handle 处理上述算法
+ * 
+ * 判断按加热片为单位，再计算PID参数之前，根据每一路的温度和目标温度
+ * 选择是小P还是大P 30 -》80 是大P 30 -》50 大P 
+ * 
+ * 此算法的核心目的在于 80->30 水冷后 会有一瞬间 当前温度会皆低于30度 目标温度30
+ * 此时用小PID算法 
+ */
+
+#define LOW_NOW_TEMP_THR  450
+#define LOW_TARGET_TEMP_THR 450
+
+
+#define P_LOW_TEMP 4.0f
+#define D_LOW_TEMP -10.0f
+
+#define P 12.5f
+#define D -5.0f
 
 void arg_pid_init(void);
 void arg_pid_handle(void);

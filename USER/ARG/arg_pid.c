@@ -23,6 +23,9 @@ static int16_t pid_now_temp[PID_CONTORLLER_NUM];
 static int16_t pid_temp_error[PID_CONTORLLER_NUM];
 static int16_t pid_temp_error_last[PID_CONTORLLER_NUM];
 
+static float p_pra = P;
+static float d_pra = D;
+
 //温控模式相关处理代码
 
 temp_control_mode_t temp_control_mode;
@@ -207,6 +210,25 @@ void water_cool_init(void){
     }
 }
 
+
+static void pd_pra_sel_handle(uint8_t id){
+    uint16_t temp=0;
+    uint16_t temp_target=0;
+
+    temp = adc_temp_data[id % 10];
+    temp_target = pid_target_temp[id % 10];
+
+    if(temp <= LOW_NOW_TEMP_THR && temp_target <= LOW_TARGET_TEMP_THR){
+        p_pra = P_LOW_TEMP;
+        d_pra = D_LOW_TEMP;
+    }else{
+        p_pra = P;
+        d_pra = D;        
+    }
+}
+
+
+
 /* 
  * 给予外界无条件关闭某路的PWM输出的方法 end
  */
@@ -316,6 +338,8 @@ void decentralized_control_mode_handle(void)
         {
             if (pid_temp_error[running_pid_id[0] % 10] > 0)
             {
+                pd_pra_sel_handle(running_pid_id[1]  % 10);
+
                 //开始计算PWM占空比，使用PD算法
                 p_cal1_f = (float)P * (float)pid_temp_error[running_pid_id[0] % 10];
                 d_cal1_f = (float)D * ((float)pid_temp_error_last[running_pid_id[0] % 10] - (float)pid_temp_error[running_pid_id[0]]);
@@ -345,9 +369,11 @@ void decentralized_control_mode_handle(void)
         {
             if (pid_temp_error[running_pid_id[1] % 10] > 0)
             {
+                pd_pra_sel_handle(running_pid_id[1]  % 10);
+
                 //开始计算PWM占空比，使用PD算法
-                p_cal2_f = (float)P * (float)pid_temp_error[running_pid_id[1] % 10];
-                d_cal2_f = (float)D * ((float)pid_temp_error_last[running_pid_id[1] % 10] - (float)pid_temp_error[running_pid_id[1]]);
+                p_cal2_f = (float)p_pra * (float)pid_temp_error[running_pid_id[1] % 10];
+                d_cal2_f = (float)d_pra * ((float)pid_temp_error_last[running_pid_id[1] % 10] - (float)pid_temp_error[running_pid_id[1]]);
                     
                 pwm_out2_f =  p_cal2_f + d_cal2_f;
 
@@ -413,6 +439,10 @@ static bool temp_in_range(int16_t range_up , int16_t range_down,int16_t error){
         return false;
     }
 }
+
+
+
+
 /*
  * 集中升温模式
  * 触发此模式，必须实现配置好需要集中控制的road id号
@@ -488,8 +518,11 @@ void concentrate_control_mode_handle(void)
     //开始PID控温
     if (pid_temp_error[concentrate_control_mode_road_id[0] % 10] > 0)
     {
-        p_cal1_f = (float)P * (float)pid_temp_error[id1];
-        d_cal1_f = (float)D * ((float)pid_temp_error_last[id1] - (float)pid_temp_error[id1]);
+
+        pd_pra_sel_handle(concentrate_control_mode_road_id[0] % 10);
+
+        p_cal1_f = (float)p_pra * (float)pid_temp_error[id1];
+        d_cal1_f = (float)d_pra * ((float)pid_temp_error_last[id1] - (float)pid_temp_error[id1]);
 
         pwm_out1_f = p_cal1_f + d_cal1_f;
 
@@ -518,8 +551,11 @@ void concentrate_control_mode_handle(void)
         set_software_pwm(id1, pwm_out1);        
     }
 
-    if (pid_temp_error[id2] > 0)
+    if (pid_temp_error[concentrate_control_mode_road_id[1] % 10] > 0)
     {
+        
+        pd_pra_sel_handle(concentrate_control_mode_road_id[1] % 10);
+
         p_cal2_f = (float)P * (float)pid_temp_error[id2];
         d_cal2_f = (float)D * ((float)pid_temp_error_last[id2] - (float)pid_temp_error[id2]);
 
@@ -698,7 +734,6 @@ void water_cool_handle(void){
         }
     }
 }
-
 
 void arg_pid_init(void)
 {
