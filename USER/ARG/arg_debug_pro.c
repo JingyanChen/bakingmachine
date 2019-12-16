@@ -104,6 +104,8 @@ static void help(void){
     debug_sender_str(" 41 open_pid_debug\r\n");debug_send_nop();
     debug_sender_str(" 42 get_task_sys_bool\r\n");debug_send_nop();
     debug_sender_str(" 43 press_run_key\r\n");debug_send_nop();
+    debug_sender_str(" 44 start_down_temp\r\n");debug_send_nop();
+    debug_sender_str(" 45 stop_down_temp\r\n");debug_send_nop();
     
 }
 
@@ -1445,6 +1447,21 @@ void get_task_sys_bool(void){
 void press_run_key(void){
     key_box_logic(0);
 }
+
+void start_down_temp(void){
+    uint8_t i =0;
+    for(i=0;i<5;i++){
+        water_cool_pump_control(i,false);
+    }
+}
+
+
+void stop_down_temp(void){
+    uint8_t i =0;
+    for(i=0;i<5;i++){
+        water_cool_pump_control(i,true);
+    }
+}
 debug_func_list_t debug_func_list[] = {
 
     {help,"help"},{help,"?"},{help,"HELP"},
@@ -1495,6 +1512,8 @@ debug_func_list_t debug_func_list[] = {
     {open_pid_debug,"open_pid_debug"},{open_pid_debug,"41"},
     {get_task_sys_bool,"get_task_sys_bool"},{get_task_sys_bool,"42"},
     {press_run_key,"press_run_key"},{press_run_key,"43"},
+    {start_down_temp,"start_down_temp"},{start_down_temp,"44"},
+    {stop_down_temp,"stop_down_temp"},{stop_down_temp,"45"},
 };
 
 
@@ -1555,8 +1574,8 @@ void arg_debug_pro_handle(void){
 
     if(temp_gui_upload_sw){
         //根据实际需要，上报浮点数，画曲线。
-        sprintf((char *)sender_buf,"temp1,%f;temp2,%f;\n",(float)adc_temp_data[0],(float)adc_temp_data[1]);
-        //sprintf((char *)sender_buf,"temp1,%f;temp2,%f;temp3,%f;temp4,%f;\n",(float)adc_temp_data[0],(float)adc_temp_data[1],(float)adc_temp_data[2],(float)adc_temp_data[3]);
+        //sprintf((char *)sender_buf,"temp1,%f;temp2,%f;\n",(float)adc_temp_data[0],(float)adc_temp_data[1]);
+        sprintf((char *)sender_buf,"temp1,%f;temp2,%f;temp3,%f;temp4,%f;temp5,%f;temp6,%f;temp7,%f;temp8,%f;\n",(float)adc_temp_data[0],(float)adc_temp_data[1],(float)adc_temp_data[2],(float)adc_temp_data[3],(float)adc_temp_data[4],(float)adc_temp_data[5],(float)adc_temp_data[6],(float)adc_temp_data[7]);
         debug_sender_str(sender_buf);
     }  
 }

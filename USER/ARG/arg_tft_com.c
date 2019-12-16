@@ -197,7 +197,7 @@ static void open_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
             } 
 
             //盒子是否关闭检查，必须关闭以后在做升温操作
-
+						/*
             if(get_box_status(i) != box_off){
 
                 if(get_tft_com_transmit_sw() == true){
@@ -212,6 +212,7 @@ static void open_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
 
                 return ;            
         }
+						*/
 
         }else{
             temp_target[i] = 0xff;

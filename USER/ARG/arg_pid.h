@@ -197,7 +197,7 @@
  */
 
 
-#define WATER_PUMP_DELAY_K  0.4
+#define WATER_PUMP_DELAY_K  0.8
 #define WATER_PUMP_DELAY_B  0
 /*
  * brief : 设置每一路的水泵降温停止时间，默认是10S
@@ -263,6 +263,25 @@ typedef enum{
 
 #define P_LOW_TEMP 4.0f
 #define D_LOW_TEMP -10.0f
+
+
+
+/*
+ * PID控制器针对应用的核心算法8
+ * 
+ * 分散控温的时候 适当给其一个P参数增益,使得其再短暂瞬间多获得一些能量
+ * 
+ * 
+ * 6 8 10 增益P参数
+ * 2 4 不增益P参数
+ * 
+ */
+
+#define _6_CONTORL_NUM_P_GAIN  1.2f
+#define _8_CONTORL_NUM_P_GAIN  1.4f
+#define _10_CONTORL_NUM_P_GAIN 1.6f
+
+
 
 #define P 12.5f
 #define D -5.0f

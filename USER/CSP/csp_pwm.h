@@ -112,5 +112,12 @@ bool set_software_pwm(uint8_t pwm_id , uint16_t percent);
  * pra @ pwm_id  : pwd id 
  */
 void close_software_pwm(uint8_t pwm_id);
+
+/*
+ * close all software pwm out exclude id1 id2
+ */
+void close_all_software_pwm_out_except(uint8_t id1,uint8_t id2);
+
+void close_all_software_pwm_out(void);
 #endif
 

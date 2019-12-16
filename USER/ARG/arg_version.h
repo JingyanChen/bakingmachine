@@ -136,6 +136,10 @@
  * 
  * 加入了分段PID算法，见"PID控制器针对应用的核心算法7"
  * 
+ * V2.3版本
+ * 
+ * 加入核心算法8，再分散控温的时候，对P进行增益
+ * 
  */
 
 void get_version_str(uint8_t * str,uint16_t len);

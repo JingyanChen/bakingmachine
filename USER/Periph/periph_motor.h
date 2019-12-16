@@ -67,7 +67,7 @@
  * 运动曲线3 先700匀速60%时间 后减速40时间700->300
  * 4S运动结束
  */
-#define SPEED_MODE
+#define MODERATION_MODE
 
 
 /*

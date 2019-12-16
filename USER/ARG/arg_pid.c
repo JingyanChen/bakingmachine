@@ -55,7 +55,7 @@ void set_pid_con_sw(uint8_t id, bool sw)
 int16_t get_target_temp(uint8_t road_id){
      int16_t sum_target_temp=0;
 
-     sum_target_temp = pid_target_temp[road_id % 10] + pid_target_temp[(road_id *2 + 1) % 10];
+     sum_target_temp = pid_target_temp[road_id * 2 % 10] + pid_target_temp[(road_id *2 + 1) % 10];
      sum_target_temp /= 2;
 
      return sum_target_temp;
@@ -63,10 +63,10 @@ int16_t get_target_temp(uint8_t road_id){
 void set_pid_controller_mode_as_decentralize(uint8_t id, uint16_t target_temp)
 {
 
-    pid_target_temp[(id) % 10] = target_temp ;
+    pid_target_temp[(id * 2) % 10] = target_temp ;
     pid_target_temp[(id * 2 + 1) % 10] = target_temp ;
 
-    set_pid_con_sw(id % 10, true);
+    set_pid_con_sw((id * 2) % 10, true);
     set_pid_con_sw((id * 2 + 1) % 10, true);
 
     set_temp_control_mode(DECENTRALIZED_CONTROL_MODE);
@@ -75,10 +75,10 @@ void set_pid_controller_mode_as_decentralize(uint8_t id, uint16_t target_temp)
 void set_pid_controller_mode_as_decentralize_without_set_mode(uint8_t id, uint16_t target_temp)
 {
 
-    pid_target_temp[(id) % 10] = target_temp ;
+    pid_target_temp[(id * 2) % 10] = target_temp ;
     pid_target_temp[(id * 2 + 1) % 10] = target_temp ;
 
-    set_pid_con_sw(id % 10, true);
+    set_pid_con_sw((id * 2 )% 10, true);
     set_pid_con_sw((id * 2 + 1) % 10, true);
 }
 
@@ -123,7 +123,7 @@ bool set_pid_controller_mode_as_concentrate(uint8_t road_id, uint16_t target_tem
     set_pid_controller_mode_as_decentralize(road_id, target_temp);
     set_temp_control_mode(CONCENTRATE_CONTROL_MODE);
 
-    concentrate_control_mode_road_id[0] = road_id;
+    concentrate_control_mode_road_id[0] = road_id * 2;
     concentrate_control_mode_road_id[1] = road_id * 2 + 1;
 
     concentrate_condition_done  = false;
@@ -150,7 +150,7 @@ bool set_pid_controller_mode_as_concentrate(uint8_t road_id, uint16_t target_tem
     set_pid_controller_mode_as_decentralize(road_id, target_temp);
     set_temp_control_mode(CONCENTRATE_CONTROL_MODE);
 
-    concentrate_control_mode_road_id[0] = road_id;
+    concentrate_control_mode_road_id[0] = road_id * 2;
     concentrate_control_mode_road_id[1] = road_id * 2 + 1;
 
     concentrate_condition_done  = false;
@@ -264,6 +264,13 @@ void decentralized_control_mode_handle(void)
     float d_cal2_f = 0;
 
     uint8_t debug_buf[200];
+
+    uint8_t control_road_num=0;
+    float p_gain=1.0f;
+
+    //关闭上一次所有的PWM控制重新开始
+    close_all_software_pwm_out();
+
     //更新一次所有温度的误差数据
 
     for (i = 0; i < PID_CONTORLLER_NUM; i++)
@@ -331,17 +338,40 @@ void decentralized_control_mode_handle(void)
         //获得了第二大的error id
         running_pid_id[1] = error_max_id;
 
+
         //获取到了 最大温差路 和最小温差路，过滤掉了被强制关闭的路
     }
+
+    /*
+     * PID控制器针对应用的核心算法8 
+     * 根据同时需要控制加热片的个数来决定是否需要对P进行增益
+     */
+
+    for (i = 0; i < PID_CONTORLLER_NUM; i++){
+        if (get_pid_con_sw(i) == true)
+        {
+            control_road_num++;
+
+            if(control_road_num >=6 ){
+                //控制个数超过了6个，适当增益P，使得恒温效果更佳
+                switch(control_road_num){
+                    case 6:p_gain = _6_CONTORL_NUM_P_GAIN ; break;
+                    case 8:p_gain = _8_CONTORL_NUM_P_GAIN ;break;
+                    case 10:p_gain = _10_CONTORL_NUM_P_GAIN ;break;
+                }
+            }
+        }
+    }
+
     if(pid_running_num != 0){
         if (get_pid_con_sw(running_pid_id[0] % 10))
         {
             if (pid_temp_error[running_pid_id[0] % 10] > 0)
             {
-                pd_pra_sel_handle(running_pid_id[1]  % 10);
+                pd_pra_sel_handle(running_pid_id[0]  % 10);
 
                 //开始计算PWM占空比，使用PD算法
-                p_cal1_f = (float)P * (float)pid_temp_error[running_pid_id[0] % 10];
+                p_cal1_f = (float)P * (float)pid_temp_error[running_pid_id[0] % 10] * p_gain;
                 d_cal1_f = (float)D * ((float)pid_temp_error_last[running_pid_id[0] % 10] - (float)pid_temp_error[running_pid_id[0]]);
                 pwm_out1_f =  p_cal1_f + d_cal1_f;
 
@@ -372,7 +402,7 @@ void decentralized_control_mode_handle(void)
                 pd_pra_sel_handle(running_pid_id[1]  % 10);
 
                 //开始计算PWM占空比，使用PD算法
-                p_cal2_f = (float)p_pra * (float)pid_temp_error[running_pid_id[1] % 10];
+                p_cal2_f = (float)p_pra * (float)pid_temp_error[running_pid_id[1] % 10] * p_gain;
                 d_cal2_f = (float)d_pra * ((float)pid_temp_error_last[running_pid_id[1] % 10] - (float)pid_temp_error[running_pid_id[1]]);
                     
                 pwm_out2_f =  p_cal2_f + d_cal2_f;
@@ -469,6 +499,11 @@ void concentrate_control_mode_handle(void)
 
     id1 = concentrate_control_mode_road_id[0] % 10;
     id2 = concentrate_control_mode_road_id[1] % 10;
+
+
+    //关闭所有非id1 id2的PWM输出
+
+    close_all_software_pwm_out_except(id1,id2);
 
     //仅更新集中两路的温度
     pid_now_temp[id1] = adc_temp_data[id1];
@@ -637,7 +672,7 @@ static bool have_temp_control_task(void)
 uint16_t get_road_temp(uint8_t road_id){
     uint16_t water_cool_road_temp = 0;
     
-    water_cool_road_temp += adc_temp_data[road_id % 10];
+    water_cool_road_temp += adc_temp_data[road_id * 2 % 10];
     water_cool_road_temp += adc_temp_data[(road_id * 2 + 1) % 10];    
 
     water_cool_road_temp /= 2;
@@ -709,7 +744,7 @@ void water_cool_handle(void){
     for(i=0;i<5;i++){
         if(water_cool_sw[i] == true && get_close_water_pump_sw(i) == false){
             //19.12.2 关闭泵的条件由均值到达目标温度改为最小值到达目标温度
-            water_cool_road_temp[0] = adc_temp_data[i % 10];
+            water_cool_road_temp[0] = adc_temp_data[(i * 2) % 10];
             water_cool_road_temp[1] = adc_temp_data[(i * 2 + 1) % 10];
 
             if(water_cool_road_temp[0] < water_cool_road_temp[1]){
@@ -724,7 +759,7 @@ void water_cool_handle(void){
 
             if(road_temp_min < water_cool_target_temp[i] + WATER_COOL_TEMP_OFFSET){
                 //debug_sender_str("LOW TEMP HAPPEND\r\n");
-                delay_ms(10);
+                //delay_ms(10);
                 set_close_water_pump_sw(i ,true); //委托一个延时关闭任务
                 set_no_reason_stop_decentralized_pwm_sw(i,true);//暂时关闭分散控温算法，大范围降温时发生
                 //关闭软件PWM
@@ -756,7 +791,7 @@ void arg_pid_init(void)
 }
 
 void no_reason_stop_temp_control(uint8_t road_id){
-    set_pid_con_sw(road_id % 10,false);
+    set_pid_con_sw((road_id * 2) % 10,false);
     set_pid_con_sw((road_id * 2 + 1) % 10,false);
 
     concentrate_condition_done = false;
@@ -764,8 +799,8 @@ void no_reason_stop_temp_control(uint8_t road_id){
 
     //关闭温控的同时也需要关闭软件PWM
 
-    set_software_pwm(road_id % 10, 0); 
-    set_software_pwm((road_id*2 + 1) % 10, 0); 
+    set_software_pwm((road_id * 2) % 10, 0); 
+    set_software_pwm((road_id* 2 + 1) % 10, 0); 
 }
 //100ms进行一次pid运算
 void arg_pid_handle(void)

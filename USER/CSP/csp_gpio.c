@@ -143,7 +143,7 @@ void csp_gpio_init(void){
 
     //output set
 
-    for (i = 0; i < 28; i++)
+    for (i = 0; i < 27; i++)
     {
 
         GPIO_InitStructure.GPIO_Pin = OUTPUT_PIN_LIST[i];
@@ -152,7 +152,13 @@ void csp_gpio_init(void){
         GPIO_Init(OUTPUT_PORT_LIST[i], &GPIO_InitStructure);
         GPIO_ResetBits(OUTPUT_PORT_LIST[i], OUTPUT_PIN_LIST[i]);
     }
-
+		
+        GPIO_InitStructure.GPIO_Pin = MOTOR_ENABLE_PIN;
+        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+        GPIO_Init(OUTPUT_PORT_LIST[i], &GPIO_InitStructure);
+        GPIO_SetBits(MOTOR_ENABLE_PORT, MOTOR_ENABLE_PIN);
+		
     //input set
 
     for (i = 0; i < 21; i++)

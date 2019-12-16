@@ -33,7 +33,7 @@ uint16_t PWM_PIN_LIST[]={
 };
 
 
-#define TIMER_PERIOD 8999
+#define TIMER_PERIOD 4449
 //#define TIMER_PERIOD 65534
 void csp_pwm_init(void)
 {
@@ -139,7 +139,7 @@ void csp_pwm_init(void)
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1; //
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable; //
     TIM_OCInitStructure.TIM_Pulse = 0; //
-    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low; //
+    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High; //
 
     TIM_OC4Init(TIM4, &TIM_OCInitStructure); //
 
@@ -272,4 +272,22 @@ bool set_software_pwm(uint8_t pwm_id , uint16_t percent){
 
 void close_software_pwm(uint8_t pwm_id){
     set_pwm_maker_percent(pwm_id,0);
+}
+
+void close_all_software_pwm_out_except(uint8_t id1,uint8_t id2){
+    uint8_t i=0;
+    for(i=0;i<10;i++){
+        if(i!=id1 && i!=id2){
+            set_pwm_maker_percent(i,0);
+            access_pwm_gpio_v(i,false);
+        }
+    }
+}
+
+void close_all_software_pwm_out(void){
+    uint8_t i=0;
+    for(i=0;i<10;i++){
+            set_pwm_maker_percent(i,0);
+            access_pwm_gpio_v(i,false);
+    }
 }
