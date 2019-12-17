@@ -7,7 +7,7 @@
 
 
 #define MAIN_VERSION    2
-#define SECOND_VERSION  2
+#define SECOND_VERSION  4
 #define IS_RELEASE      1
 
 
@@ -138,7 +138,11 @@
  * 
  * V2.3版本
  * 
- * 加入核心算法8，再分散控温的时候，对P进行增益
+ * 加入核心算法8，再分散控温的时候，对P进行增益\
+ * 
+ * V2.4版本
+ * 加入快捷开所有风扇功能
+ * 修正了分散控温模式每一路仅在奇数和偶数路选路的问题
  * 
  */
 

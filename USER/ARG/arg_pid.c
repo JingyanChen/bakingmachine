@@ -305,41 +305,51 @@ void decentralized_control_mode_handle(void)
 
     if (pid_running_num > 2)
     {
-        //开始竞争算法,选出误差最大的两个左右优先项
-        //对pid_temp_error进行分析，0xff的跳过，
-        //从10个数据中挑出第一大和第二大的数据
+        /*
+         * 19.12.17 修正分散控温存在的BUG
+         * 
+         * running_pid_id[0] 只能从0 2 4 6 8 五个数中取值
+         * running_pid_id[1] 只能从1 3 5 7 9 五个数中取值
+         */
+
+
+        /*
+         * 初始化id为初始值,要么初始化为 0  1 要不然就是2 3 不允许出现 只开0 3 的情况
+         */
+        for (i = 0; i < PID_CONTORLLER_NUM; i++){
+            if (get_pid_con_sw(i % 10) == true && get_pid_con_sw((i+1) % 10) == true){
+                running_pid_id[0] = i;
+                running_pid_id[1] = i+1;
+                break;
+            }
+        }        
+        
         error_max = 0;
-        for (i = 0; i < PID_CONTORLLER_NUM; i++)
-        {
-            if (error_max < pid_temp_error[i])
-            {
-                error_max = pid_temp_error[i];
-                error_max_id = i;
+
+        for(i=0;i<5;i++){
+            if(get_pid_con_sw(i * 2)){
+                if(error_max < pid_temp_error [i * 2]){
+                    error_max = pid_temp_error [i * 2];
+                    error_max_id = i * 2;
+                }
             }
         }
-        //获得了最大error的值
 
         running_pid_id[0] = error_max_id;
 
-        //获得第二大的error id
         error_max = 0;
-        for (i = 0; i < PID_CONTORLLER_NUM; i++)
-        {
-            if (i == running_pid_id[0])
-                continue;
 
-            if (error_max < pid_temp_error[i])
-            {
-                error_max = pid_temp_error[i];
-                error_max_id = i;
+        for(i=0;i<5;i++){
+            if(get_pid_con_sw((i * 2) + 1)){
+                if(error_max < pid_temp_error [(i * 2) + 1]){
+                    error_max = pid_temp_error [(i * 2) + 1];
+                    error_max_id = (i * 2) + 1;
+                }
             }
         }
 
-        //获得了第二大的error id
         running_pid_id[1] = error_max_id;
-
-
-        //获取到了 最大温差路 和最小温差路，过滤掉了被强制关闭的路
+        
     }
 
     /*

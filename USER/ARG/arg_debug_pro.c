@@ -106,6 +106,8 @@ static void help(void){
     debug_sender_str(" 43 press_run_key\r\n");debug_send_nop();
     debug_sender_str(" 44 start_down_temp\r\n");debug_send_nop();
     debug_sender_str(" 45 stop_down_temp\r\n");debug_send_nop();
+    debug_sender_str(" 46 start_all_fan\r\n");debug_send_nop();
+    debug_sender_str(" 46 stop_all_fan\r\n");debug_send_nop();
     
 }
 
@@ -1462,6 +1464,21 @@ void stop_down_temp(void){
         water_cool_pump_control(i,true);
     }
 }
+
+void start_all_fan(void){
+    uint8_t i =0;
+    for(i=0;i<5;i++){
+        fan_control(i,false);
+    }
+}
+
+void stop_all_fan(void){
+    uint8_t i =0;
+    for(i=0;i<5;i++){
+        fan_control(i,true);
+    }
+}
+
 debug_func_list_t debug_func_list[] = {
 
     {help,"help"},{help,"?"},{help,"HELP"},
@@ -1514,6 +1531,8 @@ debug_func_list_t debug_func_list[] = {
     {press_run_key,"press_run_key"},{press_run_key,"43"},
     {start_down_temp,"start_down_temp"},{start_down_temp,"44"},
     {stop_down_temp,"stop_down_temp"},{stop_down_temp,"45"},
+    {start_all_fan,"start_down_temp"},{start_all_fan,"46"},
+    {stop_all_fan,"stop_down_temp"},{stop_all_fan,"47"},
 };
 
 
