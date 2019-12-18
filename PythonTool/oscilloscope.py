@@ -13,7 +13,6 @@ from time import sleep
 
 import re
 
- 
 
 app = pg.mkQApp()
 
@@ -131,11 +130,14 @@ def addToDisplay():
 
  
 
- 
+com_str = ""
+
+def set_com_str(comstr):
+    com_str = comstr
 
 def ComRecvDeal():
-
-    t = InitCom('com14',115200) #串口号和波特率自行设置
+    global com_str
+    t = InitCom(com_str,115200) #串口号和波特率自行设置
 
     if(t.isOpen() == True):      
 
@@ -161,9 +163,10 @@ def InitCom(port,b):
 
     return t
 
- 
 
-if __name__ == "__main__":
+
+
+def osc_run():
 
     th= threading.Thread(target=ComRecvDeal)#创建串口接收线程
 
@@ -177,4 +180,6 @@ if __name__ == "__main__":
 
     app.exec_()
 
-    
+if __name__ == "__main__":
+    set_com_str('com1')
+    osc_run()

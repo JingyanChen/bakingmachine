@@ -1544,7 +1544,7 @@ static void arg_debug_packet_decode(uint8_t * buf , uint16_t len){
     //如果单单收到的是空格符号，或者只有回车符号，那么返回comegene commander:
 
     if(len ==  2 && buf[0] == 0x0d && buf[1] == 0x0a){
-        debug_sender_str("comegene command:");
+        debug_sender_str("comegene command:\r\n");
         temp_gui_upload_sw = false;//回车关闭一直上报
         pid_debug_sw = false;
         return ;
