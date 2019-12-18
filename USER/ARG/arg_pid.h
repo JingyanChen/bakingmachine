@@ -197,7 +197,7 @@
  */
 
 
-#define WATER_PUMP_DELAY_K  0.8
+#define WATER_PUMP_DELAY_K  0.4
 #define WATER_PUMP_DELAY_B  0
 /*
  * brief : 设置每一路的水泵降温停止时间，默认是10S
@@ -261,7 +261,7 @@ typedef enum{
 #define LOW_TARGET_TEMP_THR 450
 
 
-#define P_LOW_TEMP 4.0f
+#define P_LOW_TEMP 1.0f
 #define D_LOW_TEMP -10.0f
 
 
