@@ -59,9 +59,9 @@ void csp_pwm_init(void)
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
     TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
 
-    TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM2;
+    TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low;
+    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
     TIM_OC2Init(TIM3, &TIM_OCInitStructure);
 
     TIM_OC2PreloadConfig(TIM3, TIM_OCPreload_Enable);
@@ -83,9 +83,9 @@ void csp_pwm_init(void)
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
     TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
 
-    TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM2;
+    TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low;
+    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
     TIM_OC2Init(TIM2, &TIM_OCInitStructure);
 
     TIM_OC2PreloadConfig(TIM2, TIM_OCPreload_Enable); //??TIM2?CCR2????????

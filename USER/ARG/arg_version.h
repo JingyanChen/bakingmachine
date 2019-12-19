@@ -7,7 +7,7 @@
 
 
 #define MAIN_VERSION    2
-#define SECOND_VERSION  4
+#define SECOND_VERSION  6
 #define IS_RELEASE      1
 
 
@@ -149,6 +149,10 @@
  * 修正如下BUG
  * 1 在冗余降温期间，暂停03的判断
  * 2 给出停止指令后，任何一路都应该将03变回01
+ * 
+ * V2.6
+ * 
+ * 增加了关机功能，关机之后进入停止模式，IO保持，晶振停振
  */
 
 void get_version_str(uint8_t * str,uint16_t len);
