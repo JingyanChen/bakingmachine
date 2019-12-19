@@ -202,6 +202,10 @@ void start_water_cool(uint8_t road_id ,uint16_t target_temp){
     water_cool_sw[road_id % 5] = true;
 
 }
+bool get_water_cool_sw(uint8_t id){
+    return water_cool_sw[id % 5];
+}
+
 void water_cool_init(void){
     uint8_t i=0;
     for(i=0;i<5;i++){
@@ -633,10 +637,13 @@ void concentrate_control_mode_handle(void)
 
     //TODO 目前集中升温模式的结束标志仅仅是瞬间到达目标温度
     //后期可以再考虑结束的标志，结束标志决定是否进入控温态
+    
+    //19.12.19增补代码，如果水泵处于工作状态，不对状进行判断
+
     if(temp_in_range(10,-10,pid_temp_error[id1]) == true&&
         temp_in_range(10,-10,pid_temp_error[id2] == true)){
         concentrate_condition_done = true;
-        }
+    }
 
     //报文上传代码段，将此次的信息报给上位机
 
@@ -697,10 +704,10 @@ uint16_t get_road_temp(uint8_t road_id){
 static bool close_water_pump_sw[5];
 static uint16_t close_tick[5];
 static uint16_t WATER_PUMP_DELAY_TIM[5];
-static bool get_close_water_pump_sw(uint8_t id){
+bool get_close_water_pump_sw(uint8_t id){
     return close_water_pump_sw[id];
 }
-static void set_close_water_pump_sw(uint8_t id ,bool sw){
+void set_close_water_pump_sw(uint8_t id ,bool sw){
     close_water_pump_sw[id] = sw;
 }
 static void close_water_pump_init(void){

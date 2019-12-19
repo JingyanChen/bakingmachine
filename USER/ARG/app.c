@@ -513,6 +513,7 @@ static void queue_task_deal_wait_handle(void){
             //集中升温模式的结束的条件是，集中控制的两路有一瞬间到达目标温度
             //对于系统来说，明显的标记是 concentrate_condition_done == true 
             //系统一直查询此标志位，如果查到其为true，认为集中模式结束
+
             if(get_concentrate_status()== true){
                 set_temp_control_mode(DECENTRALIZED_CONTROL_MODE);//切换控制方式变为分散控温模式
                 set_temp_control_status(now_running_event_task.road_id,TEMP_CONTROL_CONSTANT);   //指示现在该路已经进入了分散控温模式
@@ -556,10 +557,15 @@ static void queue_task_deal_wait_handle(void){
 static void special_wait_status_server_handle(void){
     uint8_t i =0;
     int16_t error_temp=0;
-
+                    
     for(i=0;i<5;i++){
         if(get_temp_control_status(i) == TEMP_CONTROL_SPECIAL_WAIT){
             //辅助判断一下是否到温
+
+            //19.12.19 增补代码 如果水泵未关闭，不做判断
+            if(get_water_cool_sw(i) == true)
+                continue;
+
             error_temp = get_target_temp(i) - get_road_temp(i);
             if(error_temp > -10 && error_temp < 10){
                 set_temp_control_status(i,TEMP_CONTROL_ALL_READY);

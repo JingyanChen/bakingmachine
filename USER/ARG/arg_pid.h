@@ -197,7 +197,7 @@
  */
 
 
-#define WATER_PUMP_DELAY_K  0.4
+#define WATER_PUMP_DELAY_K  0.2
 #define WATER_PUMP_DELAY_B  0
 /*
  * brief : 设置每一路的水泵降温停止时间，默认是10S
@@ -379,5 +379,10 @@ bool get_concentrate_status(void);
  * 一个新的集中模式。
  */
 bool get_decentralize_busy_flag(void);
+
+//获得/写入 《PID控制器针对应用的核心算法5》 的控制使能参数
+bool get_close_water_pump_sw(uint8_t id);
+void set_close_water_pump_sw(uint8_t id ,bool sw);
+bool get_water_cool_sw(uint8_t id);
 
 #endif

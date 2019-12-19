@@ -1323,6 +1323,7 @@ static void stop_temp_control(void){
 
     no_reason_stop_temp_control(temp_event.road_id);//无条件关闭温控
     stop_water_cool(temp_event.road_id);//无条件关闭水泵
+    set_temp_control_status(temp_event.road_id,TEMP_CONTORL_STOP);
 
     if(get_task_machine_status() == task_machine_running){
         if( get_now_running_event_task().road_id == temp_event.road_id){
