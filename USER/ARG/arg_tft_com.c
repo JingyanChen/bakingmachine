@@ -8,6 +8,7 @@
 #include "arg_pid.h"
 #include "periph_humidity_sys.h"
 #include "periph_fan.h"
+#include "periph_power.h"
 #include "csp_adc.h"
 
 #include <stdbool.h>
@@ -379,12 +380,15 @@ static void close_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
     stop_water_cool(temp_event.road_id);//无条件关闭水泵
     set_temp_control_status(temp_event.road_id,TEMP_CONTORL_STOP);
 
+    //如果需要取消的任务时当前正在执行的任务
     if(get_task_machine_status() == task_machine_running){
         if( get_now_running_event_task().road_id == temp_event.road_id){
             now_running_e.task_running_over = true;
             set_now_running_event_task(now_running_e);
             queue_task_handle();
         }
+    }else{
+        set_task_stop_data(get_now_running_event_task().road_id,true);//委托将来执行任务的时候杀死任务
     }
 
     if(get_tft_com_transmit_sw() == true){
@@ -533,6 +537,9 @@ static void read_now_temp_target_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
     //quick_resond_func(read_now_temp_target,respond,5);    
 }
 
+static void power_toggle_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
+    power_key_press_event_handle();
+}
 
 static tft_com_func_list_t tft_com_func_list[]={
 
@@ -544,6 +551,7 @@ static tft_com_func_list_t tft_com_func_list[]={
     {read_box_func,read_box},
     {read_now_temp_func,read_now_temp},
     {read_now_temp_target_func,read_now_temp_target},
+    {power_toggle_func,power_toggle},
 
 };
 

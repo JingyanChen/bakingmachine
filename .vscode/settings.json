@@ -8,6 +8,8 @@
         "arg_tft_com.h": "c",
         "csp_uart.h": "c",
         "delay.h": "c",
-        "csp_wtd.h": "c"
+        "csp_wtd.h": "c",
+        "csp_adc.h": "c",
+        "periph_power.h": "c"
     }
 }

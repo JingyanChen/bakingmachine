@@ -62,6 +62,7 @@ typedef enum{
     read_box,
     read_now_temp,
     read_now_temp_target,
+    power_toggle,
 }cmd_func_list_t;
 
 typedef void (*void_func_point_has_pra) (tft_mcu_pro_data_t * tft_mcu_pro_data);
@@ -93,4 +94,7 @@ typedef enum{
 
 
 //end 适配新的温控逻辑框架 TFT需要做的改进
+
+
+
 #endif

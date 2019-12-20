@@ -107,7 +107,8 @@ static void help(void){
     debug_sender_str(" 44 start_down_temp\r\n");debug_send_nop();
     debug_sender_str(" 45 stop_down_temp\r\n");debug_send_nop();
     debug_sender_str(" 46 start_all_fan\r\n");debug_send_nop();
-    debug_sender_str(" 46 stop_all_fan\r\n");debug_send_nop();
+    debug_sender_str(" 47 stop_all_fan\r\n");debug_send_nop();
+    debug_sender_str(" 48 press_power_key\r\n");debug_send_nop();
     
 }
 
@@ -1331,6 +1332,8 @@ static void stop_temp_control(void){
             set_now_running_event_task(now_running_e);
             queue_task_handle();
         }
+    }else{
+        set_task_stop_data(get_now_running_event_task().road_id,true);//委托将来执行任务的时候杀死任务
     }
 
     sprintf((char *)send_buf,"dequeue event: STOP_CONTROL_TEMP_EVEN road_id: %d target_temp: %d change_water %d success\r\n",pra1,pra2,pra3);
@@ -1480,6 +1483,10 @@ void stop_all_fan(void){
     }
 }
 
+void press_power_key(void){
+    power_key_press_event_handle();
+}
+
 debug_func_list_t debug_func_list[] = {
 
     {help,"help"},{help,"?"},{help,"HELP"},
@@ -1534,6 +1541,7 @@ debug_func_list_t debug_func_list[] = {
     {stop_down_temp,"stop_down_temp"},{stop_down_temp,"45"},
     {start_all_fan,"start_down_temp"},{start_all_fan,"46"},
     {stop_all_fan,"stop_down_temp"},{stop_all_fan,"47"},
+    {press_power_key,"press_power_key"},{press_power_key,"48"},
 };
 
 

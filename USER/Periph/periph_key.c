@@ -26,7 +26,7 @@ static event_type_t key_event_v[KEY_NUM]={
     negative,
     negative,
     negative,
-    negative,
+    postive,
 };
 
 static bool last_key_v[KEY_NUM]={

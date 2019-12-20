@@ -5,6 +5,7 @@
 #include "periph_key.h"
 #include "arg_debug_pro.h"
 #include "sys.h"
+#include "delay.h"
 
 static lcd_power_status_t lcd_power_status;
 
@@ -41,14 +42,17 @@ static void config_sys_key_as_interrupt(void)
 void EXTI15_10_IRQHandler(void)
 {
     if(EXTI_GetITStatus(EXTI_Line15)==SET){                        
-        EXTI_ClearITPendingBit(EXTI_Line15);                        
+        EXTI_ClearITPendingBit(EXTI_Line15); 
+        SystemInit();
+        delay_init();//恢复时钟                       
     }
 }
 static void config_sys_into_standby(void)
 {
 
     config_sys_key_as_interrupt(); //set wake up key 
-    PWR_EnterSTOPMode(PWR_Regulator_ON,PWR_STOPEntry_WFI);
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR,ENABLE);
+    PWR_EnterSTOPMode(PWR_Regulator_LowPower,PWR_STOPEntry_WFI);
 }
 
 //待机相关代码end
@@ -83,7 +87,7 @@ lcd_power_status_t get_lcd_power_status(void)
     return lcd_power_status;
 }
 
-static void power_key_press_event_handle(void)
+void power_key_press_event_handle(void)
 {
     if (get_lcd_power_status() == lcd_power_off)
     {

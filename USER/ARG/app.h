@@ -205,6 +205,23 @@ void queue_task_handle(void);
 
 
 
+
+/*
+ * 2019.12.20 加入停止增补代码以修正如下bug
+ * 停止未正在执行的任务，停止不了，只能停止当前正在运行的任务
+ * 增补代码：如果出现了停止任务，先记录，等待到切换任务的时候查验
+ * 是否历史上出现过停止任务，如果是，那么不执行相关操作，跳过。
+ * 
+ * 算法如下：
+ *      如果出现了停止未执行任务的需求
+ * 先通过set_task_stop_data记录下来需求，等dequeue_event的时候判断
+ * 是否有过曾经的停止任务，如果有则丢失此dequeue数据。
+ */
+
+void set_task_stop_data(uint8_t id , bool sw);
+bool get_task_stop_data(uint8_t id);
+
+
 void arg_app_init(void);
 void arg_app_hanlde(void);
 

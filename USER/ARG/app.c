@@ -279,6 +279,19 @@ static event_t event_queue[MAX_EVENT_QUEUE_DEPTH + 1];
 static uint16_t queue_front=0;
 static uint16_t queue_rear =0;
 
+//增补关闭未执行任务的功能代码
+static bool task_stop_data[5];
+
+void set_task_stop_data(uint8_t id , bool sw){
+    task_stop_data[id % 5] = sw;
+}
+
+bool get_task_stop_data(uint8_t id){
+    return task_stop_data[id % 5];
+}
+
+//增补关闭未执行任务的功能代码 end
+
 static bool is_queue_full(void){
     return (queue_rear + 1) % (MAX_EVENT_QUEUE_DEPTH + 1) == queue_front;
 }
@@ -390,6 +403,14 @@ void queue_task_handle(void){
             //队列非空
             if(dequeue_event(&e)){
                 //成功获取到了一个队首任务
+
+                //检查队首任务是否曾经被停止过
+                if(get_task_stop_data(e.road_id) == true){
+                    //丢弃当前获取到的e数据，不做下述操作
+                    set_task_stop_data(e.road_id,false);
+                    return ;
+                }
+
                 set_now_running_event_task(e);
 
                 //设置状态机为激活状态

@@ -47,4 +47,8 @@ lcd_power_status_t get_lcd_power_status(void);
  */
 void lcd_power_control_func(bool sw);
 
+/*
+ * brief : 关机执行代码，执行此函数相当于点击了一次电源按键
+ */
+void power_key_press_event_handle(void);
 #endif
