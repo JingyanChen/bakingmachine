@@ -6,7 +6,15 @@
 #include "arg_debug_pro.h"
 #include "sys.h"
 #include "delay.h"
-
+#include "periph_fan.h"
+#include "arg_pid.h"
+#include "periph_motor.h"
+#include "periph_key.h"
+#include "periph_humidity_sys.h"
+#include "csp_wtd.h"
+#include "app.h"
+#include "csp_pwm.h"
+#include "csp_timer.h"
 static lcd_power_status_t lcd_power_status;
 
 //待机相关代码
@@ -28,7 +36,7 @@ static void config_sys_key_as_interrupt(void)
 
     EXTI_InitStructure.EXTI_Line = EXTI_Line15;
     EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
+    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
     EXTI_InitStructure.EXTI_LineCmd = ENABLE;
     EXTI_Init(&EXTI_InitStructure);
 
@@ -41,18 +49,27 @@ static void config_sys_key_as_interrupt(void)
 
 void EXTI15_10_IRQHandler(void)
 {
-    if(EXTI_GetITStatus(EXTI_Line15)==SET){                        
-        EXTI_ClearITPendingBit(EXTI_Line15); 
-        SystemInit();
-        delay_init();//恢复时钟                       
+
+    if (EXTI_GetITStatus(EXTI_Line15) == SET)
+    {
+
+        EXTI_ClearITPendingBit(EXTI_Line15);
+        if(GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_15)){
+            SystemInit();
+            delay_init(); //恢复时钟
+            csp_wtd_handle();
+            NVIC_SystemReset();
+            delay_ms(500);            
+        }
+
     }
 }
 static void config_sys_into_standby(void)
 {
 
-    config_sys_key_as_interrupt(); //set wake up key 
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR,ENABLE);
-    PWR_EnterSTOPMode(PWR_Regulator_LowPower,PWR_STOPEntry_WFI);
+    config_sys_key_as_interrupt(); //set wake up key
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);
+    PWR_EnterSTOPMode(PWR_Regulator_ON, PWR_STOPEntry_WFI);
 }
 
 //待机相关代码end
@@ -89,20 +106,52 @@ lcd_power_status_t get_lcd_power_status(void)
 
 void power_key_press_event_handle(void)
 {
+    uint8_t i=0;
+    uint32_t error_tick=0;
+    EXTI_InitTypeDef EXTI_InitStructure;
     if (get_lcd_power_status() == lcd_power_off)
     {
         if (get_tft_com_transmit_sw() == true)
             debug_sender_str("LCD POWRER ON \r\n");
         power_led_control(true);
         lcd_power_on_func();
+
+        //开机的时候不使用外部中断唤醒功能
+        EXTI_InitStructure.EXTI_Line = EXTI_Line15;
+        EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+        EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
+        EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+        EXTI_Init(&EXTI_InitStructure);
     }
     else
     {
         if (get_tft_com_transmit_sw() == true)
             debug_sender_str("LCD POWRER OFF \r\n");
+
         power_led_control(false);
         lcd_power_off_func();
-        config_sys_into_standby();//进入休眠模式
+
+
+
+        for(i=0;i<5;){
+            if(get_box_status(i) == box_running_forward || get_box_status(i) == box_running_backward){
+                csp_wtd_handle();
+                arg_app_hanlde();
+                periph_motor_handle();
+                csp_timer_handle();
+                error_tick++;
+            }else{
+                i++;
+            }
+            if(error_tick > 0xffffff){
+                error_tick = 0;//等待很长时间都没有复位，出现error
+                break;
+            }
+            //如果有运动任务，等箱体运动任务完成再关机
+        }
+
+        motor_enable_control(false);
+        config_sys_into_standby(); //进入休眠模式
     }
 }
 

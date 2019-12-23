@@ -272,6 +272,18 @@ void decentralized_control_mode_handle(void)
     uint8_t control_road_num=0;
     float p_gain=1.0f;
 
+    //分散控温模式，如果没有一路需要控制，那么退出此函数
+    for(i=0;i<10;i++){
+        if (get_pid_con_sw(i) == true){
+            control_road_num ++;
+        }
+    }
+
+    if(control_road_num == 0)
+        return ;//全部关闭的情况
+
+    control_road_num = 0;
+
     //关闭上一次所有的PWM控制重新开始
     close_all_software_pwm_out();
 

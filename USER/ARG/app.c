@@ -103,10 +103,14 @@ static void arg_box_push_pop_init(void)
 {
     uint8_t i = 0;
 
+    for(i=0;i<5;i++){
+        box_status[i] = box_unknown;
+    }
+
     //TODO 开机检查一次五个盒子是否都处于box_off 状态，通过机构的五个限位开关来感受
     //如果没有处于off状态，那么发起低速匀速退回运动
 
-    if (BOX_BACKWARD_DIR == CW)
+    if (BOX_BACKWARD_DIR == CCW)
     {
         //退回的方向是CW,那么检查CW方向的限位开关是否是处于按下的状态
         //如果不是，发起一次向BACKWARD方向的匀速运动，直到碰到限位为止
@@ -185,7 +189,7 @@ static void arg_manual_push_handle(void)
         if (is_wait_ready_status[i] == false)
         {
             if (box_status[i] == box_on &&
-                get_motor_limit_v(5 + i) == MOTOR_LIMIT_V)
+                get_motor_limit_v(5 + i) != MOTOR_LIMIT_V)
             {
                 manual_push_ready[i] = true;
                 is_wait_ready_status[i] = true;

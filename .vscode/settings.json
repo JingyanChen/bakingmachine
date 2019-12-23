@@ -10,6 +10,9 @@
         "delay.h": "c",
         "csp_wtd.h": "c",
         "csp_adc.h": "c",
-        "periph_power.h": "c"
+        "periph_power.h": "c",
+        "periph_fan.h": "c",
+        "arg_pid.h": "c",
+        "periph_humidity_sys.h": "c"
     }
 }

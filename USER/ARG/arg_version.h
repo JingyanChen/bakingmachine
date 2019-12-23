@@ -7,7 +7,7 @@
 
 
 #define MAIN_VERSION    2
-#define SECOND_VERSION  6
+#define SECOND_VERSION  8
 #define IS_RELEASE      1
 
 
@@ -161,6 +161,14 @@
  * 添加了与关机按键等价的debug指令
  * 
  * 修正了停止指令不能停止未正在执行任务的BUG
+ * 增加了上位机指令07 ，上位机可以给予关机指令
+ * 
+ * V2.8版本
+ * 
+ * 1 修正了 每层箱子复位时的疏忽BUG
+    2 完善了停止模式代码，上电后屏幕与电源一同上电，之后通过软电源键切换开关，如果有运动任务，一定会等运动任务结束才会关机
+    3 完善了唤醒后的单片机动作，唤醒后会做复位操作
+ * 
  */
 
 void get_version_str(uint8_t * str,uint16_t len);
