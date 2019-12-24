@@ -83,7 +83,7 @@ void set_pid_controller_mode_as_decentralize_without_set_mode(uint8_t id, uint16
 }
 
 
-static uint16_t concentrate_control_mode_road_id[2];
+static uint8_t concentrate_control_mode_road_id[2];
 static bool concentrate_condition_done = false;
 static bool decentralize_busy_flag = false;
 
@@ -93,7 +93,9 @@ bool get_concentrate_status(void){
 bool get_decentralize_busy_flag(void){
     return decentralize_busy_flag;
 }
-
+uint8_t get_concentrate_road_id(uint8_t id){
+    return concentrate_control_mode_road_id[id % 2];
+}
 /*
  * 2019.11.26
  * 在集中控温模式中加入停温算法，因为停温算法是待验证的，是为了增加板子温度均匀性但是损失了
@@ -110,8 +112,7 @@ static uint16_t stop_temp_pra=0;
 static uint16_t stop_tim_pra=0;
 static bool stop_arg_bool_1=false;
 static bool stop_arg_bool_2=false;
-static uint16_t stop_arg_tick_1=0;
-static uint16_t stop_arg_tick_2=0;
+static uint16_t stop_arg_tick=0;
 static bool pwm_out1_lock = false;
 static bool pwm_out2_lock = false;
 bool set_pid_controller_mode_as_concentrate(uint8_t road_id, uint16_t target_temp,uint16_t stop_temp,uint16_t stop_tim)
@@ -135,8 +136,8 @@ bool set_pid_controller_mode_as_concentrate(uint8_t road_id, uint16_t target_tem
     pwm_out1_lock = false;
     pwm_out2_lock = false;
 
-    stop_arg_tick_1 = 0;
-    stop_arg_tick_2 = 0;
+    stop_arg_tick = 0;
+
 
     return true;
 }
@@ -246,6 +247,10 @@ static void pd_pra_sel_handle(uint8_t id){
  * 1 分散选择的时候 跳过这两路的比较资格
  * 2 分散选择的时候 接受一路都没有被选中的情况
  */
+static uint8_t decentralized_control_road_id[2];
+uint8_t get_decentralized_control_road_id(uint8_t id){
+    return decentralized_control_road_id[id % 2];
+}
 void decentralized_control_mode_handle(void)
 {
     uint8_t i = 0;
@@ -367,6 +372,9 @@ void decentralized_control_mode_handle(void)
         running_pid_id[1] = error_max_id;
         
     }
+
+    decentralized_control_road_id[0] = running_pid_id[0];
+    decentralized_control_road_id[1] = running_pid_id[1];
 
     /*
      * PID控制器针对应用的核心算法8 
@@ -559,19 +567,12 @@ void concentrate_control_mode_handle(void)
     }
 
     //计时锁定时间 自动解锁
-    if(pwm_out1_lock){
-        stop_arg_tick_1 ++;
-        if(stop_arg_tick_1 > stop_tim_pra * 10){
-            stop_arg_tick_1 = 0;
+    if(pwm_out1_lock && pwm_out2_lock){
+        stop_arg_tick ++;
+        if(stop_arg_tick > stop_tim_pra * 10){
+            stop_arg_tick = 0;
             pwm_out1_lock = false;//unlock
-        }
-    }
-
-    if(pwm_out2_lock){
-        stop_arg_tick_2 ++;
-        if(stop_arg_tick_2 > stop_tim_pra * 10){
-            stop_arg_tick_2 = 0;
-            pwm_out2_lock = false;//unlock
+            pwm_out2_lock = false;
         }
     }
     #endif
@@ -652,8 +653,7 @@ void concentrate_control_mode_handle(void)
     
     //19.12.19增补代码，如果水泵处于工作状态，不对状进行判断
 
-    if(temp_in_range(10,-10,pid_temp_error[id1]) == true&&
-        temp_in_range(10,-10,pid_temp_error[id2] == true)){
+    if(temp_in_range(10,-10,pid_temp_error[id1]) == true  && temp_in_range(10,-10,pid_temp_error[id2]) == true){
         concentrate_condition_done = true;
     }
 
@@ -661,15 +661,11 @@ void concentrate_control_mode_handle(void)
 
     if(get_pid_debug_sw() == true){
         #if defined (STOP_TEMP_ARG)
-        if(pwm_out1_lock && pwm_out2_lock){
-            sprintf((char *)debug_buf,"| concentrate Mode | ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) !!!!!STOP ARG LOCKING!!!!!\r\n",
-                    id1,p_cal1_f,d_cal1_f,pwm_out1,pid_now_temp[id1],pid_target_temp[id1],
-                    id2,p_cal2_f,d_cal2_f,pwm_out2,pid_now_temp[id2],pid_target_temp[id2]);
-        }else{
-            sprintf((char *)debug_buf,"| concentrate Mode | ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d)\r\n",
-                    id1,p_cal1_f,d_cal1_f,pwm_out1,pid_now_temp[id1],pid_target_temp[id1],
-                    id2,p_cal2_f,d_cal2_f,pwm_out2,pid_now_temp[id2],pid_target_temp[id2]);            
-        }
+
+        sprintf((char *)debug_buf,"| concentrate Mode | ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) pwmlock : (%d,%d)\r\n",
+                id1,p_cal1_f,d_cal1_f,pwm_out1,pid_now_temp[id1],pid_target_temp[id1],
+                id2,p_cal2_f,d_cal2_f,pwm_out2,pid_now_temp[id2],pid_target_temp[id2],
+                pwm_out1_lock,pwm_out2_lock);  
         debug_sender_str(debug_buf);
         #else
         sprintf((char *)debug_buf,"| concentrate Mode | ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d)\r\n",
@@ -810,6 +806,10 @@ void arg_pid_init(void)
         pid_controller_sw[i] = false;
     }
 
+    for(i=0;i<2;i++){
+        decentralized_control_road_id[i] = 0;
+        concentrate_control_mode_road_id[i] = 0;
+    }
     set_temp_control_mode(DECENTRALIZED_CONTROL_MODE);
     concentrate_condition_done = false;
     decentralize_busy_flag = false;

@@ -84,7 +84,7 @@
 //假设由30 ->80 则升温到65°会停温，暂时设置为0.7
 #define STOP_TEMP_CAL_K 0.7
 
-#define STOP_TIM_DEFAULT 10 //暂停时间设为10S
+#define STOP_TIM_DEFAULT 5 //暂停时间设为10S
 /*
  * PID控制器针对应用的核心算法2
  * Author : Jingyan Chen @ ComeGene 2019.11.22
@@ -95,6 +95,19 @@
  * 2 STOP_PID_TIM 停温时间，当触发停温温度后，需要保持无输出的时间
  * 
  * 这个算法将会嵌入到集中控温模式中，在新版本中体现此算法。
+ * 
+ * 2019.12.24 对核心算法2进行改进，具体见V2.9版本的更新日志
+ * 
+ * 停温算法存在问题，如果两边的加热效率不同，会出现一路进入停温算法，另外一路未进入
+ * 停温算法而是全速加温，这样会增加自激震荡，应当提出如下改善意见
+ * 停温算法的原则是希望两个加热片均处于相同温度，保持一段时间，先到达温度的加热片
+ * 应当适当等待，并且这个等待时间不加入固定的等待时间里面，等待另外一路也升温
+ * 到停止温度后，一同计时10S。
+ * 
+ * 上述的原则可以增加板子的均匀性。如果出现一端加热块，一端加热慢的问题，热的快的
+ * 会等待热的慢的，然后共同进入无PWM输出的停温算法10S，这样无疑会增加均匀性。
+ * 
+ * 会有一段时间只有一边的加热片全速升温
  */
 
 
@@ -283,7 +296,7 @@ typedef enum{
 
 
 
-#define P 12.5f
+#define P 8.0f
 #define D -5.0f
 
 void arg_pid_init(void);
@@ -385,4 +398,16 @@ bool get_close_water_pump_sw(uint8_t id);
 void set_close_water_pump_sw(uint8_t id ,bool sw);
 bool get_water_cool_sw(uint8_t id);
 
+/*
+ * breif : 获得正在控制的集中升温加热片id
+ * pra @ id : 0 / 1
+ * return now concentrate control id
+ */
+uint8_t get_concentrate_road_id(uint8_t id);
+/*
+ * breif : 获得正在控制的分散升温加热片id
+ * pra @ id : 0 / 1
+ * return now concentrate control id
+ */
+uint8_t get_decentralized_control_road_id(uint8_t id);
 #endif

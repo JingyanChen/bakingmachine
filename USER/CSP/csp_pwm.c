@@ -178,7 +178,7 @@ static uint16_t pwm_maker_percent[]={0,0,0,0,0,0,0,0,0,0};
 static void set_pwm_maker_percent(uint8_t id , uint16_t percent){
     pwm_maker_percent[id % 10] = percent;
 }
-static uint16_t get_pwm_maker_percent(uint8_t id){
+uint16_t get_pwm_maker_percent(uint8_t id){
     return pwm_maker_percent[id % 10];
 }
 

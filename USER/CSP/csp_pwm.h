@@ -119,5 +119,10 @@ void close_software_pwm(uint8_t pwm_id);
 void close_all_software_pwm_out_except(uint8_t id1,uint8_t id2);
 
 void close_all_software_pwm_out(void);
+
+/*
+ * brief : get software pwm percent
+ */
+uint16_t get_pwm_maker_percent(uint8_t id);
 #endif
 

@@ -334,24 +334,36 @@ static void close_temp_control_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
 
     uint16_t need_out_water=0;
     uint16_t operate_id = 0;
+    uint16_t operate_id_read = 0x1d;
     uint16_t respond[50];
 	uint8_t debug[50];
+    uint8_t i = 0;
+    
     //bool out_succ = false;
     bool enqueue_succ=false;
     event_t now_running_e;
     
     event_t temp_event;
 
-    operate_id = tft_mcu_pro_data->load[0];
-    operate_id <<= 8;
-    operate_id |=tft_mcu_pro_data->load[1];
+    operate_id_read = tft_mcu_pro_data->load[2];
+    operate_id_read <<= 8;
+    operate_id_read |=tft_mcu_pro_data->load[3];
 
-    need_out_water = tft_mcu_pro_data->load[2];
+    need_out_water = tft_mcu_pro_data->load[4];
     need_out_water <<= 8;
-    need_out_water |=tft_mcu_pro_data->load[3];
+    need_out_water |=tft_mcu_pro_data->load[5];
 
-    if(operate_id > 4){
 
+
+    for(i=0;i<5;i++){
+        if(operate_id_read & (0x01 << i)){
+            operate_id = 0;
+            break;
+        }
+    }
+
+    if(operate_id_read == 0x1d){
+        //未找到对应合法的关闭值
         if(get_tft_com_transmit_sw() == true){
             debug_sender_str("id pra error\r\n");
             delay_ms(10);

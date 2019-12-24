@@ -5,6 +5,7 @@
 #include "csp_gpio.h"
 #include "csp_timer.h"
 #include "arg_debug_pro.h"
+#include "csp_pwm.h"
 #include "delay.h"
 #include "csp_pwm.h"
 #include "app.h"
@@ -23,6 +24,7 @@ static bool temp_gui_upload_sw  = false;
 static bool tft_com_transmit_sw = false;
 static bool box_running_debug_sw = false;
 static bool pid_debug_sw = false;
+static bool sys_debug_sw = false;
 void arg_debug_pro_init(void){
     uint8_t welcom_string[200];
 
@@ -30,6 +32,7 @@ void arg_debug_pro_init(void){
     tft_com_transmit_sw = false;
     box_running_debug_sw = false;
     pid_debug_sw = false;
+    sys_debug_sw = false;
 
     sprintf((char *)welcom_string,"\r\nWelcome to comegene debug instruction systems.Version %d.%d.%d [make_time:%s_%s] \r\nType ""help"",""?"",""copyright"" or ""author"" for more information.\r\n",MAIN_VERSION,SECOND_VERSION,IS_RELEASE,__DATE__, __TIME__);
     debug_sender_str(welcom_string);
@@ -109,6 +112,8 @@ static void help(void){
     debug_sender_str(" 46 start_all_fan\r\n");debug_send_nop();
     debug_sender_str(" 47 stop_all_fan\r\n");debug_send_nop();
     debug_sender_str(" 48 press_power_key\r\n");debug_send_nop();
+    debug_sender_str(" 49 sys_debug\r\n");debug_send_nop();
+    
     
 }
 
@@ -1459,6 +1464,7 @@ void start_down_temp(void){
     for(i=0;i<5;i++){
         water_cool_pump_control(i,false);
     }
+    debug_sender_str("start all water cool pump success\r\n");
 }
 
 
@@ -1467,6 +1473,7 @@ void stop_down_temp(void){
     for(i=0;i<5;i++){
         water_cool_pump_control(i,true);
     }
+    debug_sender_str("stop all water cool pump success\r\n");
 }
 
 void start_all_fan(void){
@@ -1474,6 +1481,7 @@ void start_all_fan(void){
     for(i=0;i<5;i++){
         fan_control(i,false);
     }
+    debug_sender_str("start all fan success\r\n");
 }
 
 void stop_all_fan(void){
@@ -1481,12 +1489,26 @@ void stop_all_fan(void){
     for(i=0;i<5;i++){
         fan_control(i,true);
     }
+    debug_sender_str("stop all fan success\r\n");
 }
 
 void press_power_key(void){
     power_key_press_event_handle();
 }
 
+
+void sys_debug(void){
+    //比较丰富的方式指示每一层盒子的状态
+    //1 指示总体的控温方式 C : 集中控温模式  D ： 分散控温模式
+    //2 指示每一路的温度值和目标温度
+    //3 指示每一路的水冷泵状态
+    //4 指示每一路的逻辑状态
+
+    sys_debug_sw = true;
+
+    debug_sender_str("start sys debug success\r\n");
+
+}
 debug_func_list_t debug_func_list[] = {
 
     {help,"help"},{help,"?"},{help,"HELP"},
@@ -1539,9 +1561,10 @@ debug_func_list_t debug_func_list[] = {
     {press_run_key,"press_run_key"},{press_run_key,"43"},
     {start_down_temp,"start_down_temp"},{start_down_temp,"44"},
     {stop_down_temp,"stop_down_temp"},{stop_down_temp,"45"},
-    {start_all_fan,"start_down_temp"},{start_all_fan,"46"},
-    {stop_all_fan,"stop_down_temp"},{stop_all_fan,"47"},
+    {start_all_fan,"start_all_fan"},{start_all_fan,"46"},
+    {stop_all_fan,"stop_all_fan"},{stop_all_fan,"47"},
     {press_power_key,"press_power_key"},{press_power_key,"48"},
+    {sys_debug , "sys_debug"},{sys_debug,"49"},
 };
 
 
@@ -1556,6 +1579,7 @@ static void arg_debug_packet_decode(uint8_t * buf , uint16_t len){
         debug_sender_str("comegene command:\r\n");
         temp_gui_upload_sw = false;//回车关闭一直上报
         pid_debug_sw = false;
+        sys_debug_sw = false;
         return ;
     }
 
@@ -1585,7 +1609,7 @@ static void arg_debug_packet_decode(uint8_t * buf , uint16_t len){
 }
 
 void arg_debug_pro_handle(void){
-    uint8_t sender_buf[200];
+    uint8_t sender_buf[300];
     if(_UPLOAD_TEMP_GUI_FLAG == false)
         return;
     _UPLOAD_TEMP_GUI_FLAG = false;
@@ -1606,4 +1630,42 @@ void arg_debug_pro_handle(void){
         sprintf((char *)sender_buf,"temp1,%f;temp2,%f;temp3,%f;temp4,%f;temp5,%f;temp6,%f;temp7,%f;temp8,%f;\n",(float)adc_temp_data[0],(float)adc_temp_data[1],(float)adc_temp_data[2],(float)adc_temp_data[3],(float)adc_temp_data[4],(float)adc_temp_data[5],(float)adc_temp_data[6],(float)adc_temp_data[7]);
         debug_sender_str(sender_buf);
     }  
+
+    if(sys_debug_sw){
+    //比较丰富的方式指示每一层盒子的状态
+    //1 指示总体的控温方式 C : 集中控温模式  D ： 分散控温模式
+    //2 指示每一路的温度值和目标温度
+    //3 指示每一路的水冷泵状态
+    //4 指示每一路的逻辑状态
+    //5 当前控制的road id
+    if(get_temp_control_mode() == DECENTRALIZED_CONTROL_MODE){
+        debug_sender_str("MODE : D --- ");
+        delay_ms(5);
+        sprintf((char *)sender_buf,\
+        "0=> T: %d/%d W: %d LI: %d pwm (%03d,%03d) | 1=> T: %d/%d W: %d LI: %d pwm (%03d,%03d) | 2=> T: %d/%d W: %d LI: %d pwm (%03d,%03d) | 3=> T: %d/%d W: %d LI: %d pwm (%03d,%03d) | 4=> T: %d/%d W: %d LI: %d pwm (%03d,%03d) --- id :(%d,%d) \r\n"\
+        ,get_road_temp(0),get_target_temp(0),get_water_cool_sw(0),get_temp_control_status(0),get_pwm_maker_percent(0),get_pwm_maker_percent(1),\
+        get_road_temp(1),get_target_temp(1),get_water_cool_sw(1),get_temp_control_status(1),get_pwm_maker_percent(2),get_pwm_maker_percent(3),\
+        get_road_temp(2),get_target_temp(2),get_water_cool_sw(2),get_temp_control_status(2),get_pwm_maker_percent(4),get_pwm_maker_percent(5),\
+        get_road_temp(3),get_target_temp(3),get_water_cool_sw(3),get_temp_control_status(3),get_pwm_maker_percent(6),get_pwm_maker_percent(7),\
+        get_road_temp(4),get_target_temp(4),get_water_cool_sw(4),get_temp_control_status(4),get_pwm_maker_percent(8),get_pwm_maker_percent(9),\
+        get_decentralized_control_road_id(0),get_decentralized_control_road_id(1));
+
+        debug_sender_str(sender_buf);        
+    }else{
+        debug_sender_str("MODE : C --- ");
+        delay_ms(5);
+        sprintf((char *)sender_buf,\
+        "0=> T: %d/%d W: %d LI: %d pwm (%03d,%03d) | 1=> T: %d/%d W: %d LI: %d pwm (%03d,%03d) | 2=> T: %d/%d W: %d LI: %d pwm (%03d,%03d) | 3=> T: %d/%d W: %d LI: %d pwm (%03d,%03d) | 4=> T: %d/%d W: %d LI: %d pwm (%03d,%03d) --- id :(%d,%d) \r\n"\
+        ,get_road_temp(0),get_target_temp(0),get_water_cool_sw(0),get_temp_control_status(0),get_pwm_maker_percent(0),get_pwm_maker_percent(1),\
+        get_road_temp(1),get_target_temp(1),get_water_cool_sw(1),get_temp_control_status(1),get_pwm_maker_percent(2),get_pwm_maker_percent(3),\
+        get_road_temp(2),get_target_temp(2),get_water_cool_sw(2),get_temp_control_status(2),get_pwm_maker_percent(4),get_pwm_maker_percent(5),\
+        get_road_temp(3),get_target_temp(3),get_water_cool_sw(3),get_temp_control_status(3),get_pwm_maker_percent(6),get_pwm_maker_percent(7),\
+        get_road_temp(4),get_target_temp(4),get_water_cool_sw(4),get_temp_control_status(4),get_pwm_maker_percent(8),get_pwm_maker_percent(9),\
+        get_concentrate_road_id(0),get_concentrate_road_id(1));
+
+        debug_sender_str(sender_buf);
+    }
+
+
+    }
 }
