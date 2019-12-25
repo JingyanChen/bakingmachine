@@ -6,8 +6,8 @@
 #include <stdio.h>
 
 
-#define MAIN_VERSION    2
-#define SECOND_VERSION  9
+#define MAIN_VERSION    3
+#define SECOND_VERSION  0
 #define IS_RELEASE      1
 
 
@@ -184,6 +184,14 @@
  * 修正代码粗心带来的BUG，现象是其中一路达到(-1,1)摄氏度的温差，就转换了逻辑状态由01 -> 02
  * 
  * 减小P值，改善超调的问题，但是减少了升温效率，为此减少停温算法的时间来改善问题
+ * 
+ * V3.0版本
+ * 
+ * 提前了水冷算法关闭PID控制器的时机
+ * 降低了P值，和冗余水冷时间
+ * 修正分散控温 小范围P值减小算法不起作用的问题
+ * 增加了报文 id(a,b)显示当前电源控制的路情况 如果不控制 显示0xff
+ * 优化了pid控制算法，支持只有一路控制的情况 类似(1,255)
  */
 
 void get_version_str(uint8_t * str,uint16_t len);

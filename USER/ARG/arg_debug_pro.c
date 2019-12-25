@@ -1191,6 +1191,8 @@ static void run_temp_control(void){
                 //大范围降温，需要委托水冷线程
                 //大范围降温，计算水泵运行DELAY时间
                 set_water_pump_delay_tim(temp_event.road_id,(uint16_t)((float)(get_road_temp(temp_event.road_id) - temp_event.target_temp) * WATER_PUMP_DELAY_K + WATER_PUMP_DELAY_B));
+                
+                set_no_reason_stop_decentralized_pwm_sw(temp_event.road_id,true);//暂时关闭分散控温算法，大范围降温时发生
 
                 start_water_cool(temp_event.road_id,temp_event.target_temp);
                 sprintf((char *)send_buf,"road %d is big cooling control.cooling dump running delay Tim is %d\r\n",temp_event.road_id,(uint16_t)((float)(get_road_temp(temp_event.road_id) - temp_event.target_temp) * WATER_PUMP_DELAY_K + WATER_PUMP_DELAY_B));

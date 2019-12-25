@@ -52,19 +52,20 @@ void set_pid_con_sw(uint8_t id, bool sw)
     pid_controller_sw[id] = sw;
 }
 
-int16_t get_target_temp(uint8_t road_id){
-     int16_t sum_target_temp=0;
+int16_t get_target_temp(uint8_t road_id)
+{
+    int16_t sum_target_temp = 0;
 
-     sum_target_temp = pid_target_temp[road_id * 2 % 10] + pid_target_temp[(road_id *2 + 1) % 10];
-     sum_target_temp /= 2;
+    sum_target_temp = pid_target_temp[road_id * 2 % 10] + pid_target_temp[(road_id * 2 + 1) % 10];
+    sum_target_temp /= 2;
 
-     return sum_target_temp;
+    return sum_target_temp;
 }
 void set_pid_controller_mode_as_decentralize(uint8_t id, uint16_t target_temp)
 {
 
-    pid_target_temp[(id * 2) % 10] = target_temp ;
-    pid_target_temp[(id * 2 + 1) % 10] = target_temp ;
+    pid_target_temp[(id * 2) % 10] = target_temp;
+    pid_target_temp[(id * 2 + 1) % 10] = target_temp;
 
     set_pid_con_sw((id * 2) % 10, true);
     set_pid_con_sw((id * 2 + 1) % 10, true);
@@ -75,25 +76,27 @@ void set_pid_controller_mode_as_decentralize(uint8_t id, uint16_t target_temp)
 void set_pid_controller_mode_as_decentralize_without_set_mode(uint8_t id, uint16_t target_temp)
 {
 
-    pid_target_temp[(id * 2) % 10] = target_temp ;
-    pid_target_temp[(id * 2 + 1) % 10] = target_temp ;
+    pid_target_temp[(id * 2) % 10] = target_temp;
+    pid_target_temp[(id * 2 + 1) % 10] = target_temp;
 
-    set_pid_con_sw((id * 2 )% 10, true);
+    set_pid_con_sw((id * 2) % 10, true);
     set_pid_con_sw((id * 2 + 1) % 10, true);
 }
-
 
 static uint8_t concentrate_control_mode_road_id[2];
 static bool concentrate_condition_done = false;
 static bool decentralize_busy_flag = false;
 
-bool get_concentrate_status(void){
+bool get_concentrate_status(void)
+{
     return concentrate_condition_done;
 }
-bool get_decentralize_busy_flag(void){
+bool get_decentralize_busy_flag(void)
+{
     return decentralize_busy_flag;
 }
-uint8_t get_concentrate_road_id(uint8_t id){
+uint8_t get_concentrate_road_id(uint8_t id)
+{
     return concentrate_control_mode_road_id[id % 2];
 }
 /*
@@ -107,17 +110,18 @@ uint8_t get_concentrate_road_id(uint8_t id){
  * 
  */
 
-#if defined (STOP_TEMP_ARG)
-static uint16_t stop_temp_pra=0;
-static uint16_t stop_tim_pra=0;
-static bool stop_arg_bool_1=false;
-static bool stop_arg_bool_2=false;
-static uint16_t stop_arg_tick=0;
+#if defined(STOP_TEMP_ARG)
+static uint16_t stop_temp_pra = 0;
+static uint16_t stop_tim_pra = 0;
+static bool stop_arg_bool_1 = false;
+static bool stop_arg_bool_2 = false;
+static uint16_t stop_arg_tick = 0;
 static bool pwm_out1_lock = false;
 static bool pwm_out2_lock = false;
-bool set_pid_controller_mode_as_concentrate(uint8_t road_id, uint16_t target_temp,uint16_t stop_temp,uint16_t stop_tim)
+bool set_pid_controller_mode_as_concentrate(uint8_t road_id, uint16_t target_temp, uint16_t stop_temp, uint16_t stop_tim)
 {
-    if(decentralize_busy_flag == true){
+    if (decentralize_busy_flag == true)
+    {
         return false;
     }
 
@@ -127,7 +131,7 @@ bool set_pid_controller_mode_as_concentrate(uint8_t road_id, uint16_t target_tem
     concentrate_control_mode_road_id[0] = road_id * 2;
     concentrate_control_mode_road_id[1] = road_id * 2 + 1;
 
-    concentrate_condition_done  = false;
+    concentrate_condition_done = false;
 
     stop_temp_pra = stop_temp;
     stop_tim_pra = stop_tim;
@@ -138,13 +142,13 @@ bool set_pid_controller_mode_as_concentrate(uint8_t road_id, uint16_t target_tem
 
     stop_arg_tick = 0;
 
-
     return true;
 }
 #else
 bool set_pid_controller_mode_as_concentrate(uint8_t road_id, uint16_t target_temp)
 {
-    if(decentralize_busy_flag == true){
+    if (decentralize_busy_flag == true)
+    {
         return false;
     }
 
@@ -154,85 +158,82 @@ bool set_pid_controller_mode_as_concentrate(uint8_t road_id, uint16_t target_tem
     concentrate_control_mode_road_id[0] = road_id * 2;
     concentrate_control_mode_road_id[1] = road_id * 2 + 1;
 
-    concentrate_condition_done  = false;
+    concentrate_condition_done = false;
 
     return true;
 }
 #endif
 
-
 /*
  * 给予外界无条件关闭某路的PWM输出的方法
  */
 static bool no_reason_stop_decentralized_pwm_sw[5];
-static void no_reason_stop_decentralized_pwm_init(void){
-		uint8_t i=0;
-    for(i=0;i<5;i++){
-       no_reason_stop_decentralized_pwm_sw[i] = false; 
+static void no_reason_stop_decentralized_pwm_init(void)
+{
+    uint8_t i = 0;
+    for (i = 0; i < 5; i++)
+    {
+        no_reason_stop_decentralized_pwm_sw[i] = false;
     }
     //默认不关闭任何分散模式的任何一路PWM输出
 }
-static void set_no_reason_stop_decentralized_pwm_sw(uint8_t id , bool sw){
+void set_no_reason_stop_decentralized_pwm_sw(uint8_t id, bool sw)
+{
     no_reason_stop_decentralized_pwm_sw[id % 5] = sw;
 }
-static bool get_no_reason_stop_decentralized_pwm_sw(uint8_t id){
+static bool get_no_reason_stop_decentralized_pwm_sw(uint8_t id)
+{
     return no_reason_stop_decentralized_pwm_sw[id % 5];
-}
-static bool i_is_no_reason_off(uint8_t input_i){
-    uint8_t i=0;
-    for(i=0;i<5;i++){
-        if(no_reason_stop_decentralized_pwm_sw[i] == true){
-            if(input_i == i || input_i == (i*2 + 1)){
-                return true;
-            }
-        }
-    }
-    return false;
 }
 
 static uint16_t water_cool_target_temp[5];
 static bool water_cool_sw[5];
-void stop_water_cool(uint8_t road_id){
-    water_cool_pump_control(road_id % 5, 1 );//关闭水冷降温
-    water_cool_target_temp[road_id % 5] = false;    
+void stop_water_cool(uint8_t road_id)
+{
+    water_cool_pump_control(road_id % 5, 1); //关闭水冷降温
+    water_cool_target_temp[road_id % 5] = false;
 }
-void start_water_cool(uint8_t road_id ,uint16_t target_temp){
+void start_water_cool(uint8_t road_id, uint16_t target_temp)
+{
 
-    water_cool_pump_control(road_id % 5, 0 );//打开水冷降温
+    water_cool_pump_control(road_id % 5, 0); //打开水冷降温
     water_cool_target_temp[road_id % 5] = target_temp;
     water_cool_sw[road_id % 5] = true;
-
 }
-bool get_water_cool_sw(uint8_t id){
+bool get_water_cool_sw(uint8_t id)
+{
     return water_cool_sw[id % 5];
 }
 
-void water_cool_init(void){
-    uint8_t i=0;
-    for(i=0;i<5;i++){
+void water_cool_init(void)
+{
+    uint8_t i = 0;
+    for (i = 0; i < 5; i++)
+    {
         water_cool_target_temp[i] = 0;
         water_cool_sw[i] = false;
     }
 }
 
-
-static void pd_pra_sel_handle(uint8_t id){
-    uint16_t temp=0;
-    uint16_t temp_target=0;
+static void pd_pra_sel_handle(uint8_t id)
+{
+    uint16_t temp = 0;
+    uint16_t temp_target = 0;
 
     temp = adc_temp_data[id % 10];
     temp_target = pid_target_temp[id % 10];
 
-    if(temp <= LOW_NOW_TEMP_THR && temp_target <= LOW_TARGET_TEMP_THR){
+    if (temp <= LOW_NOW_TEMP_THR && temp_target <= LOW_TARGET_TEMP_THR)
+    {
         p_pra = P_LOW_TEMP;
         d_pra = D_LOW_TEMP;
-    }else{
+    }
+    else
+    {
         p_pra = P;
-        d_pra = D;        
+        d_pra = D;
     }
 }
-
-
 
 /* 
  * 给予外界无条件关闭某路的PWM输出的方法 end
@@ -248,7 +249,8 @@ static void pd_pra_sel_handle(uint8_t id){
  * 2 分散选择的时候 接受一路都没有被选中的情况
  */
 static uint8_t decentralized_control_road_id[2];
-uint8_t get_decentralized_control_road_id(uint8_t id){
+uint8_t get_decentralized_control_road_id(uint8_t id)
+{
     return decentralized_control_road_id[id % 2];
 }
 void decentralized_control_mode_handle(void)
@@ -274,20 +276,8 @@ void decentralized_control_mode_handle(void)
 
     uint8_t debug_buf[200];
 
-    uint8_t control_road_num=0;
-    float p_gain=1.0f;
-
-    //分散控温模式，如果没有一路需要控制，那么退出此函数
-    for(i=0;i<10;i++){
-        if (get_pid_con_sw(i) == true){
-            control_road_num ++;
-        }
-    }
-
-    if(control_road_num == 0)
-        return ;//全部关闭的情况
-
-    control_road_num = 0;
+    uint8_t control_road_num = 0;
+    float p_gain = 1.0f;
 
     //关闭上一次所有的PWM控制重新开始
     close_all_software_pwm_out();
@@ -312,9 +302,16 @@ void decentralized_control_mode_handle(void)
         {
             //如果 i 被无条件关闭了 不运行下述代码
 
-            if(i_is_no_reason_off(i)==true){
-                continue ; 
+            if (get_no_reason_stop_decentralized_pwm_sw(i / 2) == true)
+            {
+                continue;
                 //这一路被外界无条件关闭了
+            }
+
+            if (pid_temp_error[i] < 0)
+            {
+                continue;
+                //这一路不需要控制了
             }
 
             pid_running_num++;
@@ -322,7 +319,6 @@ void decentralized_control_mode_handle(void)
             running_pid_index++;
         }
     }
-
 
     if (pid_running_num > 2)
     {
@@ -333,24 +329,38 @@ void decentralized_control_mode_handle(void)
          * running_pid_id[1] 只能从1 3 5 7 9 五个数中取值
          */
 
-
         /*
          * 初始化id为初始值,要么初始化为 0  1 要不然就是2 3 不允许出现 只开0 3 的情况
          */
-        for (i = 0; i < PID_CONTORLLER_NUM; i++){
-            if (get_pid_con_sw(i % 10) == true && get_pid_con_sw((i+1) % 10) == true){
+        for (i = 0; i < PID_CONTORLLER_NUM; i++)
+        {
+            if (get_pid_con_sw(i % 10) == true && get_pid_con_sw((i + 1) % 10) == true)
+            {
                 running_pid_id[0] = i;
-                running_pid_id[1] = i+1;
+                running_pid_id[1] = i + 1;
                 break;
             }
-        }        
-        
+        }
+
+        // 需要再斟酌一下 下述代码，选择误差第一大和第二打的路，考虑排序算法
+        //一路必须是奇数路 一路必须偶数路
+        //
         error_max = 0;
 
-        for(i=0;i<5;i++){
-            if(get_pid_con_sw(i * 2)){
-                if(error_max < pid_temp_error [i * 2]){
-                    error_max = pid_temp_error [i * 2];
+        /*
+         * 在所有偶数路中挑选误差最大的路
+         */
+        for (i = 0; i < 5; i++)
+        {
+            if (get_pid_con_sw(i * 2))
+            {
+                if (pid_temp_error[i * 2] < 0)
+                {
+                    pid_temp_error[i * 2] = 0;
+                }
+                if (error_max <= pid_temp_error[i * 2])
+                {
+                    error_max = pid_temp_error[i * 2];
                     error_max_id = i * 2;
                 }
             }
@@ -360,54 +370,117 @@ void decentralized_control_mode_handle(void)
 
         error_max = 0;
 
-        for(i=0;i<5;i++){
-            if(get_pid_con_sw((i * 2) + 1)){
-                if(error_max < pid_temp_error [(i * 2) + 1]){
-                    error_max = pid_temp_error [(i * 2) + 1];
+        for (i = 0; i < 5; i++)
+        {
+            if (get_pid_con_sw((i * 2) + 1))
+            {
+                if (pid_temp_error[i * 2 + 1] < 0)
+                {
+                    pid_temp_error[i * 2 + 1] = 0;
+                }
+                if (error_max <= pid_temp_error[(i * 2) + 1])
+                {
+                    error_max = pid_temp_error[(i * 2) + 1];
                     error_max_id = (i * 2) + 1;
                 }
             }
         }
 
         running_pid_id[1] = error_max_id;
-        
     }
 
-    decentralized_control_road_id[0] = running_pid_id[0];
-    decentralized_control_road_id[1] = running_pid_id[1];
+    if (pid_running_num == 0)
+    {
+        decentralized_control_road_id[0] = 0xff;
+        decentralized_control_road_id[1] = 0xff;
+    }
+    else if (pid_running_num == 1)
+    {
+        decentralized_control_road_id[0] = running_pid_id[0];
+        decentralized_control_road_id[1] = 0xff;
+    }
+    else
+    {
+        decentralized_control_road_id[0] = running_pid_id[0];
+        decentralized_control_road_id[1] = running_pid_id[1];
+    }
 
     /*
      * PID控制器针对应用的核心算法8 
      * 根据同时需要控制加热片的个数来决定是否需要对P进行增益
      */
 
-    for (i = 0; i < PID_CONTORLLER_NUM; i++){
+    for (i = 0; i < PID_CONTORLLER_NUM; i++)
+    {
         if (get_pid_con_sw(i) == true)
         {
             control_road_num++;
 
-            if(control_road_num >=6 ){
+            if (control_road_num >= 6)
+            {
                 //控制个数超过了6个，适当增益P，使得恒温效果更佳
-                switch(control_road_num){
-                    case 6:p_gain = _6_CONTORL_NUM_P_GAIN ; break;
-                    case 8:p_gain = _8_CONTORL_NUM_P_GAIN ;break;
-                    case 10:p_gain = _10_CONTORL_NUM_P_GAIN ;break;
+                switch (control_road_num)
+                {
+                case 6:
+                    p_gain = _6_CONTORL_NUM_P_GAIN;
+                    break;
+                case 8:
+                    p_gain = _8_CONTORL_NUM_P_GAIN;
+                    break;
+                case 10:
+                    p_gain = _10_CONTORL_NUM_P_GAIN;
+                    break;
                 }
             }
         }
     }
 
-    if(pid_running_num != 0){
+    if (pid_running_num == 1)
+    {
+
         if (get_pid_con_sw(running_pid_id[0] % 10))
         {
             if (pid_temp_error[running_pid_id[0] % 10] > 0)
             {
-                pd_pra_sel_handle(running_pid_id[0]  % 10);
+                pd_pra_sel_handle(running_pid_id[0] % 10);
 
                 //开始计算PWM占空比，使用PD算法
-                p_cal1_f = (float)P * (float)pid_temp_error[running_pid_id[0] % 10] * p_gain;
-                d_cal1_f = (float)D * ((float)pid_temp_error_last[running_pid_id[0] % 10] - (float)pid_temp_error[running_pid_id[0]]);
-                pwm_out1_f =  p_cal1_f + d_cal1_f;
+                p_cal1_f = (float)p_pra * (float)pid_temp_error[running_pid_id[0] % 10] * p_gain;
+                d_cal1_f = (float)d_pra * ((float)pid_temp_error_last[running_pid_id[0] % 10] - (float)pid_temp_error[running_pid_id[0]]);
+                pwm_out1_f = p_cal1_f + d_cal1_f;
+
+                pid_temp_error_last[running_pid_id[0] % 10] = pid_temp_error[running_pid_id[0] % 10];
+
+                pwm_out1 = (int16_t)pwm_out1_f;
+
+                if (pwm_out1 > 1000)
+                    pwm_out1 = 1000;
+
+                if (pwm_out1 < 0)
+                    pwm_out1 = 0;
+
+                set_software_pwm(running_pid_id[0], pwm_out1);
+            }
+            else
+            {
+                //出现降温的情况，直接给到0
+                pwm_out1 = 0;
+                set_software_pwm(running_pid_id[0], pwm_out1);
+            }
+        }
+    }
+    else
+    {
+        if (get_pid_con_sw(running_pid_id[0] % 10))
+        {
+            if (pid_temp_error[running_pid_id[0] % 10] > 0)
+            {
+                pd_pra_sel_handle(running_pid_id[0] % 10);
+
+                //开始计算PWM占空比，使用PD算法
+                p_cal1_f = (float)p_pra * (float)pid_temp_error[running_pid_id[0] % 10] * p_gain;
+                d_cal1_f = (float)d_pra * ((float)pid_temp_error_last[running_pid_id[0] % 10] - (float)pid_temp_error[running_pid_id[0]]);
+                pwm_out1_f = p_cal1_f + d_cal1_f;
 
                 pid_temp_error_last[running_pid_id[0] % 10] = pid_temp_error[running_pid_id[0] % 10];
 
@@ -433,13 +506,13 @@ void decentralized_control_mode_handle(void)
         {
             if (pid_temp_error[running_pid_id[1] % 10] > 0)
             {
-                pd_pra_sel_handle(running_pid_id[1]  % 10);
+                pd_pra_sel_handle(running_pid_id[1] % 10);
 
                 //开始计算PWM占空比，使用PD算法
                 p_cal2_f = (float)p_pra * (float)pid_temp_error[running_pid_id[1] % 10] * p_gain;
                 d_cal2_f = (float)d_pra * ((float)pid_temp_error_last[running_pid_id[1] % 10] - (float)pid_temp_error[running_pid_id[1]]);
-                    
-                pwm_out2_f =  p_cal2_f + d_cal2_f;
+
+                pwm_out2_f = p_cal2_f + d_cal2_f;
 
                 pid_temp_error_last[running_pid_id[1] % 10] = pid_temp_error[running_pid_id[1] % 10];
 
@@ -449,8 +522,8 @@ void decentralized_control_mode_handle(void)
                     pwm_out2 = 1000;
 
                 if (pwm_out2 < 0)
-                pwm_out2 = 0;
-                    set_software_pwm(running_pid_id[1], pwm_out2);
+                    pwm_out2 = 0;
+                set_software_pwm(running_pid_id[1], pwm_out2);
             }
             else
             {
@@ -459,6 +532,7 @@ void decentralized_control_mode_handle(void)
             }
         }
     }
+
     //判断所有打开的温度控制路，是否都处于控温状态了，如果是的，把BUSY位置0，告诉上级，处于NO BUSY状态
     //可以响应新的升温任务
     //对控温状态的定义：目标温度 - 当前温度   < 1.0摄氏度
@@ -468,44 +542,51 @@ void decentralized_control_mode_handle(void)
     {
         if (get_pid_con_sw(i) == true)
         {
-            if(pid_temp_error[i] < 10)
+            if (pid_temp_error[i] < 10)
             {
-            }else{
+            }
+            else
+            {
                 decentralize_busy_flag = true;
                 goto exit;
-            } 
+            }
         }
     }
 
     decentralize_busy_flag = false;
 
-    exit:
+exit:
     //上报代码段
-    if(get_pid_debug_sw() == true){
-        if(pid_running_num == 0){
-        debug_sender_str("| decentralized Mode | no road need control \r\n");
-        }else{
-        sprintf((char *)debug_buf,"| decentralized Mode | ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) lock List [%d %d %d %d %d] water cold sw list [%d %d %d %d %d]\r\n",
-                running_pid_id[0],p_cal1_f,d_cal1_f,pwm_out1,pid_now_temp[running_pid_id[0]],pid_target_temp[running_pid_id[0]],
-                running_pid_id[1],p_cal2_f,d_cal2_f,pwm_out2,pid_now_temp[running_pid_id[1]],pid_target_temp[running_pid_id[1]],
-                get_no_reason_stop_decentralized_pwm_sw(0),get_no_reason_stop_decentralized_pwm_sw(1),get_no_reason_stop_decentralized_pwm_sw(2),
-                get_no_reason_stop_decentralized_pwm_sw(3),get_no_reason_stop_decentralized_pwm_sw(4),
-                water_cool_sw[0],water_cool_sw[1],water_cool_sw[2],water_cool_sw[3],water_cool_sw[4]);
-        debug_sender_str(debug_buf);
+    if (get_pid_debug_sw() == true)
+    {
+        if (pid_running_num == 0)
+        {
+            debug_sender_str("| decentralized Mode | no road need control \r\n");
+        }
+        else
+        {
+            sprintf((char *)debug_buf, "| decentralized Mode | ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) lock List [%d %d %d %d %d] water cold sw list [%d %d %d %d %d]\r\n",
+                    running_pid_id[0], p_cal1_f, d_cal1_f, pwm_out1, pid_now_temp[running_pid_id[0]], pid_target_temp[running_pid_id[0]],
+                    running_pid_id[1], p_cal2_f, d_cal2_f, pwm_out2, pid_now_temp[running_pid_id[1]], pid_target_temp[running_pid_id[1]],
+                    get_no_reason_stop_decentralized_pwm_sw(0), get_no_reason_stop_decentralized_pwm_sw(1), get_no_reason_stop_decentralized_pwm_sw(2),
+                    get_no_reason_stop_decentralized_pwm_sw(3), get_no_reason_stop_decentralized_pwm_sw(4),
+                    water_cool_sw[0], water_cool_sw[1], water_cool_sw[2], water_cool_sw[3], water_cool_sw[4]);
+            debug_sender_str(debug_buf);
         }
     }
 }
 
-static bool temp_in_range(int16_t range_up , int16_t range_down,int16_t error){
-    if(error > range_down && error < range_up){
+static bool temp_in_range(int16_t range_up, int16_t range_down, int16_t error)
+{
+    if (error > range_down && error < range_up)
+    {
         return true;
-    }else{
+    }
+    else
+    {
         return false;
     }
 }
-
-
-
 
 /*
  * 集中升温模式
@@ -520,24 +601,22 @@ void concentrate_control_mode_handle(void)
     float p_cal1_f = 0;
     float d_cal1_f = 0;
     float p_cal2_f = 0;
-    float d_cal2_f = 0;    
+    float d_cal2_f = 0;
 
     int16_t pwm_out1 = 0;
     int16_t pwm_out2 = 0;
-    uint16_t id1=0;
-    uint16_t id2=0;
+    uint16_t id1 = 0;
+    uint16_t id2 = 0;
 
     //上传报文使用
     uint8_t debug_buf[200];
-    
 
     id1 = concentrate_control_mode_road_id[0] % 10;
     id2 = concentrate_control_mode_road_id[1] % 10;
 
-
     //关闭所有非id1 id2的PWM输出
 
-    close_all_software_pwm_out_except(id1,id2);
+    close_all_software_pwm_out_except(id1, id2);
 
     //仅更新集中两路的温度
     pid_now_temp[id1] = adc_temp_data[id1];
@@ -546,11 +625,12 @@ void concentrate_control_mode_handle(void)
     pid_temp_error[id1] = pid_target_temp[id1] - pid_now_temp[id1];
     pid_temp_error[id2] = pid_target_temp[id2] - pid_now_temp[id2];
 
+#if defined(STOP_TEMP_ARG)
 
-    #if defined (STOP_TEMP_ARG)
-
-    if(stop_arg_bool_1 == false){
-        if(pid_now_temp[id1] > stop_temp_pra){
+    if (stop_arg_bool_1 == false)
+    {
+        if (pid_now_temp[id1] > stop_temp_pra)
+        {
             //出现一个瞬间 温度超过停止温度
             //锁上pwm1
             //以后不再判断
@@ -559,23 +639,27 @@ void concentrate_control_mode_handle(void)
         }
     }
 
-    if(stop_arg_bool_2 == false){
-        if(pid_now_temp[id2] > stop_temp_pra){
+    if (stop_arg_bool_2 == false)
+    {
+        if (pid_now_temp[id2] > stop_temp_pra)
+        {
             pwm_out2_lock = true;
             stop_arg_bool_2 = true;
         }
     }
 
     //计时锁定时间 自动解锁
-    if(pwm_out1_lock && pwm_out2_lock){
-        stop_arg_tick ++;
-        if(stop_arg_tick > stop_tim_pra * 10){
+    if (pwm_out1_lock && pwm_out2_lock)
+    {
+        stop_arg_tick++;
+        if (stop_arg_tick > stop_tim_pra * 10)
+        {
             stop_arg_tick = 0;
-            pwm_out1_lock = false;//unlock
+            pwm_out1_lock = false; //unlock
             pwm_out2_lock = false;
         }
     }
-    #endif
+#endif
 
     //开始PID控温
     if (pid_temp_error[concentrate_control_mode_road_id[0] % 10] > 0)
@@ -596,30 +680,31 @@ void concentrate_control_mode_handle(void)
             pwm_out1 = 1000;
 
         if (pwm_out1 < 0)
-            pwm_out1 = 0;        
+            pwm_out1 = 0;
 
-        #if defined (STOP_TEMP_ARG)
-        if(pwm_out1_lock)
-            set_software_pwm(id1, 0); 
+#if defined(STOP_TEMP_ARG)
+        if (pwm_out1_lock)
+            set_software_pwm(id1, 0);
         else
             set_software_pwm(id1, pwm_out1);
-        #else
+#else
         set_software_pwm(id1, pwm_out1);
-        #endif
-    }else
+#endif
+    }
+    else
     {
         pwm_out1 = 0;
 
-        set_software_pwm(id1, pwm_out1);        
+        set_software_pwm(id1, pwm_out1);
     }
 
     if (pid_temp_error[concentrate_control_mode_road_id[1] % 10] > 0)
     {
-        
+
         pd_pra_sel_handle(concentrate_control_mode_road_id[1] % 10);
 
-        p_cal2_f = (float)P * (float)pid_temp_error[id2];
-        d_cal2_f = (float)D * ((float)pid_temp_error_last[id2] - (float)pid_temp_error[id2]);
+        p_cal2_f = (float)p_pra * (float)pid_temp_error[id2];
+        d_cal2_f = (float)p_pra * ((float)pid_temp_error_last[id2] - (float)pid_temp_error[id2]);
 
         pwm_out2_f = p_cal2_f + d_cal2_f;
         pid_temp_error_last[id2] = pid_temp_error[id2];
@@ -630,51 +715,54 @@ void concentrate_control_mode_handle(void)
             pwm_out2 = 1000;
 
         if (pwm_out2 < 0)
-            pwm_out2 = 0;        
+            pwm_out2 = 0;
 
-        #if defined (STOP_TEMP_ARG)
-        if(pwm_out2_lock)
-            set_software_pwm(id2, 0); 
+#if defined(STOP_TEMP_ARG)
+        if (pwm_out2_lock)
+            set_software_pwm(id2, 0);
         else
             set_software_pwm(id2, pwm_out2);
-        #else
+#else
         set_software_pwm(id2, pwm_out2);
-        #endif
-
-    }else{
+#endif
+    }
+    else
+    {
 
         pwm_out2 = 0;
 
-        set_software_pwm(id2, pwm_out2);            
+        set_software_pwm(id2, pwm_out2);
     }
 
     //TODO 目前集中升温模式的结束标志仅仅是瞬间到达目标温度
     //后期可以再考虑结束的标志，结束标志决定是否进入控温态
-    
+
     //19.12.19增补代码，如果水泵处于工作状态，不对状进行判断
 
-    if(temp_in_range(10,-10,pid_temp_error[id1]) == true  && temp_in_range(10,-10,pid_temp_error[id2]) == true){
+    if (temp_in_range(10, -10, pid_temp_error[id1]) == true && temp_in_range(10, -10, pid_temp_error[id2]) == true)
+    {
         concentrate_condition_done = true;
     }
 
     //报文上传代码段，将此次的信息报给上位机
 
-    if(get_pid_debug_sw() == true){
-        #if defined (STOP_TEMP_ARG)
+    if (get_pid_debug_sw() == true)
+    {
+#if defined(STOP_TEMP_ARG)
 
-        sprintf((char *)debug_buf,"| concentrate Mode | ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) pwmlock : (%d,%d)\r\n",
-                id1,p_cal1_f,d_cal1_f,pwm_out1,pid_now_temp[id1],pid_target_temp[id1],
-                id2,p_cal2_f,d_cal2_f,pwm_out2,pid_now_temp[id2],pid_target_temp[id2],
-                pwm_out1_lock,pwm_out2_lock);  
+        sprintf((char *)debug_buf, "| concentrate Mode | ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) pwmlock : (%d,%d)\r\n",
+                id1, p_cal1_f, d_cal1_f, pwm_out1, pid_now_temp[id1], pid_target_temp[id1],
+                id2, p_cal2_f, d_cal2_f, pwm_out2, pid_now_temp[id2], pid_target_temp[id2],
+                pwm_out1_lock, pwm_out2_lock);
         debug_sender_str(debug_buf);
-        #else
-        sprintf((char *)debug_buf,"| concentrate Mode | ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d)\r\n",
-                id1,p_cal1_f,d_cal1_f,pwm_out1,pid_now_temp[id1],pid_target_temp[id1],
-                id2,p_cal2_f,d_cal2_f,pwm_out2,pid_now_temp[id2],pid_target_temp[id2]);
+#else
+        sprintf((char *)debug_buf, "| concentrate Mode | ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d) ID %d (p:%.2f,d:%.2f,pwm:%d,T %d/%d)\r\n",
+                id1, p_cal1_f, d_cal1_f, pwm_out1, pid_now_temp[id1], pid_target_temp[id1],
+                id2, p_cal2_f, d_cal2_f, pwm_out2, pid_now_temp[id2], pid_target_temp[id2]);
         debug_sender_str(debug_buf);
-        #endif
+#endif
     }
-} 
+}
 
 static bool have_temp_control_task(void)
 {
@@ -692,13 +780,12 @@ static bool have_temp_control_task(void)
     return false;
 }
 
-
-
-uint16_t get_road_temp(uint8_t road_id){
+uint16_t get_road_temp(uint8_t road_id)
+{
     uint16_t water_cool_road_temp = 0;
-    
+
     water_cool_road_temp += adc_temp_data[road_id * 2 % 10];
-    water_cool_road_temp += adc_temp_data[(road_id * 2 + 1) % 10];    
+    water_cool_road_temp += adc_temp_data[(road_id * 2 + 1) % 10];
 
     water_cool_road_temp /= 2;
 
@@ -712,39 +799,49 @@ uint16_t get_road_temp(uint8_t road_id){
 static bool close_water_pump_sw[5];
 static uint16_t close_tick[5];
 static uint16_t WATER_PUMP_DELAY_TIM[5];
-bool get_close_water_pump_sw(uint8_t id){
+bool get_close_water_pump_sw(uint8_t id)
+{
     return close_water_pump_sw[id];
 }
-void set_close_water_pump_sw(uint8_t id ,bool sw){
+void set_close_water_pump_sw(uint8_t id, bool sw)
+{
     close_water_pump_sw[id] = sw;
 }
-static void close_water_pump_init(void){
-    uint8_t i=0;
-    for(i=0;i<5;i++){
+static void close_water_pump_init(void)
+{
+    uint8_t i = 0;
+    for (i = 0; i < 5; i++)
+    {
         close_tick[i] = 0;
-        close_water_pump_sw[i]= false;
-        WATER_PUMP_DELAY_TIM[i] = 100;//默认保持10S
+        close_water_pump_sw[i] = false;
+        WATER_PUMP_DELAY_TIM[i] = 100; //默认保持10S
     }
 }
-void set_water_pump_delay_tim(uint8_t id ,uint16_t delayTim){
+void set_water_pump_delay_tim(uint8_t id, uint16_t delayTim)
+{
     WATER_PUMP_DELAY_TIM[id] = delayTim;
 }
 
-static void close_water_pump_handle(void){
-    uint8_t i=0;
-    for(i=0;i<5;i++){
-        if(get_close_water_pump_sw(i)){
+static void close_water_pump_handle(void)
+{
+    uint8_t i = 0;
+    for (i = 0; i < 5; i++)
+    {
+        if (get_close_water_pump_sw(i))
+        {
             close_tick[i]++;
-            
-            if(close_tick[i] > WATER_PUMP_DELAY_TIM[i] / 2){
-                 water_cool_pump_control(i % 5, 1 );//关闭水冷降温            
-            }            
 
-            if(close_tick[i] > WATER_PUMP_DELAY_TIM[i]){
-                 close_tick[i] = 0;
-                 water_cool_sw[i] = false;
-                 set_close_water_pump_sw(i,false);
-                 set_no_reason_stop_decentralized_pwm_sw(i,false);//恢复大范围降温算法，关闭温控的状态机
+            if (close_tick[i] > WATER_PUMP_DELAY_TIM[i] / 2)
+            {
+                water_cool_pump_control(i % 5, 1); //关闭水冷降温
+            }
+
+            if (close_tick[i] > WATER_PUMP_DELAY_TIM[i])
+            {
+                close_tick[i] = 0;
+                water_cool_sw[i] = false;
+                set_close_water_pump_sw(i, false);
+                set_no_reason_stop_decentralized_pwm_sw(i, false); //恢复大范围降温算法，关闭温控的状态机
             }
         }
     }
@@ -753,43 +850,42 @@ static void close_water_pump_handle(void){
 /*
  * 委托关闭水冷算法代码段 end
  */
-void water_cool_handle(void){
-    uint16_t water_cool_road_temp[2];
-    uint16_t road_temp_min=0;
-    uint8_t i=0;
+void water_cool_handle(void)
+{
+    uint16_t road_temp = 0;
+    uint8_t i = 0;
     //uint8_t debug_buf[100];
 
-    if(water_cool_sw[0] == false &&
+    if (water_cool_sw[0] == false &&
         water_cool_sw[1] == false &&
         water_cool_sw[2] == false &&
         water_cool_sw[3] == false &&
         water_cool_sw[4] == false)
-        return ;
+        return;
 
-    for(i=0;i<5;i++){
-        if(water_cool_sw[i] == true && get_close_water_pump_sw(i) == false){
-            //19.12.2 关闭泵的条件由均值到达目标温度改为最小值到达目标温度
-            water_cool_road_temp[0] = adc_temp_data[(i * 2) % 10];
-            water_cool_road_temp[1] = adc_temp_data[(i * 2 + 1) % 10];
+    for (i = 0; i < 5; i++)
+    {
+        if (water_cool_sw[i] == true && get_close_water_pump_sw(i) == false)
+        {
+            //19.12.2 关闭泵的条件由均值到达目标温度改为最大值到达目标温度
 
-            if(water_cool_road_temp[0] < water_cool_road_temp[1]){
-                road_temp_min = water_cool_road_temp[1];
-            }else{
-                road_temp_min = water_cool_road_temp[0]; 
-            }
+            //19.12.25 重新更改为使用get_road_temp的方法获得平均温度作为判据
+            //因为后面给出了更多的优质算法来解决余热的问题，不需要使用最值算法
 
+            road_temp = get_road_temp(i);
             //sprintf((char *)debug_buf,"max_temp: %d target_temp %d \r\n",road_temp_min , water_cool_target_temp[i]);
             //debug_sender_str(debug_buf);
             //delay_ms(10);
 
-            if(road_temp_min < water_cool_target_temp[i] + WATER_COOL_TEMP_OFFSET){
+            if (road_temp < water_cool_target_temp[i] + WATER_COOL_TEMP_OFFSET)
+            {
                 //debug_sender_str("LOW TEMP HAPPEND\r\n");
                 //delay_ms(10);
-                set_close_water_pump_sw(i ,true); //委托一个延时关闭任务
-                set_no_reason_stop_decentralized_pwm_sw(i,true);//暂时关闭分散控温算法，大范围降温时发生
+                set_close_water_pump_sw(i, true); //委托一个延时关闭任务
+                //接下来的时间 一半时间停止控制 & 打开水冷，另一半时间只是停止控制 & 关闭水冷
                 //关闭软件PWM
-                set_software_pwm(i % 10, 0); 
-                set_software_pwm((i*2 + 1) % 10, 0); 
+                set_software_pwm(i % 10, 0);
+                set_software_pwm((i * 2 + 1) % 10, 0);
             }
         }
     }
@@ -806,7 +902,8 @@ void arg_pid_init(void)
         pid_controller_sw[i] = false;
     }
 
-    for(i=0;i<2;i++){
+    for (i = 0; i < 2; i++)
+    {
         decentralized_control_road_id[i] = 0;
         concentrate_control_mode_road_id[i] = 0;
     }
@@ -819,17 +916,18 @@ void arg_pid_init(void)
     no_reason_stop_decentralized_pwm_init();
 }
 
-void no_reason_stop_temp_control(uint8_t road_id){
-    set_pid_con_sw((road_id * 2) % 10,false);
-    set_pid_con_sw((road_id * 2 + 1) % 10,false);
+void no_reason_stop_temp_control(uint8_t road_id)
+{
+    set_pid_con_sw((road_id * 2) % 10, false);
+    set_pid_con_sw((road_id * 2 + 1) % 10, false);
 
     concentrate_condition_done = false;
     decentralize_busy_flag = false;
 
     //关闭温控的同时也需要关闭软件PWM
 
-    set_software_pwm((road_id * 2) % 10, 0); 
-    set_software_pwm((road_id* 2 + 1) % 10, 0); 
+    set_software_pwm((road_id * 2) % 10, 0);
+    set_software_pwm((road_id * 2 + 1) % 10, 0);
 }
 //100ms进行一次pid运算
 void arg_pid_handle(void)
@@ -840,10 +938,9 @@ void arg_pid_handle(void)
 
     _PID_CONTROL_UP_FALG = false;
 
-
     water_cool_handle();
     close_water_pump_handle();
-    
+
     if (have_temp_control_task() == false)
         return;
 
@@ -855,6 +952,4 @@ void arg_pid_handle(void)
     {
         decentralized_control_mode_handle();
     }
-
-
 }

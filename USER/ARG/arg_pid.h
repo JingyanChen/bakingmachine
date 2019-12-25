@@ -210,7 +210,7 @@
  */
 
 
-#define WATER_PUMP_DELAY_K  0.2
+#define WATER_PUMP_DELAY_K  0.05
 #define WATER_PUMP_DELAY_B  0
 /*
  * brief : 设置每一路的水泵降温停止时间，默认是10S
@@ -274,7 +274,7 @@ typedef enum{
 #define LOW_TARGET_TEMP_THR 450
 
 
-#define P_LOW_TEMP 1.0f
+#define P_LOW_TEMP 3.0f
 #define D_LOW_TEMP -10.0f
 
 
@@ -410,4 +410,9 @@ uint8_t get_concentrate_road_id(uint8_t id);
  * return now concentrate control id
  */
 uint8_t get_decentralized_control_road_id(uint8_t id);
+
+/*
+ * brief : 提供一个无条件暂停水冷的方法，配合水冷逻辑使用
+ */
+void set_no_reason_stop_decentralized_pwm_sw(uint8_t id , bool sw);
 #endif
