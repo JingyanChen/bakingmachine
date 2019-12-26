@@ -45,6 +45,7 @@ extern bakingMachine_t  bakingMachine_flag;
 #define _HUMIDITY_CONTROL_FLAG bakingMachine_flag.timer_flag_2.se3
 #define _TFT_COM_UPDATE_FLAG bakingMachine_flag.timer_flag_2.se4
 #define _MOTOR_LIMIT_UPDATE_FLAG bakingMachine_flag.timer_flag_2.se5
+#define _ARG_REPORT_FLAG bakingMachine_flag.timer_flag_2.se6
 
 void csp_timer_init(void);
 void csp_timer_handle(void);

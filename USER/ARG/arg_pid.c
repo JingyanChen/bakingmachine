@@ -188,17 +188,20 @@ static bool get_no_reason_stop_decentralized_pwm_sw(uint8_t id)
 
 static uint16_t water_cool_target_temp[5];
 static bool water_cool_sw[5];
+static bool redundancy_arg_sw_buf[5];
+
 void stop_water_cool(uint8_t road_id)
 {
     water_cool_pump_control(road_id % 5, 1); //关闭水冷降温
-    water_cool_target_temp[road_id % 5] = false;
+    water_cool_target_temp[road_id % 5] = 0;
 }
-void start_water_cool(uint8_t road_id, uint16_t target_temp)
+void start_water_cool(uint8_t road_id, uint16_t target_temp,bool redundancy_arg_sw)
 {
 
     water_cool_pump_control(road_id % 5, 0); //打开水冷降温
     water_cool_target_temp[road_id % 5] = target_temp;
     water_cool_sw[road_id % 5] = true;
+    redundancy_arg_sw_buf[road_id % 5] = redundancy_arg_sw;
 }
 bool get_water_cool_sw(uint8_t id)
 {
@@ -212,6 +215,7 @@ void water_cool_init(void)
     {
         water_cool_target_temp[i] = 0;
         water_cool_sw[i] = false;
+        redundancy_arg_sw_buf[i] = false;
     }
 }
 
@@ -739,7 +743,15 @@ void concentrate_control_mode_handle(void)
 
     //19.12.19增补代码，如果水泵处于工作状态，不对状进行判断
 
-    if (temp_in_range(10, -10, pid_temp_error[id1]) == true && temp_in_range(10, -10, pid_temp_error[id2]) == true)
+    //19.12.26修改代码 从(-10,10),增大到了(-999,10)
+    /*
+     * 修改了结束集中控温态的条件，从(-10,10)变为 (-10,正无穷)
+     * 也就是说只要有一瞬间温度到达了(target_temp,target_temp+10)就结束集中控温态
+     * 这样做的好处在于，如果调过了，控制器并没有良好的办法让其降温，所以也不应该
+     * 占着集中模式的资源
+     */
+    
+    if (temp_in_range(10, -999, pid_temp_error[id1]) == true && temp_in_range(10, -10, pid_temp_error[id2]) == true)
     {
         concentrate_condition_done = true;
     }
@@ -773,6 +785,9 @@ static bool have_temp_control_task(void)
     {
         if (pid_controller_sw[i] == true)
         {
+            //初始化全局变量
+            decentralized_control_road_id[0] = 0xff;
+            decentralized_control_road_id[1] = 0xff;
             return true;
         }
     }
@@ -847,6 +862,13 @@ static void close_water_pump_handle(void)
     }
 }
 
+void clear_water_cool_logic_machine(uint8_t road_id){
+    stop_water_cool(road_id % 5);  
+    close_water_pump_sw[road_id % 5] = false;
+    close_tick[road_id % 5] = 0;
+    WATER_PUMP_DELAY_TIM[road_id % 5] = 0;    
+}
+
 /*
  * 委托关闭水冷算法代码段 end
  */
@@ -881,11 +903,16 @@ void water_cool_handle(void)
             {
                 //debug_sender_str("LOW TEMP HAPPEND\r\n");
                 //delay_ms(10);
-                set_close_water_pump_sw(i, true); //委托一个延时关闭任务
-                //接下来的时间 一半时间停止控制 & 打开水冷，另一半时间只是停止控制 & 关闭水冷
-                //关闭软件PWM
-                set_software_pwm(i % 10, 0);
-                set_software_pwm((i * 2 + 1) % 10, 0);
+                if(redundancy_arg_sw_buf[i] == true){
+                    set_close_water_pump_sw(i, true); //委托一个延时关闭任务
+                    //接下来的时间 一半时间停止控制 & 打开水冷，另一半时间只是停止控制 & 关闭水冷
+                    //关闭软件PWM
+                    set_software_pwm(i % 10, 0);
+                    set_software_pwm((i * 2 + 1) % 10, 0);
+                }else{
+                    //直接关闭
+                    water_cool_pump_control(i % 5, 1); //关闭水冷降温
+                }
             }
         }
     }

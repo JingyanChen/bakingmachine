@@ -110,7 +110,7 @@ static void csp_1000_ms_handle(void){
     _1000ms_tick = 0;
 
     // 1000 ms code
-
+    _ARG_REPORT_FLAG = true;
     //
 
 }

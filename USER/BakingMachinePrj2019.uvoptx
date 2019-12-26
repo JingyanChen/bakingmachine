@@ -176,23 +176,23 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>665</LineNumber>
+          <LineNumber>1333</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>0</Address>
+          <Address>134256828</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>0</BreakIfRCount>
-          <Filename>.\ARG\arg_pid.c</Filename>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>.\ARG\arg_debug_pro.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression></Expression>
+          <Expression>\\Template\ARG/arg_debug_pro.c\1333</Expression>
         </Bp>
         <Bp>
           <Number>1</Number>
           <Type>0</Type>
-          <LineNumber>666</LineNumber>
+          <LineNumber>407</LineNumber>
           <EnabledFlag>1</EnabledFlag>
           <Address>0</Address>
           <ByteObject>0</ByteObject>
@@ -201,7 +201,7 @@
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>0</BreakIfRCount>
-          <Filename>.\ARG\arg_pid.c</Filename>
+          <Filename>.\ARG\app.c</Filename>
           <ExecCommand></ExecCommand>
           <Expression></Expression>
         </Bp>
@@ -428,6 +428,21 @@
           <count>38</count>
           <WinNumber>2</WinNumber>
           <ItemText>pid_temp_error</ItemText>
+        </Ww>
+        <Ww>
+          <count>39</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>task_stop_data</ItemText>
+        </Ww>
+        <Ww>
+          <count>40</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>task_machine_status</ItemText>
+        </Ww>
+        <Ww>
+          <count>41</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>now_running_event_task</ItemText>
         </Ww>
       </WatchWindow2>
       <Tracepoint>

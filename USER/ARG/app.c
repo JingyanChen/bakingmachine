@@ -476,8 +476,11 @@ static bool queue_task_deal_handle(void){
                  * 如果是有换水需求的大范围降温任务，在这边解析
                  */
                  if(get_road_temp(now_running_event_task.road_id) > now_running_event_task.target_temp + SMALL_RANGE_DOWN_TEMP){
-                    start_water_cool(now_running_event_task.road_id,now_running_event_task.target_temp);
+                    start_water_cool(now_running_event_task.road_id,now_running_event_task.target_temp,true);
                     set_water_pump_delay_tim(now_running_event_task.road_id,(uint16_t)((float)(get_road_temp(now_running_event_task.road_id) - now_running_event_task.target_temp) * WATER_PUMP_DELAY_K + WATER_PUMP_DELAY_B));                 
+                }else{
+                    //否则不是大范围降温任务，清空所有水冷相关的状态机
+                    clear_water_cool_logic_machine(now_running_event_task.road_id);
                 }
                 //配置换水任务
                 if(now_running_event_task.need_change_water == true){

@@ -274,7 +274,7 @@ typedef enum{
 #define LOW_TARGET_TEMP_THR 450
 
 
-#define P_LOW_TEMP 3.0f
+#define P_LOW_TEMP 2.0f
 #define D_LOW_TEMP -10.0f
 
 
@@ -368,10 +368,12 @@ bool set_pid_controller_mode_as_concentrate(uint8_t road_id,uint16_t target_temp
 #endif
 /*
  * brief : 委托一个水冷降温任务，状态机会打开水冷泵，一直到温度低于target_temp，关闭泵
+ *         并且传入是否需要采用冗余算法，冗余算法是用来控制低温效果的，见版本V3.1的说明
  * pra @ id : 0-4 为了简化程序，把0-1设为一对 2-3 设为一对
+ * pra @ redundancy_arg_sw : 是否打开算法
  * pra @ target:每一层的目标温度
  */
-void start_water_cool(uint8_t road_id ,uint16_t target_temp);
+void start_water_cool(uint8_t road_id ,uint16_t target_temp ,bool redundancy_arg_sw);
 /*
  * brief : 关闭水冷委托事件
  * pra @ id : 0-4 为了简化程序，把0-1设为一对 2-3 设为一对
@@ -395,7 +397,7 @@ bool get_decentralize_busy_flag(void);
 
 //获得/写入 《PID控制器针对应用的核心算法5》 的控制使能参数
 bool get_close_water_pump_sw(uint8_t id);
-void set_close_water_pump_sw(uint8_t id ,bool sw);
+void set_close_water_pump_sw(uint8_t id, bool sw);
 bool get_water_cool_sw(uint8_t id);
 
 /*
@@ -415,4 +417,10 @@ uint8_t get_decentralized_control_road_id(uint8_t id);
  * brief : 提供一个无条件暂停水冷的方法，配合水冷逻辑使用
  */
 void set_no_reason_stop_decentralized_pwm_sw(uint8_t id , bool sw);
+
+/*
+ * brief : 清空所有水冷相关的状态机，用在升温的时候，清除一下水冷逻辑
+ *         一旦判断到升温任务，立刻清除
+ */
+void clear_water_cool_logic_machine(uint8_t road_id);
 #endif

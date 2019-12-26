@@ -17,7 +17,7 @@
 #include "periph_fan.h"
 #include "periph_power.h"
 #include "app.h"
-
+#include "report.h"
 
 int main(void)
 {
@@ -41,7 +41,8 @@ int main(void)
 	arg_pid_init();
 	
 	arg_app_init();
-	
+	arg_report_init();
+
 	while (1)
 	{
 		csp_timer_handle();
@@ -59,5 +60,6 @@ int main(void)
 		arg_pid_handle();
 		
 		arg_app_hanlde();
+		arg_report_handle();
 	}
 }

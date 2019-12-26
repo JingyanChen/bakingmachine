@@ -19,6 +19,7 @@
 #include "periph_power.h"
 #include "csp_wtd.h"
 #include "app.h"
+#include "report.h"
 
 static bool temp_gui_upload_sw  = false;
 static bool tft_com_transmit_sw = false;
@@ -113,8 +114,10 @@ static void help(void){
     debug_sender_str(" 47 stop_all_fan\r\n");debug_send_nop();
     debug_sender_str(" 48 press_power_key\r\n");debug_send_nop();
     debug_sender_str(" 49 sys_debug\r\n");debug_send_nop();
-    
-    
+    debug_sender_str(" 50 start_one_hdr\r\n");debug_send_nop();
+    debug_sender_str(" 51 start_all_hdr\r\n");debug_send_nop();
+    debug_sender_str(" 52 start_one_tcp\r\n");debug_send_nop();
+    debug_sender_str(" 53 start_all_tcp\r\n");debug_send_nop();    
 }
 
 static void get_csp_adc(void){
@@ -1194,7 +1197,7 @@ static void run_temp_control(void){
                 
                 set_no_reason_stop_decentralized_pwm_sw(temp_event.road_id,true);//暂时关闭分散控温算法，大范围降温时发生
 
-                start_water_cool(temp_event.road_id,temp_event.target_temp);
+                start_water_cool(temp_event.road_id,temp_event.target_temp,true);
                 sprintf((char *)send_buf,"road %d is big cooling control.cooling dump running delay Tim is %d\r\n",temp_event.road_id,(uint16_t)((float)(get_road_temp(temp_event.road_id) - temp_event.target_temp) * WATER_PUMP_DELAY_K + WATER_PUMP_DELAY_B));
                 debug_sender_str(send_buf); 
             }else{
@@ -1218,8 +1221,9 @@ static void run_temp_control(void){
                 debug_sender_str(send_buf);   
             }else{
                 //小范围的升温，单单分散温控处理
+                clear_water_cool_logic_machine(temp_event.road_id);
                 set_pid_controller_mode_as_decentralize_without_set_mode(temp_event.road_id,temp_event.target_temp);
-                set_temp_control_status(temp_event.road_id,TEMP_CONTROL_SPECIAL_WAIT);
+                set_temp_control_status(temp_event.road_id,TEMP_CONTROL_ALL_READY);
 
                 sprintf((char *)send_buf,"road %d is small heating control.opearate done\r\n",temp_event.road_id);
                 debug_sender_str(send_buf); 
@@ -1333,15 +1337,22 @@ static void stop_temp_control(void){
     stop_water_cool(temp_event.road_id);//无条件关闭水泵
     set_temp_control_status(temp_event.road_id,TEMP_CONTORL_STOP);
 
-    if(get_task_machine_status() == task_machine_running){
-        if( get_now_running_event_task().road_id == temp_event.road_id){
-            now_running_e.task_running_over = true;
-            set_now_running_event_task(now_running_e);
-            queue_task_handle();
-        }
+
+    if( get_now_running_event_task().road_id == temp_event.road_id){
+        now_running_e.task_running_over = true;
+        set_now_running_event_task(now_running_e);
+        queue_task_handle();
     }else{
         set_task_stop_data(get_now_running_event_task().road_id,true);//委托将来执行任务的时候杀死任务
     }
+
+    //判断需要停止的路是否处于超过70摄氏度的高温，如果是则打开水冷到常温的任务
+
+    if(get_road_temp(temp_event.road_id) > 700){
+        start_water_cool(temp_event.road_id,400,false);
+    }
+
+    //end
 
     sprintf((char *)send_buf,"dequeue event: STOP_CONTROL_TEMP_EVEN road_id: %d target_temp: %d change_water %d success\r\n",pra1,pra2,pra3);
     debug_sender_str(send_buf);       
@@ -1511,6 +1522,35 @@ void sys_debug(void){
     debug_sender_str("start sys debug success\r\n");
 
 }
+void start_one_hdr(void){
+    if(start_HRD_check(false)){
+        debug_sender_str("start 0 box HDR test success\r\n");
+    }else{
+        debug_sender_str("start 0 box HDR test failed\r\n");
+    }
+    
+}
+void start_all_hdr(void){
+    if(start_HRD_check(true)){
+        debug_sender_str("start all box HDR test success\r\n");
+    }else{
+        debug_sender_str("start all box HDR test success\r\n");
+    }
+}
+void start_one_tcp(void){
+    if(start_TCP_check(false)){
+        debug_sender_str("start 0 box TCP test success\r\n");
+    }else{
+        debug_sender_str("start 0 box TCP test success\r\n");
+    }
+}   
+void start_all_tcp(void){
+    if(start_TCP_check(true)){
+        debug_sender_str("start all TCP HDR test success\r\n");
+    }else{
+        debug_sender_str("start all TCP HDR test success\r\n");
+    }
+}
 debug_func_list_t debug_func_list[] = {
 
     {help,"help"},{help,"?"},{help,"HELP"},
@@ -1567,6 +1607,12 @@ debug_func_list_t debug_func_list[] = {
     {stop_all_fan,"stop_all_fan"},{stop_all_fan,"47"},
     {press_power_key,"press_power_key"},{press_power_key,"48"},
     {sys_debug , "sys_debug"},{sys_debug,"49"},
+
+    {start_one_hdr , "start_one_hdr"},{start_one_hdr,"50"},
+    {start_all_hdr , "start_all_hdr"},{start_all_hdr,"51"},
+    {start_one_tcp , "start_one_tcp"},{start_one_tcp,"52"},
+    {start_all_tcp , "start_all_tcp"},{start_all_tcp,"52"},
+  
 };
 
 
