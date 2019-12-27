@@ -7,7 +7,7 @@
 
 
 #define MAIN_VERSION    3
-#define SECOND_VERSION  0
+#define SECOND_VERSION  2
 #define IS_RELEASE      1
 
 
@@ -220,6 +220,12 @@
  * 2 增加新文件 report.c /.h 详细见report.h
  * V3.1 版本给入了HDR参数的测试方法，并且简单测试了，V3.2版本给入TCP的测试方法和测试
  * 
+ * 
+ * V3.2版本
+ * 
+ * 取消了TCP测试，为了程序清爽整洁，不再加入过于复杂的测试逻辑。
+ * 如果需要TCP相关测试，手动测试，人工判断即可，HDR测试可以表征问题
+ * HDR RATE值越小，TCP性能越好
  */
 
 void get_version_str(uint8_t * str,uint16_t len);

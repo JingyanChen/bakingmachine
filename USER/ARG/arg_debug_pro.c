@@ -1537,20 +1537,6 @@ void start_all_hdr(void){
         debug_sender_str("start all box HDR test success\r\n");
     }
 }
-void start_one_tcp(void){
-    if(start_TCP_check(false)){
-        debug_sender_str("start 0 box TCP test success\r\n");
-    }else{
-        debug_sender_str("start 0 box TCP test success\r\n");
-    }
-}   
-void start_all_tcp(void){
-    if(start_TCP_check(true)){
-        debug_sender_str("start all TCP HDR test success\r\n");
-    }else{
-        debug_sender_str("start all TCP HDR test success\r\n");
-    }
-}
 debug_func_list_t debug_func_list[] = {
 
     {help,"help"},{help,"?"},{help,"HELP"},
@@ -1610,8 +1596,6 @@ debug_func_list_t debug_func_list[] = {
 
     {start_one_hdr , "start_one_hdr"},{start_one_hdr,"50"},
     {start_all_hdr , "start_all_hdr"},{start_all_hdr,"51"},
-    {start_one_tcp , "start_one_tcp"},{start_one_tcp,"52"},
-    {start_all_tcp , "start_all_tcp"},{start_all_tcp,"52"},
   
 };
 

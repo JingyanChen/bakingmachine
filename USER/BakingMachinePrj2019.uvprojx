@@ -633,6 +633,11 @@
               <FileType>1</FileType>
               <FilePath>.\ARG\arg_tft_com.c</FilePath>
             </File>
+            <File>
+              <FileName>report.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\ARG\report.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
