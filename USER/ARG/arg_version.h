@@ -7,7 +7,7 @@
 
 
 #define MAIN_VERSION    3
-#define SECOND_VERSION  2
+#define SECOND_VERSION  3
 #define IS_RELEASE      1
 
 
@@ -226,6 +226,11 @@
  * 取消了TCP测试，为了程序清爽整洁，不再加入过于复杂的测试逻辑。
  * 如果需要TCP相关测试，手动测试，人工判断即可，HDR测试可以表征问题
  * HDR RATE值越小，TCP性能越好
+ * 
+ * V3.3 版本
+ * 
+ * 适应最新的六层板GPIO定义
+ * 
  */
 
 void get_version_str(uint8_t * str,uint16_t len);

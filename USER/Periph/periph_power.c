@@ -28,33 +28,33 @@ static void config_sys_key_as_interrupt(void)
 
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOE | RCC_APB2Periph_AFIO, ENABLE);
 
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
     GPIO_Init(GPIOE, &GPIO_InitStructure);
 
-    GPIO_EXTILineConfig(GPIO_PortSourceGPIOE, GPIO_PinSource15);
+    GPIO_EXTILineConfig(GPIO_PortSourceGPIOE, GPIO_PinSource8);
 
-    EXTI_InitStructure.EXTI_Line = EXTI_Line15;
+    EXTI_InitStructure.EXTI_Line = EXTI_Line8;
     EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
     EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
     EXTI_InitStructure.EXTI_LineCmd = ENABLE;
     EXTI_Init(&EXTI_InitStructure);
 
-    NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
 }
 
-void EXTI15_10_IRQHandler(void)
+void EXTI9_5_IRQHandler(void)
 {
 
-    if (EXTI_GetITStatus(EXTI_Line15) == SET)
+    if (EXTI_GetITStatus(EXTI_Line8) == SET)
     {
 
-        EXTI_ClearITPendingBit(EXTI_Line15);
-        if(GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_15)){
+        EXTI_ClearITPendingBit(EXTI_Line8);
+        if(GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_8)){
             SystemInit();
             delay_init(); //恢复时钟
             csp_wtd_handle();
