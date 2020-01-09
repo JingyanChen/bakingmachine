@@ -39,7 +39,68 @@ void arg_debug_pro_init(void){
     debug_sender_str(welcom_string);
 
 }
+string_decode_t decode_string(uint8_t * str , uint16_t str_len){
 
+    string_decode_t rlt;
+    uint16_t i=0,j=0,k=0,end_pos=0;
+    uint16_t num_head_pos[MAX_STRING_DECODE_PRA_NUM];
+    uint8_t pra_str[MAX_STRING_DECODE_PRA_NUM][20];
+
+    //initial result parameter
+
+    rlt.is_vaild_string = false;
+    rlt.pra_num = 0;
+    memset(rlt.pra_list, 0, MAX_STRING_DECODE_PRA_NUM);
+
+    if(str_len < 2){
+        rlt.is_vaild_string = false;
+        return rlt;
+    }
+
+    //first check wethere end of 0x0d 0x0a
+    if(str[str_len-1] != 0x0a || str[str_len-2] != 0x0d){
+        rlt.is_vaild_string = false;
+        return rlt;
+    }
+
+    //check pra num
+    for( i = 0 ; i < str_len - 2 ; i ++){
+        if(str[i] == ' '){
+            num_head_pos[rlt.pra_num % MAX_STRING_DECODE_PRA_NUM] = i+1;
+            rlt.pra_num ++;
+        }
+    }
+
+    //check pra is '0' - '9' character
+
+    for(j=0;j<rlt.pra_num;j++){
+
+        if(j == rlt.pra_num -1){
+            end_pos = str_len-2;
+        }else{
+            end_pos = num_head_pos[j + 1] - 1;
+        }
+        for (i = num_head_pos[j]; i <end_pos; i++){
+            if(str[i] <'0' || str[i] >'9'){
+                rlt.is_vaild_string = false;
+                return rlt;                
+            }else{
+                pra_str[j][k] = str[i];
+                k++;
+            }
+        }
+        pra_str[j][k] = '\0';
+        k = 0;
+    }
+
+    for (j = 0; j < rlt.pra_num; j++){
+        rlt.pra_list[j] = atoi((const char *)pra_str[j]);
+    }
+
+    rlt.is_vaild_string = true;
+
+    return rlt;      
+}
 bool get_tft_com_transmit_sw(void){
     return tft_com_transmit_sw;
 }
@@ -56,14 +117,14 @@ static void debug_send_nop(void){
     delay_ms(10);
 }
 
-static void copyright(void){
+static void copyright(string_decode_t * string_decode_result){
     debug_sender_str("Copyright (c) 2001-2019 Comegene LLC.\r\nAll Rights Reserved.\r\n");
 }
 
-static void author(void){
+static void author(string_decode_t * string_decode_result){
     debug_sender_str("Name:Jingyan Chen\r\nE-mail:xqchendream@163.com\r\nAll Right reserves\r\n");
 }
-static void help(void){
+static void help(string_decode_t * string_decode_result){
     debug_sender_str("\r\n\r\n\r\n help cmd list >>>>>>>\r\n");debug_send_nop();
     debug_sender_str(" 1  get_csp_adc \r\n");debug_send_nop();
     debug_sender_str(" 2  set_warm_pwm id percent Note id : 0-9 percent 0-1000\r\n");debug_send_nop();
@@ -120,7 +181,7 @@ static void help(void){
     debug_sender_str(" 53 start_all_tcp\r\n");debug_send_nop();    
 }
 
-static void get_csp_adc(void){
+static void get_csp_adc(string_decode_t * string_decode_result){
     uint8_t sender_buf[100];
     uint8_t i=0;
     uint16_t mv = 0;
@@ -132,294 +193,97 @@ static void get_csp_adc(void){
         delay_ms(10);
     }
 }
-static void get_temp(void){
+static void get_temp(string_decode_t * string_decode_result){
     uint8_t sender_buf[100];
     uint8_t i=0;
     uint16_t mv = 0;
 
     for(i=0;i<10;i++){
-        mv = adc_temp_data[i];
+        mv = get_temp_data(i);
         sprintf((char *)sender_buf,">>> temp  %d is %d  / 0.1 degree centigrade \r\n" , i,mv);
         debug_sender_str(sender_buf);
         delay_ms(10);
     }
 }
-static void set_warm_pwm(void){
-    //继续分析数据包，debug_uart_rx_buf,debug_uart_rec_len
-    //获得 set_warm_pwm 1 200 0x0d 0x0a 解析出 1 200这两个数据出来
-    uint8_t i=0;
-    uint8_t k_pos[10];
-    uint8_t k=0;
-    uint8_t j=0;
-
-    uint8_t pra_str1[20];
-    uint8_t pra_str2[20];
-
+static void set_warm_pwm(string_decode_t * string_decode_result){
     uint8_t send_buf[100];
-    uint16_t pra1=0,pra2=0;
 
-    //确定空格符号的位置
-    for(i=0;i<debug_uart_rec_len;i++){
-        if(debug_uart_rx_buf[i] == ' '){
-            k_pos[k] = i;
-            k++;
-        }
-    }
-
-    if(k != 2){
-        debug_sender_str("command error\r\n");
-        return ;
-    }
-        
-    
-    for(i=k_pos[0]+1;i<k_pos[1];i++){
-        pra_str1[j] = debug_uart_rx_buf[i];
-        if(pra_str1[j] <'0' || pra_str1[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }
-        j++;
-    }
-		pra_str1[j] = '\0';
-		
-    j=0;
-
-    for(i=k_pos[1]+1;i<debug_uart_rec_len-2;i++){
-        pra_str2[j] = debug_uart_rx_buf[i];
-        if(pra_str2[j] <'0' || pra_str2[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }        
-        j++;
-    }    
-		pra_str1[j] = '\0';
-		
-    pra1 = atoi((const char *)pra_str1);
-    pra2 = atoi((const char *)pra_str2);
-
-    //pra check 
-
-    if(pra1 > 9){
+    if(string_decode_result->pra_list[0] > 9){
         debug_sender_str("id pra error ,please input 0-9");
         return ;
     }
         
 
-    if(pra2 > 1000){
+    if(string_decode_result->pra_list[1] > 1000){
         debug_sender_str("percent pra error ,please input 0-1000");
         return ;        
     }
 
-    set_software_pwm(pra1,pra2);
+    set_software_pwm(string_decode_result->pra_list[0],string_decode_result->pra_list[1]);
 
-    sprintf((char *)send_buf,"set warmer %d as %d / 1000 PWM success\r\n",pra1,pra2);
+    sprintf((char *)send_buf,"set warmer %d as %d / 1000 PWM success\r\n",string_decode_result->pra_list[0],string_decode_result->pra_list[1]);
     debug_sender_str(send_buf);
 }
-static void set_motor_pwm(void){
-    //继续分析数据包，debug_uart_rx_buf,debug_uart_rec_len
-    //获得 set_motor_pwm 1 200 0x0d 0x0a 解析出 1 200这两个数据出来
-    uint8_t i=0;
-    uint8_t k_pos[10];
-    uint8_t k=0;
-    uint8_t j=0;
+static void set_motor_pwm(string_decode_t * string_decode_result){
+     uint8_t send_buf[100];
 
-    uint8_t pra_str1[20];
-    uint8_t pra_str2[20];
-
-    uint8_t send_buf[100];
-    uint16_t pra1=0,pra2=0;
-
-    //确定空格符号的位置
-    for(i=0;i<debug_uart_rec_len;i++){
-        if(debug_uart_rx_buf[i] == ' '){
-            k_pos[k] = i;
-            k++;
-        }
-    }
-
-    if(k != 2){
-        debug_sender_str("command error\r\n");
-        return ;
-    }
-        
-    
-    for(i=k_pos[0]+1;i<k_pos[1];i++){
-        pra_str1[j] = debug_uart_rx_buf[i];
-        if(pra_str1[j] <'0' || pra_str1[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }
-        j++;
-    }
-		pra_str1[j] = '\0';
-    j=0;
-
-    for(i=k_pos[1]+1;i<debug_uart_rec_len-2;i++){
-        pra_str2[j] = debug_uart_rx_buf[i];
-        if(pra_str2[j] <'0' || pra_str2[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }        
-        j++;
-    }    
-		pra_str2[j] = '\0';
-		
-    pra1 = atoi((const char *)pra_str1);
-    pra2 = atoi((const char *)pra_str2);
-
-    if(pra1 > 4){
+    if(string_decode_result->pra_list[0] > 4){
         debug_sender_str("id pra error ,please input 0-4");
         return ;
     }
         
 
-    if(pra2 > 1000){
+    if(string_decode_result->pra_list[1] > 1000){
         debug_sender_str("percent pra error ,please input 0-1000");
         return ;        
     }
-    set_pwm(pra1 , (float)pra2 / 1000.0);
+    set_pwm(string_decode_result->pra_list[0] , (float)string_decode_result->pra_list[1] / 1000.0);
 
-    sprintf((char *)send_buf,"set motor %d as %d / 1000 PWM success\r\n",pra1,pra2);
+    sprintf((char *)send_buf,"set motor %d as %d / 1000 PWM success\r\n",string_decode_result->pra_list[0],string_decode_result->pra_list[1]);
     debug_sender_str(send_buf);
 }
-static void water_cool_pump_con(void){
-    //获得 set_motor_pwm 1 200 0x0d 0x0a 解析出 1 200这两个数据出来
-    uint8_t i=0;
-    uint8_t k_pos[10];
-    uint8_t k=0;
-    uint8_t j=0;
-
-    uint8_t pra_str1[20];
-    uint8_t pra_str2[20];
+static void water_cool_pump_con(string_decode_t * string_decode_result){
 
     uint8_t send_buf[100];
-    uint16_t pra1=0,pra2=0;
 
-    //确定空格符号的位置
-    for(i=0;i<debug_uart_rec_len;i++){
-        if(debug_uart_rx_buf[i] == ' '){
-            k_pos[k] = i;
-            k++;
-        }
-    }
-
-    if(k != 2){
-        debug_sender_str("command error\r\n");
-        return ;
-    }
-        
-    
-    for(i=k_pos[0]+1;i<k_pos[1];i++){
-        pra_str1[j] = debug_uart_rx_buf[i];
-        if(pra_str1[j] <'0' || pra_str1[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }
-        j++;
-    }
-		pra_str1[j] = '\0';
-    j=0;
-
-    for(i=k_pos[1]+1;i<debug_uart_rec_len-2;i++){
-        pra_str2[j] = debug_uart_rx_buf[i];
-        if(pra_str2[j] <'0' || pra_str2[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }        
-        j++;
-    }    
-		pra_str2[j] = '\0';
-		
-    pra1 = atoi((const char *)pra_str1);
-    pra2 = atoi((const char *)pra_str2);
-
-    if(pra1 > 4){
+    if(string_decode_result->pra_list[0] > 4){
         debug_sender_str("id pra error ,please input 0-4");
         return ;
     }
         
 
-    if(pra2 !=1 && pra2 !=0 ){
+    if(string_decode_result->pra_list[1] !=1 && string_decode_result->pra_list[1] !=0 ){
         debug_sender_str("sw pra error ,please input 0/1");
         return ;        
     }
 
-    water_cool_pump_control(pra1,pra2);
+    water_cool_pump_control(string_decode_result->pra_list[0],string_decode_result->pra_list[1]);
 
-    sprintf((char *)send_buf,"set pump con %d as %d success\r\n",pra1,pra2);
+    sprintf((char *)send_buf,"set pump con %d as %d success\r\n",string_decode_result->pra_list[0],string_decode_result->pra_list[1]);
 
     debug_sender_str(send_buf);
 }
-static void water_cool_vavle_con(void){
-//继续分析数据包，debug_uart_rx_buf,debug_uart_rec_len
-    //获得 set_motor_pwm 1 200 0x0d 0x0a 解析出 1 200这两个数据出来
-    uint8_t i=0;
-    uint8_t k_pos[10];
-    uint8_t k=0;
-    uint8_t j=0;
-
-    uint8_t pra_str1[20];
-    uint8_t pra_str2[20];
-
+static void water_cool_vavle_con(string_decode_t * string_decode_result){
     uint8_t send_buf[100];
-    uint16_t pra1=0,pra2=0;
 
-    //确定空格符号的位置
-    for(i=0;i<debug_uart_rec_len;i++){
-        if(debug_uart_rx_buf[i] == ' '){
-            k_pos[k] = i;
-            k++;
-        }
-    }
-
-    if(k != 2){
-        debug_sender_str("command error\r\n");
-        return ;
-    }
-        
-    
-    for(i=k_pos[0]+1;i<k_pos[1];i++){
-        pra_str1[j] = debug_uart_rx_buf[i];
-        if(pra_str1[j] <'0' || pra_str1[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }
-        j++;
-    }
-		pra_str1[j] = '\0';
-    j=0;
-
-    for(i=k_pos[1]+1;i<debug_uart_rec_len-2;i++){
-        pra_str2[j] = debug_uart_rx_buf[i];
-        if(pra_str2[j] <'0' || pra_str2[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }        
-        j++;
-    }    
-		pra_str2[j] = '\0';
-		
-    pra1 = atoi((const char *)pra_str1);
-    pra2 = atoi((const char *)pra_str2);
-
-    if(pra1 > 6){
+    if(string_decode_result->pra_list[0] > 6){
         debug_sender_str("id pra error ,please input 0-6");
         return ;
     }
         
 
-    if(pra2 !=1 && pra2 !=0 ){
+    if(string_decode_result->pra_list[0] !=1 && string_decode_result->pra_list[1] !=0 ){
         debug_sender_str("sw pra error ,please input 0/1");
         return ;        
     }
 
-    water_cool_vavle_control(pra1,pra2);
+    water_cool_vavle_control(string_decode_result->pra_list[0],string_decode_result->pra_list[1]);
 
-    sprintf((char *)send_buf,"set vavle con %d as %d success\r\n",pra1,pra2);
+    sprintf((char *)send_buf,"set vavle con %d as %d success\r\n",string_decode_result->pra_list[0],string_decode_result->pra_list[1]);
     
     debug_sender_str(send_buf);
 }
-static void get_liquid_feedback(void){
+static void get_liquid_feedback(string_decode_t * string_decode_result){
     uint8_t sender_buf[100];
     uint8_t i=0;
     uint16_t sw = 0;
@@ -434,75 +298,26 @@ static void get_liquid_feedback(void){
         delay_ms(10);
     }
 }
-static void humidity_con(void){
-//获得 set_motor_pwm 1 200 0x0d 0x0a 解析出 1 200这两个数据出来
-    uint8_t i=0;
-    uint8_t k_pos[10];
-    uint8_t k=0;
-    uint8_t j=0;
-
-    uint8_t pra_str1[20];
-    uint8_t pra_str2[20];
-
+static void humidity_con(string_decode_t * string_decode_result){
     uint8_t send_buf[100];
-    uint16_t pra1=0,pra2=0;
-
-    //确定空格符号的位置
-    for(i=0;i<debug_uart_rec_len;i++){
-        if(debug_uart_rx_buf[i] == ' '){
-            k_pos[k] = i;
-            k++;
-        }
-    }
-
-    if(k != 2){
-        debug_sender_str("command error\r\n");
-        return ;
-    }
-        
-    
-    for(i=k_pos[0]+1;i<k_pos[1];i++){
-        pra_str1[j] = debug_uart_rx_buf[i];
-        if(pra_str1[j] <'0' || pra_str1[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }
-        j++;
-    }
-		pra_str1[j] = '\0';
-    j=0;
-
-    for(i=k_pos[1]+1;i<debug_uart_rec_len-2;i++){
-        pra_str2[j] = debug_uart_rx_buf[i];
-        if(pra_str2[j] <'0' || pra_str2[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }        
-        j++;
-    }    
-		pra_str2[j] = '\0';
-		
-    pra1 = atoi((const char *)pra_str1);
-    pra2 = atoi((const char *)pra_str2);
-
-    if(pra1 > 1){
+    if(string_decode_result->pra_list[0] > 1){
         debug_sender_str("id pra error ,please input 0-1");
         return ;
     }
         
 
-    if(pra2 !=1 && pra2 !=0 ){
+    if(string_decode_result->pra_list[1] !=1 && string_decode_result->pra_list[1] !=0 ){
         debug_sender_str("sw pra error ,please input 0/1");
         return ;        
     }
 
-    humidity_control(pra1,pra2);
+    humidity_control(string_decode_result->pra_list[0],string_decode_result->pra_list[1]);
 
-    sprintf((char *)send_buf,"set humidity con %d as %d success\r\n",pra1,pra2);
+    sprintf((char *)send_buf,"set humidity con %d as %d success\r\n",string_decode_result->pra_list[0],string_decode_result->pra_list[1]);
 
     debug_sender_str(send_buf);
 }
-static void get_motor_limit(void){
+static void get_motor_limit(string_decode_t * string_decode_result){
     uint8_t sender_buf[100];
     uint8_t i=0;
     uint16_t sw = 0;
@@ -517,7 +332,7 @@ static void get_motor_limit(void){
         delay_ms(10);
     }
 }
-static void get_key_in(void){
+static void get_key_in(string_decode_t * string_decode_result){
     uint8_t sender_buf[100];
     uint8_t i=0;
     uint16_t sw = 0;
@@ -532,145 +347,50 @@ static void get_key_in(void){
         delay_ms(10);
     }
 }
-static void fan_con(void){
-    //获得 set_motor_pwm 1 200 0x0d 0x0a 解析出 1 200这两个数据出来
-    uint8_t i=0;
-    uint8_t k_pos[10];
-    uint8_t k=0;
-    uint8_t j=0;
-
-    uint8_t pra_str1[20];
-    uint8_t pra_str2[20];
+static void fan_con(string_decode_t * string_decode_result){
 
     uint8_t send_buf[100];
-    uint16_t pra1=0,pra2=0;
-
-    //确定空格符号的位置
-    for(i=0;i<debug_uart_rec_len;i++){
-        if(debug_uart_rx_buf[i] == ' '){
-            k_pos[k] = i;
-            k++;
-        }
-    }
-
-    if(k != 2){
-        debug_sender_str("command error\r\n");
-        return ;
-    }
-        
-    
-    for(i=k_pos[0]+1;i<k_pos[1];i++){
-        pra_str1[j] = debug_uart_rx_buf[i];
-        if(pra_str1[j] <'0' || pra_str1[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }
-        j++;
-    }
-		pra_str1[j] = '\0';
-    j=0;
-
-    for(i=k_pos[1]+1;i<debug_uart_rec_len-2;i++){
-        pra_str2[j] = debug_uart_rx_buf[i];
-        if(pra_str2[j] <'0' || pra_str2[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }        
-        j++;
-    }    
-		pra_str2[j] = '\0';
-		
-    pra1 = atoi((const char *)pra_str1);
-    pra2 = atoi((const char *)pra_str2);
-
-    if(pra1 > 4){
+    if(string_decode_result->pra_list[0] > 4){
         debug_sender_str("id pra error ,please input 0-4");
         return ;
     }
         
 
-    if(pra2 !=1 && pra2 !=0 ){
+    if(string_decode_result->pra_list[1] !=1 && string_decode_result->pra_list[1] !=0 ){
         debug_sender_str("sw pra error ,please input 0/1");
         return ;        
     }
 
-    set_fan(pra1,pra2);
+    set_fan(string_decode_result->pra_list[0],string_decode_result->pra_list[1]);
 
-    sprintf((char *)send_buf,"set fan con %d as %d success\r\n",pra1,pra2);
+    sprintf((char *)send_buf,"set fan con %d as %d success\r\n",string_decode_result->pra_list[0],string_decode_result->pra_list[1]);
 
     debug_sender_str(send_buf);
 }
-static void led_con(void){
-    //获得 set_motor_pwm 1 200 0x0d 0x0a 解析出 1 200这两个数据出来
-    uint8_t i=0;
-    uint8_t k_pos[10];
-    uint8_t k=0;
-    uint8_t j=0;
-
-    uint8_t pra_str1[20];
-    uint8_t pra_str2[20];
-
-    uint8_t send_buf[100];
-    uint16_t pra1=0,pra2=0;
-
-    //确定空格符号的位置
-    for(i=0;i<debug_uart_rec_len;i++){
-        if(debug_uart_rx_buf[i] == ' '){
-            k_pos[k] = i;
-            k++;
-        }
-    }
-
-    if(k != 2){
-        debug_sender_str("command error\r\n");
-        return ;
-    }
-        
+static void led_con(string_decode_t * string_decode_result){
     
-    for(i=k_pos[0]+1;i<k_pos[1];i++){
-        pra_str1[j] = debug_uart_rx_buf[i];
-        if(pra_str1[j] <'0' || pra_str1[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }
-        j++;
-    }
-		pra_str1[j] = '\0';
-    j=0;
-
-    for(i=k_pos[1]+1;i<debug_uart_rec_len-2;i++){
-        pra_str2[j] = debug_uart_rx_buf[i];
-        if(pra_str2[j] <'0' || pra_str2[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }        
-        j++;
-    }    
-		pra_str2[j] = '\0';
-		
-    pra1 = atoi((const char *)pra_str1);
-    pra2 = atoi((const char *)pra_str2);
-
-    if(pra1 > 0){
+    uint8_t send_buf[100];
+    
+    if(string_decode_result->pra_list[0] > 0){
         debug_sender_str("id pra error ,please input 0");
         return ;
     }
         
 
-    if(pra2 !=1 && pra2 !=0 ){
+    if(string_decode_result->pra_list[1] !=1 && string_decode_result->pra_list[1] !=0 ){
         debug_sender_str("sw pra error ,please input 0/1");
         return ;        
     }
-    if(pra2 == 1)
+    if(string_decode_result->pra_list[1] == 1)
         power_led_control(true);
     else
         power_led_control(false);
 
-    sprintf((char *)send_buf,"set led %d as %d success\r\n",pra1,pra2);
+    sprintf((char *)send_buf,"set led %d as %d success\r\n",string_decode_result->pra_list[0],string_decode_result->pra_list[1]);
 
     debug_sender_str(send_buf);
 }
-static void get_pid_sw(void){
+static void get_pid_sw(string_decode_t * string_decode_result){
     uint8_t sender_buf[100];
     uint8_t i=0;
 
@@ -683,68 +403,15 @@ static void get_pid_sw(void){
         delay_ms(10);
     }    
 }
-static void start_pid(void){
-    //继续分析数据包，debug_uart_rx_buf,debug_uart_rec_len
-    //获得 set_warm_pwm 1 200 0x0d 0x0a 解析出 1 200这两个数据出来
-    uint8_t i=0;
-    uint8_t k_pos[10];
-    uint8_t k=0;
-    uint8_t j=0;
+static void start_pid(string_decode_t * string_decode_result){
 
-    uint8_t pra_str1[20];
-    uint8_t pra_str2[20];
-
-    //uint8_t send_buf[100];
-    uint16_t pra1=0,pra2=0;
-
-    //确定空格符号的位置
-    for(i=0;i<debug_uart_rec_len;i++){
-        if(debug_uart_rx_buf[i] == ' '){
-            k_pos[k] = i;
-            k++;
-        }
-    }
-
-    if(k != 2){
-        debug_sender_str("command error\r\n");
-        return ;
-    }
-        
-    
-    for(i=k_pos[0]+1;i<k_pos[1];i++){
-        pra_str1[j] = debug_uart_rx_buf[i];
-        if(pra_str1[j] <'0' || pra_str1[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }
-        j++;
-    }
-		pra_str1[j] = '\0';
-		
-    j=0;
-
-    for(i=k_pos[1]+1;i<debug_uart_rec_len-2;i++){
-        pra_str2[j] = debug_uart_rx_buf[i];
-        if(pra_str2[j] <'0' || pra_str2[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }        
-        j++;
-    }    
-		pra_str1[j] = '\0';
-		
-    pra1 = atoi((const char *)pra_str1);
-    pra2 = atoi((const char *)pra_str2);
-
-    //pra check 
-
-    if(pra1 > 9){
+    if(string_decode_result->pra_list[0] > 9){
         debug_sender_str("id pra error ,please input 0-9");
         return ;
     }
         
     //todo
-    if(pra2 > 1000 || pra2 < 250){
+    if(string_decode_result->pra_list[1] > 1000 || string_decode_result->pra_list[1] < 250){
         debug_sender_str("taget temp error. vaild temp is 25-100");
         return ;        
     }
@@ -756,188 +423,61 @@ static void start_pid(void){
     //sprintf((char *)send_buf,"start pid controller %d target %d is success\r\n",pra1,pra2);
     //debug_sender_str(send_buf);    
 }
-static void set_motor(void){
-    //继续分析数据包，debug_uart_rx_buf,debug_uart_rec_len
-    //获得 set_motor_pwm 1 200 0x0d 0x0a 解析出 1 200这两个数据出来
-    uint8_t i=0;
-    uint8_t k_pos[10];
-    uint8_t k=0;
-    uint8_t j=0;
-
-    uint8_t pra_str1[20];
-    uint8_t pra_str2[20];
-    uint8_t pra_str3[20];
+static void set_motor(string_decode_t * string_decode_result){
 
     uint8_t send_buf[100];
-    uint16_t pra1=0,pra2=0,pra3=0;
 
-    //确定空格符号的位置
-    for(i=0;i<debug_uart_rec_len;i++){
-        if(debug_uart_rx_buf[i] == ' '){
-            k_pos[k] = i;
-            k++;
-        }
-    }
-
-    if(k != 3){
-        debug_sender_str("command error\r\n");
-        return ;
-    }
-        
-    
-    for(i=k_pos[0]+1;i<k_pos[1];i++){
-        pra_str1[j] = debug_uart_rx_buf[i];
-        if(pra_str1[j] <'0' || pra_str1[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }
-        j++;
-    }
-		pra_str1[j] = '\0';
-    j=0;
-
-    for(i=k_pos[1]+1;i<k_pos[2];i++){
-        pra_str2[j] = debug_uart_rx_buf[i];
-        if(pra_str2[j] <'0' || pra_str2[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }        
-        j++;
-    }    
-		pra_str2[j] = '\0';
-
-
-    j=0;
-
-    for(i=k_pos[2]+1;i<debug_uart_rec_len-2;i++){
-        pra_str3[j] = debug_uart_rx_buf[i];
-        if(pra_str3[j] <'0' || pra_str3[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }        
-        j++;
-    }    
-		pra_str3[j] = '\0';
-
-    pra1 = atoi((const char *)pra_str1);
-    pra2 = atoi((const char *)pra_str2);
-    pra3 = atoi((const char *)pra_str3);
-
-    if(pra1 > 4){
+    if(string_decode_result->pra_list[0] > 4){
         debug_sender_str("id pra error ,please input 0-4");
         return ;
     }
         
 
-    if(pra2 != 1 && pra2 !=0){
+    if(string_decode_result->pra_list[1] != 1 && string_decode_result->pra_list[1] !=0){
         debug_sender_str("dir error ,please input 0/1");
         return ;        
     }
 
-    if(pra3 > 1000){
+    if(string_decode_result->pra_list[2] > 1000){
         debug_sender_str("percent pra error ,please input 0-1000");
         return ;        
     }
 
-    set_motor_speed_dir(pra1,(dir_t)pra2, pra3);
+    set_motor_speed_dir(string_decode_result->pra_list[0],(dir_t)string_decode_result->pra_list[1], string_decode_result->pra_list[2]);
 
-    sprintf((char *)send_buf,"set motor %d dir %d percent %d/ 1000 PWM success\r\n",pra1,pra2,pra3);
+    sprintf((char *)send_buf,"set motor %d dir %d percent %d/ 1000 PWM success\r\n",string_decode_result->pra_list[0],string_decode_result->pra_list[1],string_decode_result->pra_list[2]);
     debug_sender_str(send_buf);
 }
-static void set_acc_motor(void){
-//继续分析数据包，debug_uart_rx_buf,debug_uart_rec_len
-    //获得 set_motor_pwm 1 200 0x0d 0x0a 解析出 1 200这两个数据出来
-    uint8_t i=0;
-    uint8_t k_pos[10];
-    uint8_t k=0;
-    uint8_t j=0;
-
-    uint8_t pra_str1[20];
-    uint8_t pra_str2[20];
-    uint8_t pra_str3[20];
+static void set_acc_motor(string_decode_t * string_decode_result){
 
     uint8_t send_buf[100];
-    uint16_t pra1=0,pra2=0,pra3=0;
-
-    //确定空格符号的位置
-    for(i=0;i<debug_uart_rec_len;i++){
-        if(debug_uart_rx_buf[i] == ' '){
-            k_pos[k] = i;
-            k++;
-        }
-    }
-
-    if(k != 3){
-        debug_sender_str("command error\r\n");
-        return ;
-    }
-        
     
-    for(i=k_pos[0]+1;i<k_pos[1];i++){
-        pra_str1[j] = debug_uart_rx_buf[i];
-        if(pra_str1[j] <'0' || pra_str1[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }
-        j++;
-    }
-		pra_str1[j] = '\0';
-    j=0;
-
-    for(i=k_pos[1]+1;i<k_pos[2];i++){
-        pra_str2[j] = debug_uart_rx_buf[i];
-        if(pra_str2[j] <'0' || pra_str2[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }        
-        j++;
-    }    
-		pra_str2[j] = '\0';
-
-
-    j=0;
-
-    for(i=k_pos[2]+1;i<debug_uart_rec_len-2;i++){
-        pra_str3[j] = debug_uart_rx_buf[i];
-        if(pra_str3[j] <'0' || pra_str3[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }        
-        j++;
-    }    
-		pra_str3[j] = '\0';
-
-    pra1 = atoi((const char *)pra_str1);
-    pra2 = atoi((const char *)pra_str2);
-    pra3 = atoi((const char *)pra_str3);
-
-    if(pra1 > 4){
+    if(string_decode_result->pra_list[0] > 4){
         debug_sender_str("id pra error ,please input 0-4");
         return ;
     }
         
 
-    if(pra2 != 1 && pra2 !=0){
+    if(string_decode_result->pra_list[1] != 1 && string_decode_result->pra_list[1] !=0){
         debug_sender_str("dir error ,please input 0/1");
         return ;        
     }
 
-    if(pra3 < 2000){
+    if(string_decode_result->pra_list[2] < 2000){
         debug_sender_str("tim pra error ,please input 2000 - 65535");
         return ;        
     }
 
-    start_motor_acc_arg(pra1,(dir_t)pra2, pra3);
+    start_motor_acc_arg(string_decode_result->pra_list[0],(dir_t)string_decode_result->pra_list[1], string_decode_result->pra_list[2]);
 
-    sprintf((char *)send_buf,"set motor acc %d dir %d tim %d ms success\r\n",pra1,pra2,pra3);
+    sprintf((char *)send_buf,"set motor acc %d dir %d tim %d ms success\r\n",string_decode_result->pra_list[0],string_decode_result->pra_list[1],string_decode_result->pra_list[2]);
     debug_sender_str(send_buf);    
 }
-//源源不断的发送十个温度片的数据
-static void open_temp_gui(void){
+static void open_temp_gui(string_decode_t * string_decode_result){
     temp_gui_upload_sw = true;
     debug_sender_str("temp gui is start...\r\n");
 }
-static void get_humidity_status(void){
+static void get_humidity_status(string_decode_t * string_decode_result){
 
     switch(get_water_injection_status()){
        case no_injection_task :   debug_sender_str("Now status : no_injection_task\r\n");break;
@@ -950,7 +490,7 @@ static void get_humidity_status(void){
     }
 
 }
-static void version(void){
+static void version(string_decode_t * string_decode_result){
     uint8_t version_buf[150];
 
     if(IS_RELEASE == 0)
@@ -960,31 +500,29 @@ static void version(void){
 
     debug_sender_str(version_buf);
 }
-static void open_all_vavle(void){
+static void open_all_vavle(string_decode_t * string_decode_result){
     uint8_t i=0;
     for(i=0;i<7;i++){
         water_cool_vavle_control(i,false);
     }
 }
-static void change_water_all(void){
+static void change_water_all(string_decode_t * string_decode_result){
     change_water(0xff);
     debug_sender_str("change water success\r\n");
 }
-static void out_water_all(void){
+static void out_water_all(string_decode_t * string_decode_result){
     out_water(0xff);
     debug_sender_str("out water success\r\n");
 }
-static void open_tft_com_debug(void){
+static void open_tft_com_debug(string_decode_t * string_decode_result){
     tft_com_transmit_sw = true;
     debug_sender_str("tft com transmit open success\r\n");
 }
-
-static void close_tft_com_debug(void){
+static void close_tft_com_debug(string_decode_t * string_decode_result){
     tft_com_transmit_sw = false;
     debug_sender_str("tft com transmit close success\r\n");
 }
-
-static void read_box_status(void){
+static void read_box_status(string_decode_t * string_decode_result){
     uint8_t sender_buf[100];
     uint8_t i=0;
     box_status_t status = box_off;
@@ -1002,8 +540,7 @@ static void read_box_status(void){
         delay_ms(10);
     }
 }
-
-static void read_fan_status(void){
+static void read_fan_status(string_decode_t * string_decode_result){
     uint8_t sender_buf[100];
     uint8_t i=0;
     uint16_t b = 0;
@@ -1015,41 +552,34 @@ static void read_fan_status(void){
         delay_ms(10);
     }
 }
-
-static void power_on(void){
+static void power_on(string_decode_t * string_decode_result){
     lcd_power_control_func(true);
     debug_sender_str("power on success\r\n");
 }
-
-static void power_off(void){
+static void power_off(string_decode_t * string_decode_result){
     lcd_power_control_func(false);
     debug_sender_str("power off success\r\n");
 }
-
-static void get_power_status(void){
+static void get_power_status(string_decode_t * string_decode_result){
     if(get_lcd_power_status() ==  lcd_power_off){
         debug_sender_str("lcd_power_off\r\n");
     }else{
         debug_sender_str("lcd_power_on\r\n");
     }
 }
-
-static void wtd_test(void){
+static void wtd_test(string_decode_t * string_decode_result){
     debug_sender_str("system will block delay 3 seconds\r\n");
     delay_ms(3000);
 }
-
-static void open_box_speed_debug(void){
+static void open_box_speed_debug(string_decode_t * string_decode_result){
     box_running_debug_sw = true;
     debug_sender_str("box speed debug open success\r\n");
 }
-static void close_box_speed_debug(void){
+static void close_box_speed_debug(string_decode_t * string_decode_result){
     box_running_debug_sw = false;
     debug_sender_str("box speed debug close success\r\n");
 }
-
-
-static void get_box_status_func(void){
+static void get_box_status_func(string_decode_t * string_decode_result){
     box_status_t status;
     status = get_box_status(0);
 
@@ -1065,99 +595,36 @@ static void get_box_status_func(void){
     }
 
 }
-static void start_pid_test(void){
-
+static void start_pid_test(string_decode_t * string_decode_result){
 }
-
-static void run_temp_control(void){
-    uint8_t i=0;
-    uint8_t k_pos[10];
-    uint8_t k=0;
-    uint8_t j=0;
-
-    uint8_t pra_str1[20];
-    uint8_t pra_str2[20];
-    uint8_t pra_str3[20];
+static void run_temp_control(string_decode_t * string_decode_result){
 
     uint8_t send_buf[100];
-    uint16_t pra1=0,pra2=0,pra3=0;
 
     event_t temp_event;
 
     bool dequeue_result=false;
-    
-    //确定空格符号的位置
-    for(i=0;i<debug_uart_rec_len;i++){
-        if(debug_uart_rx_buf[i] == ' '){
-            k_pos[k] = i;
-            k++;
-        }
-    }
 
-    if(k != 3){
-        debug_sender_str("command error\r\n");
-        return ;
-    }
-        
-    
-    for(i=k_pos[0]+1;i<k_pos[1];i++){
-        pra_str1[j] = debug_uart_rx_buf[i];
-        if(pra_str1[j] <'0' || pra_str1[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }
-        j++;
-    }
-		pra_str1[j] = '\0';
-    j=0;
-
-    for(i=k_pos[1]+1;i<k_pos[2];i++){
-        pra_str2[j] = debug_uart_rx_buf[i];
-        if(pra_str2[j] <'0' || pra_str2[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }        
-        j++;
-    }    
-		pra_str2[j] = '\0';
-
-
-    j=0;
-
-    for(i=k_pos[2]+1;i<debug_uart_rec_len-2;i++){
-        pra_str3[j] = debug_uart_rx_buf[i];
-        if(pra_str3[j] <'0' || pra_str3[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }        
-        j++;
-    }    
-		pra_str3[j] = '\0';
-
-    pra1 = atoi((const char *)pra_str1);
-    pra2 = atoi((const char *)pra_str2);
-    pra3 = atoi((const char *)pra_str3);
-
-    if(pra1 > 4){
+    if(string_decode_result->pra_list[0] > 4){
         debug_sender_str("id pra error ,please input 0-4");
         return ;
     }
         
 
-    if(pra2 > 1000 || pra2 < 250){
+    if(string_decode_result->pra_list[1] > 1000 || string_decode_result->pra_list[1] < 250){
         debug_sender_str("temp error ,please input 250-1000");
         return ;        
     }
 
-    if(pra3 !=0 && pra3 !=1){
+    if(string_decode_result->pra_list[2] !=0 && string_decode_result->pra_list[2] !=1){
         debug_sender_str("need_change_water pra error 0/1");
         return ;        
     }
 
     temp_event.event_type = START_CONTROL_TEMP_EVENT;
-    temp_event.road_id = pra1;
-    temp_event.target_temp = pra2;
-    temp_event.need_change_water = pra3;
+    temp_event.road_id = string_decode_result->pra_list[0];
+    temp_event.target_temp = string_decode_result->pra_list[1];
+    temp_event.need_change_water = string_decode_result->pra_list[2];
     temp_event.task_running_over = false;
 
     /*
@@ -1177,7 +644,7 @@ static void run_temp_control(void){
         dequeue_result = enqueue_event(temp_event);
 
         if(dequeue_result){
-            sprintf((char *)send_buf,"dequeue event: START_CONTROL_TEMP_EVENT road_id: %d target_temp: %d change_water %d success\r\n",pra1,pra2,pra3);
+            sprintf((char *)send_buf,"dequeue event: START_CONTROL_TEMP_EVENT road_id: %d target_temp: %d change_water %d success\r\n",string_decode_result->pra_list[0],string_decode_result->pra_list[1],string_decode_result->pra_list[2]);
         }else{
             sprintf((char *)send_buf,"dequeue event: START_CONTROL_TEMP_EVENT failed ! queue full\r\n");
         }
@@ -1213,7 +680,7 @@ static void run_temp_control(void){
                 dequeue_result = enqueue_event(temp_event);
 
                 if(dequeue_result){
-                    sprintf((char *)send_buf,"dequeue event: START_CONTROL_TEMP_EVENT road_id: %d target_temp: %d change_water %d success\r\n",pra1,pra2,pra3);
+                    sprintf((char *)send_buf,"dequeue event: START_CONTROL_TEMP_EVENT road_id: %d target_temp: %d change_water %d success\r\n",string_decode_result->pra_list[0],string_decode_result->pra_list[1],string_decode_result->pra_list[2]);
                 }else{
                     sprintf((char *)send_buf,"dequeue event: START_CONTROL_TEMP_EVENT failed ! queue full\r\n");
                 }
@@ -1234,95 +701,23 @@ static void run_temp_control(void){
     
 
 }
-static void stop_temp_control(void){
-    //模拟一个显示屏 停止被按下的事件
-    uint8_t i=0;
-    uint8_t k_pos[10];
-    uint8_t k=0;
-    uint8_t j=0;
-
-    uint8_t pra_str1[20];
-    uint8_t pra_str2[20];
-    uint8_t pra_str3[20];
+static void stop_temp_control(string_decode_t * string_decode_result){
 
     uint8_t send_buf[100];
-    uint16_t pra1=0,pra2=0,pra3=0;
 
     event_t temp_event;
     event_t now_running_e;
 
-    //确定空格符号的位置
-    for(i=0;i<debug_uart_rec_len;i++){
-        if(debug_uart_rx_buf[i] == ' '){
-            k_pos[k] = i;
-            k++;
-        }
-    }
-
-    if(k != 3){
-        debug_sender_str("command error\r\n");
-        return ;
-    }
-        
-    
-    for(i=k_pos[0]+1;i<k_pos[1];i++){
-        pra_str1[j] = debug_uart_rx_buf[i];
-        if(pra_str1[j] <'0' || pra_str1[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }
-        j++;
-    }
-		pra_str1[j] = '\0';
-    j=0;
-
-    for(i=k_pos[1]+1;i<k_pos[2];i++){
-        pra_str2[j] = debug_uart_rx_buf[i];
-        if(pra_str2[j] <'0' || pra_str2[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }        
-        j++;
-    }    
-		pra_str2[j] = '\0';
-
-
-    j=0;
-
-    for(i=k_pos[2]+1;i<debug_uart_rec_len-2;i++){
-        pra_str3[j] = debug_uart_rx_buf[i];
-        if(pra_str3[j] <'0' || pra_str3[j] >'9'){
-            debug_sender_str("command error\r\n");
-            return ;            
-        }        
-        j++;
-    }    
-		pra_str3[j] = '\0';
-
-    pra1 = atoi((const char *)pra_str1);
-    pra2 = atoi((const char *)pra_str2);
-    pra3 = atoi((const char *)pra_str3);
-
-    if(pra1 > 4){
+    if(string_decode_result->pra_list[0] > 4){
         debug_sender_str("id pra error ,please input 0-4");
         return ;
     }
         
 
-    if(pra2 > 1000 || pra2 < 250){
-        debug_sender_str("temp error ,please input 250-1000");
-        return ;        
-    }
-
-    if(pra3 !=0 && pra3 !=1){
-        debug_sender_str("need_change_water pra error 0/1");
-        return ;        
-    }
-
     temp_event.event_type = STOP_CONTROL_TEMP_EVEN;
-    temp_event.road_id = pra1;
-    temp_event.target_temp = pra2;
-    temp_event.need_change_water = pra3;
+    temp_event.road_id = string_decode_result->pra_list[0];
+    temp_event.target_temp = string_decode_result->pra_list[1];
+    temp_event.need_change_water = string_decode_result->pra_list[2];
     temp_event.task_running_over = false;
 
     //dequeue_result = enqueue_event(temp_event);
@@ -1354,10 +749,10 @@ static void stop_temp_control(void){
 
     //end
 
-    sprintf((char *)send_buf,"dequeue event: STOP_CONTROL_TEMP_EVEN road_id: %d target_temp: %d change_water %d success\r\n",pra1,pra2,pra3);
+    sprintf((char *)send_buf,"stop road_id: %d success\r\n",temp_event.road_id);
     debug_sender_str(send_buf);       
 }
-static void print_task_nop(void){
+static void print_task_nop(){
     csp_wtd_handle();
     delay_ms(5);
 }
@@ -1398,7 +793,7 @@ static void print_task_info(uint8_t event_index , bool is_running_task ,event_t 
     debug_sender_str("----------");
     
 }
-static void get_task_machine_status_debug(void){
+static void get_task_machine_status_debug(string_decode_t * string_decode_result){
     //获得当前的运行状态，哪些被执行，哪些没被执行当前处于什么状态
     //这个函数是算法核心
 
@@ -1428,8 +823,7 @@ static void get_task_machine_status_debug(void){
     }
 
 }
-
-void get_road_status(void){
+void get_road_status(string_decode_t * string_decode_result){
     uint8_t i =0;
     uint8_t send_buf[50];
     for(i=0;i<5;i++){
@@ -1446,13 +840,11 @@ void get_road_status(void){
         }
     }
 }
-
-void open_pid_debug(void){
+void open_pid_debug(string_decode_t * string_decode_result){
     pid_debug_sw = true;
     debug_sender_str("pid debug is start...\r\n");
 }
-
-void get_task_sys_bool(void){
+void get_task_sys_bool(string_decode_t * string_decode_result){
     
     uint8_t debug_buf[100];
 
@@ -1467,50 +859,41 @@ void get_task_sys_bool(void){
     sprintf((char *)debug_buf,"concentrate flag : %d\r\ndecentralize flag : %d\r\nget_queue_task_deal_hang_up : %d\r\n",concen_flag,decen_flag,queue_task_deal_hang_up);
     debug_sender_str(debug_buf);
 }
-
-void press_run_key(void){
+void press_run_key(string_decode_t * string_decode_result){
     key_box_logic(0);
 }
-
-void start_down_temp(void){
+void start_down_temp(string_decode_t * string_decode_result){
     uint8_t i =0;
     for(i=0;i<5;i++){
         water_cool_pump_control(i,false);
     }
     debug_sender_str("start all water cool pump success\r\n");
 }
-
-
-void stop_down_temp(void){
+void stop_down_temp(string_decode_t * string_decode_result){
     uint8_t i =0;
     for(i=0;i<5;i++){
         water_cool_pump_control(i,true);
     }
     debug_sender_str("stop all water cool pump success\r\n");
 }
-
-void start_all_fan(void){
+void start_all_fan(string_decode_t * string_decode_result){
     uint8_t i =0;
     for(i=0;i<5;i++){
         fan_control(i,false);
     }
     debug_sender_str("start all fan success\r\n");
 }
-
-void stop_all_fan(void){
+void stop_all_fan(string_decode_t * string_decode_result){
     uint8_t i =0;
     for(i=0;i<5;i++){
         fan_control(i,true);
     }
     debug_sender_str("stop all fan success\r\n");
 }
-
-void press_power_key(void){
+void press_power_key(string_decode_t * string_decode_result){
     power_key_press_event_handle();
 }
-
-
-void sys_debug(void){
+void sys_debug(string_decode_t * string_decode_result){
     //比较丰富的方式指示每一层盒子的状态
     //1 指示总体的控温方式 C : 集中控温模式  D ： 分散控温模式
     //2 指示每一路的温度值和目标温度
@@ -1522,7 +905,7 @@ void sys_debug(void){
     debug_sender_str("start sys debug success\r\n");
 
 }
-void start_one_hdr(void){
+void start_one_hdr(string_decode_t * string_decode_result){
     if(start_HRD_check(false)){
         debug_sender_str("start 0 box HDR test success\r\n");
     }else{
@@ -1530,7 +913,7 @@ void start_one_hdr(void){
     }
     
 }
-void start_all_hdr(void){
+void start_all_hdr(string_decode_t * string_decode_result){
     if(start_HRD_check(true)){
         debug_sender_str("start all box HDR test success\r\n");
     }else{
@@ -1539,63 +922,63 @@ void start_all_hdr(void){
 }
 debug_func_list_t debug_func_list[] = {
 
-    {help,"help"},{help,"?"},{help,"HELP"},
+    {help,"help",0},{help,"?",0},{help,"HELP",0},
 
-    {get_csp_adc,"get_csp_adc"},{get_csp_adc,"1"},
-    {set_warm_pwm,"set_warm_pwm"},{set_warm_pwm,"2"},
-    {set_motor_pwm,"set_motor_pwm"},{set_motor_pwm,"3"},
+    {get_csp_adc,"get_csp_adc",0},{get_csp_adc,"1",0},
+    {set_warm_pwm,"set_warm_pwm",2},{set_warm_pwm,"2",2},
+    {set_motor_pwm,"set_motor_pwm",2},{set_motor_pwm,"3",2},
 
-    {water_cool_pump_con,"water_cool_pump_con"},{water_cool_pump_con,"4"},
-    {water_cool_vavle_con,"water_cool_vavle_con"},{water_cool_vavle_con,"5"},
-    {get_liquid_feedback,"get_liquid_feedback"},{get_liquid_feedback,"6"},
-    {humidity_con,"humidity_con"},{humidity_con,"7"},
-    {get_motor_limit,"get_motor_limit"},{get_motor_limit,"8"},
-    {get_key_in,"get_key_in"},{get_key_in,"9"},
-    {fan_con,"fan_con"},{fan_con,"10"},
-    {led_con,"led_con"},{led_con,"11"},
-    {open_all_vavle,"open_all_vavle"},{open_all_vavle,"12"},
+    {water_cool_pump_con,"water_cool_pump_con",2},{water_cool_pump_con,"4",2},
+    {water_cool_vavle_con,"water_cool_vavle_con",2},{water_cool_vavle_con,"5",2},
+    {get_liquid_feedback,"get_liquid_feedback",0},{get_liquid_feedback,"6",0},
+    {humidity_con,"humidity_con",2},{humidity_con,"7",2},
+    {get_motor_limit,"get_motor_limit",0},{get_motor_limit,"8",0},
+    {get_key_in,"get_key_in",0},{get_key_in,"9",0},
+    {fan_con,"fan_con",2},{fan_con,"10",2},
+    {led_con,"led_con",2},{led_con,"11",2},
+    {open_all_vavle,"open_all_vavle",0},{open_all_vavle,"12",0},
 
-    {set_motor,"set_motor"},{set_motor,"13"},
-    {set_acc_motor,"set_acc_motor"},{set_acc_motor,"14"},
-    {change_water_all,"change_water_all"},{change_water_all,"15"},
-    {out_water_all,"out_water_all"},{out_water_all,"16"},
-    {get_humidity_status ,"get_humidity_status"},{get_humidity_status,"17"},
+    {set_motor,"set_motor",3},{set_motor,"13",3},
+    {set_acc_motor,"set_acc_motor",3},{set_acc_motor,"14",3},
+    {change_water_all,"change_water_all",0},{change_water_all,"15",0},
+    {out_water_all,"out_water_all",0},{out_water_all,"16",0},
+    {get_humidity_status ,"get_humidity_status",0},{get_humidity_status,"17",0},
 
-    {get_temp,"get_temp"},{get_temp,"18"},
-    {get_pid_sw,"get_pid_sw"},{get_pid_sw,"19"},
-    {start_pid,"start_pid"},{start_pid,"20"},
-    {open_temp_gui,"open_temp_gui"},{open_temp_gui,"21"},
-    {version,"version"},{version,"22"},
-    {open_tft_com_debug,"open_tft_com_debug"},{open_tft_com_debug,"23"},
-    {close_tft_com_debug,"close_tft_com_debug"},{close_tft_com_debug,"24"},
-    {read_box_status,"read_box_status"},{read_box_status,"25"},
-    {read_fan_status,"read_fan_status"},{read_fan_status,"26"},
-    {power_on,"power_on"},{power_on,"27"},
-    {power_off,"power_off"},{power_off,"28"},
-    {get_power_status,"get_power_status"},{get_power_status,"29"},
-    {wtd_test,"wtd_test"},{wtd_test,"30"},
-    {copyright,"copyright"},{copyright,"31"},
-    {author,"author"},{author,"32"},
-    {open_box_speed_debug,"open_box_speed_debug"},{open_box_speed_debug,"33"},
-    {close_box_speed_debug,"close_box_speed_debug"},{close_box_speed_debug,"34"},
-    {get_box_status_func,"get_box_status_func"},{get_box_status_func,"35"},
-    {start_pid_test,"start_pid_test"},{start_pid_test,"36"},
-    {run_temp_control,"run_temp_control"},{run_temp_control,"37"},
-    {stop_temp_control,"stop_temp_control"},{stop_temp_control,"38"},
-    {get_task_machine_status_debug,"get_task_machine_status"},{get_task_machine_status_debug,"39"},
-    {get_road_status,"get_road_status"},{get_road_status,"40"},
-    {open_pid_debug,"open_pid_debug"},{open_pid_debug,"41"},
-    {get_task_sys_bool,"get_task_sys_bool"},{get_task_sys_bool,"42"},
-    {press_run_key,"press_run_key"},{press_run_key,"43"},
-    {start_down_temp,"start_down_temp"},{start_down_temp,"44"},
-    {stop_down_temp,"stop_down_temp"},{stop_down_temp,"45"},
-    {start_all_fan,"start_all_fan"},{start_all_fan,"46"},
-    {stop_all_fan,"stop_all_fan"},{stop_all_fan,"47"},
-    {press_power_key,"press_power_key"},{press_power_key,"48"},
-    {sys_debug , "sys_debug"},{sys_debug,"49"},
+    {get_temp,"get_temp",0},{get_temp,"18",0},
+    {get_pid_sw,"get_pid_sw",0},{get_pid_sw,"19",0},
+    {start_pid,"start_pid",2},{start_pid,"20",2},
+    {open_temp_gui,"open_temp_gui",0},{open_temp_gui,"21",0},
+    {version,"version",0},{version,"22",0},
+    {open_tft_com_debug,"open_tft_com_debug",0},{open_tft_com_debug,"23",0},
+    {close_tft_com_debug,"close_tft_com_debug",0},{close_tft_com_debug,"24",0},
+    {read_box_status,"read_box_status",0},{read_box_status,"25",0},
+    {read_fan_status,"read_fan_status",0},{read_fan_status,"26",0},
+    {power_on,"power_on",0},{power_on,"27",0},
+    {power_off,"power_off",0},{power_off,"28",0},
+    {get_power_status,"get_power_status",0},{get_power_status,"29",0},
+    {wtd_test,"wtd_test",0},{wtd_test,"30",0},
+    {copyright,"copyright",0},{copyright,"31",0},
+    {author,"author",0},{author,"32",0},
+    {open_box_speed_debug,"open_box_speed_debug",0},{open_box_speed_debug,"33",0},
+    {close_box_speed_debug,"close_box_speed_debug",0},{close_box_speed_debug,"34",0},
+    {get_box_status_func,"get_box_status_func",0},{get_box_status_func,"35",0},
+    {start_pid_test,"start_pid_test",0},{start_pid_test,"36",0},
+    {run_temp_control,"run_temp_control",3},{run_temp_control,"37",3},
+    {stop_temp_control,"stop_temp_control",1},{stop_temp_control,"38",1},
+    {get_task_machine_status_debug,"get_task_machine_status",0},{get_task_machine_status_debug,"39",0},
+    {get_road_status,"get_road_status",0},{get_road_status,"40",0},
+    {open_pid_debug,"open_pid_debug",0},{open_pid_debug,"41",0},
+    {get_task_sys_bool,"get_task_sys_bool",0},{get_task_sys_bool,"42",0},
+    {press_run_key,"press_run_key",0},{press_run_key,"43",0},
+    {start_down_temp,"start_down_temp",0},{start_down_temp,"44",0},
+    {stop_down_temp,"stop_down_temp",0},{stop_down_temp,"45",0},
+    {start_all_fan,"start_all_fan",0},{start_all_fan,"46",0},
+    {stop_all_fan,"stop_all_fan",0},{stop_all_fan,"47",0},
+    {press_power_key,"press_power_key",0},{press_power_key,"48",0},
+    {sys_debug , "sys_debug",0},{sys_debug,"49",0},
 
-    {start_one_hdr , "start_one_hdr"},{start_one_hdr,"50"},
-    {start_all_hdr , "start_all_hdr"},{start_all_hdr,"51"},
+    {start_one_hdr , "start_one_hdr",0},{start_one_hdr,"50",0},
+    {start_all_hdr , "start_all_hdr",0},{start_all_hdr,"51",0},
   
 };
 
@@ -1603,6 +986,8 @@ debug_func_list_t debug_func_list[] = {
 static void arg_debug_packet_decode(uint8_t * buf , uint16_t len){
     uint8_t cmd_buf[50];
     uint8_t i=0;
+    string_decode_t string_decode_result;
+
     //对接受的到的数据包进行解析，从而做出对应的动作
 
     //如果单单收到的是空格符号，或者只有回车符号，那么返回comegene commander:
@@ -1631,7 +1016,16 @@ static void arg_debug_packet_decode(uint8_t * buf , uint16_t len){
 
     for(i=0;i<sizeof(debug_func_list)/sizeof(debug_func_list_t);i++){
         if(strcmp((char *)cmd_buf,debug_func_list[i].cmd_str) == 0){
-            debug_func_list[i].func();
+            if(debug_func_list[i].pra_num == 0){
+                debug_func_list[i].func(&string_decode_result);
+            }else{
+                string_decode_result = decode_string(debug_uart_rx_buf,debug_uart_rec_len);
+                if(string_decode_result.is_vaild_string == true && string_decode_result.pra_num == debug_func_list[i].pra_num){
+                    debug_func_list[i].func(&string_decode_result);
+                }else{
+                    debug_sender_str("invaild command\r\n"); 
+                }
+            }
             return ;
         }
     }
@@ -1659,7 +1053,7 @@ void arg_debug_pro_handle(void){
     if(temp_gui_upload_sw){
         //根据实际需要，上报浮点数，画曲线。
         //sprintf((char *)sender_buf,"temp1,%f;temp2,%f;\n",(float)adc_temp_data[0],(float)adc_temp_data[1]);
-        sprintf((char *)sender_buf,"temp1,%f;temp2,%f;temp3,%f;temp4,%f;temp5,%f;temp6,%f;temp7,%f;temp8,%f;\n",(float)adc_temp_data[0],(float)adc_temp_data[1],(float)adc_temp_data[2],(float)adc_temp_data[3],(float)adc_temp_data[4],(float)adc_temp_data[5],(float)adc_temp_data[6],(float)adc_temp_data[7]);
+        sprintf((char *)sender_buf,"temp1,%f;temp2,%f;temp3,%f;temp4,%f;temp5,%f;temp6,%f;temp7,%f;temp8,%f;\n",(float)get_temp_data(0),(float)get_temp_data(1),(float)get_temp_data(2),(float)get_temp_data(3),(float)get_temp_data(4),(float)get_temp_data(5),(float)get_temp_data(6),(float)get_temp_data(7));
         debug_sender_str(sender_buf);
     }  
 

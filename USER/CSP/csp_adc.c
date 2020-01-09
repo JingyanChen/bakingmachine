@@ -142,8 +142,17 @@ uint16_t get_adc_v(uint8_t id ,uint16_t ref){
     return rlt;
 }
 
-uint16_t adc_mv_data[10];
-uint16_t adc_temp_data[10];
+static uint16_t adc_mv_data[10];
+static uint16_t adc_temp_data[10];
+
+uint16_t get_adc_mv_data(uint8_t id){
+    return adc_mv_data[id % 10];
+}
+
+uint16_t get_temp_data(uint8_t id){
+    return adc_temp_data[id % 10];
+}
+
 void csp_adc_handle(void)
 {
     //200ms更新一次十路电压数据，后期考虑做换算转化为温度单位

@@ -519,7 +519,7 @@ static void read_now_temp_func(tft_mcu_pro_data_t * tft_mcu_pro_data){
     //两两一组做平均
 
     for(i=0;i<10;i++){
-        temp[i] = adc_temp_data[i];
+        temp[i] = get_temp_data(i);
     }
 
     for(i=0;i<5;i++){

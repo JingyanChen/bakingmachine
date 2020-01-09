@@ -2,7 +2,7 @@
 #define __CSP_GPIO__
 
 #include  <stdbool.h>
-
+#include  <stdint.h>
 /*
  * GPIO define for barkingMachine
  * GPIO DEVICE is follow

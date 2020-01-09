@@ -69,7 +69,7 @@ void csp_adc_handle(void);
 uint16_t get_adc_v(uint8_t id ,uint16_t ref);
 
 //外部可以直接通过访问此公开的全局变量访问各个路的电压情况
-extern uint16_t adc_mv_data[10];
-extern uint16_t adc_temp_data[10];
+uint16_t get_adc_mv_data(uint8_t id);
+uint16_t get_temp_data(uint8_t id);
 
 #endif

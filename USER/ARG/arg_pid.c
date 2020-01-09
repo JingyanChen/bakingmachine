@@ -224,7 +224,7 @@ static void pd_pra_sel_handle(uint8_t id)
     uint16_t temp = 0;
     uint16_t temp_target = 0;
 
-    temp = adc_temp_data[id % 10];
+    temp = get_temp_data(id % 10);
     temp_target = pid_target_temp[id % 10];
 
     if (temp <= LOW_NOW_TEMP_THR && temp_target <= LOW_TARGET_TEMP_THR)
@@ -290,7 +290,7 @@ void decentralized_control_mode_handle(void)
 
     for (i = 0; i < PID_CONTORLLER_NUM; i++)
     {
-        pid_now_temp[i] = adc_temp_data[i];
+        pid_now_temp[i] = get_temp_data(i);
 
         if (get_pid_con_sw(i) == true)
         {
@@ -623,8 +623,8 @@ void concentrate_control_mode_handle(void)
     close_all_software_pwm_out_except(id1, id2);
 
     //仅更新集中两路的温度
-    pid_now_temp[id1] = adc_temp_data[id1];
-    pid_now_temp[id2] = adc_temp_data[id2];
+    pid_now_temp[id1] = get_temp_data(id1);
+    pid_now_temp[id2] = get_temp_data(id2);
 
     pid_temp_error[id1] = pid_target_temp[id1] - pid_now_temp[id1];
     pid_temp_error[id2] = pid_target_temp[id2] - pid_now_temp[id2];
@@ -799,8 +799,8 @@ uint16_t get_road_temp(uint8_t road_id)
 {
     uint16_t water_cool_road_temp = 0;
 
-    water_cool_road_temp += adc_temp_data[road_id * 2 % 10];
-    water_cool_road_temp += adc_temp_data[(road_id * 2 + 1) % 10];
+    water_cool_road_temp += get_temp_data(road_id * 2 % 10);
+    water_cool_road_temp += get_temp_data((road_id * 2 + 1) % 10);
 
     water_cool_road_temp /= 2;
 

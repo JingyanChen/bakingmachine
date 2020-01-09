@@ -112,8 +112,8 @@ void arg_report_handle(void){
             //则需要打开水冷直到这个条件被达到
             water_cool_pump_control(now_check_id % 5, 0);
 
-            road_temp_0 = adc_temp_data[(now_check_id * 2) % 10 ];
-            road_temp_1 = adc_temp_data[(now_check_id * 2 + 1) % 10 ];
+            road_temp_0 = get_temp_data((now_check_id * 2) % 10 );
+            road_temp_1 = get_temp_data((now_check_id * 2 + 1) % 10 );
 
             //abs road_temp error
             if(road_temp_0 > road_temp_1){
@@ -158,8 +158,8 @@ void arg_report_handle(void){
                         stop_S_timer();//停止计时
                         
                         //上报HDR的检测结果
-                        road_temp_0 = adc_temp_data[(now_check_id * 2) % 10 ];
-                        road_temp_1 = adc_temp_data[(now_check_id * 2 + 1) % 10 ];
+                        road_temp_0 = get_temp_data((now_check_id * 2) % 10 );
+                        road_temp_1 = get_temp_data((now_check_id * 2 + 1) % 10 );
                         
                         road_temp_error = road_temp_0 - road_temp_1;
                         sprintf((char*)debug_sender_buf,"HDR REPORT ROAD %d\r\n",
