@@ -150,7 +150,24 @@ uint16_t get_adc_mv_data(uint8_t id){
 }
 
 uint16_t get_temp_data(uint8_t id){
-    return adc_temp_data[id % 10];
+    /* 
+     * 适配最新硬件定义，做一个转接(0,1)->(0,5)的转换
+     * 为了不影响其他文件的正常逻辑使用
+     */
+    switch(id){
+        case 0: return adc_temp_data[0];
+        case 1: return adc_temp_data[5];
+        case 2: return adc_temp_data[1];   
+        case 3: return adc_temp_data[6];   
+        case 4: return adc_temp_data[2];
+        case 5: return adc_temp_data[7];
+        case 6: return adc_temp_data[3];   
+        case 7: return adc_temp_data[8];    
+        case 8: return adc_temp_data[4];   
+        case 9: return adc_temp_data[9];         
+        default : return 0;
+    }
+
 }
 
 void csp_adc_handle(void)
@@ -173,21 +190,11 @@ void csp_adc_handle(void)
          * 4mA - 480mv   20mA - 24000mV
          * 0摄氏度 - 480mV   100摄氏度 - 2400mV
          */
-            adc_temp_data[i] = (uint16_t)((float)( (float)adc_mv_data[i] - (float)480 ) / 1.92);
+        adc_temp_data[i] = (uint16_t)((float)( (float)adc_mv_data[i] - (float)480 ) / 1.92);
             
     }
 }
 
 
-//4ma  - 0
-//20ma - 100
-// 20 * 120 = 2400
-//4 * 120   = 480  mV
-//4 * 121   = 484 mV
-//0.03mA * 120欧姆 = 3.6mV
-
-// 0.16 mA / sheshidu
-
-//0.2欧姆 6.83 = 
 
 

@@ -327,9 +327,9 @@ void set_motor_speed_dir(uint8_t id , dir_t dir ,uint16_t speed){
     speed_float = (float)speed / 1000.0;
 
     if(dir == CW){
-        motor_dir_set(id % 5 , true);
-    }else{
         motor_dir_set(id % 5 , false);
+    }else{
+        motor_dir_set(id % 5 , true);
     }
 
     set_pwm(id % 5,speed_float);

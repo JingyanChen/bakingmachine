@@ -61,7 +61,7 @@ void csp_pwm_init(void)
 
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low;
     TIM_OC2Init(TIM3, &TIM_OCInitStructure);
 
     TIM_OC2PreloadConfig(TIM3, TIM_OCPreload_Enable);
@@ -85,7 +85,7 @@ void csp_pwm_init(void)
 
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low;
     TIM_OC2Init(TIM2, &TIM_OCInitStructure);
 
     TIM_OC2PreloadConfig(TIM2, TIM_OCPreload_Enable); //??TIM2?CCR2????????
@@ -125,21 +125,21 @@ void csp_pwm_init(void)
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1; //
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable; //
     TIM_OCInitStructure.TIM_Pulse = 0; //
-    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High; //
+    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low; //
 
     TIM_OC1Init(TIM4, &TIM_OCInitStructure); //
 
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1; //
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable; //
     TIM_OCInitStructure.TIM_Pulse = 0; //
-    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High; //
+    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low; //
 
     TIM_OC2Init(TIM4, &TIM_OCInitStructure); //
 
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1; //
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable; //
     TIM_OCInitStructure.TIM_Pulse = 0; //
-    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High; //
+    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low; //
 
     TIM_OC4Init(TIM4, &TIM_OCInitStructure); //
 

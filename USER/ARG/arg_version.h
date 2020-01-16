@@ -7,7 +7,7 @@
 
 
 #define MAIN_VERSION    3
-#define SECOND_VERSION  3
+#define SECOND_VERSION  5
 #define IS_RELEASE      1
 
 
@@ -231,6 +231,14 @@
  * 
  * 适应最新的六层板GPIO定义
  * 
+ * V3.4 版本
+ * 
+ * 优化了arg_debug_pro系列代码，增强了代码重用性，增补了decode_string强重用函数
+ * 优化了csp_adc.c/.h 以后不再允许任何形情况下的extern函数，而是用set/get函数做对私有变量的访问。
+ * 
+ * V3.5版本
+ * 
+ * 适配最新的DB15多插头定义
  */
 
 void get_version_str(uint8_t * str,uint16_t len);
