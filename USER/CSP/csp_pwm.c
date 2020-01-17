@@ -173,21 +173,68 @@ void csp_pwm_init(void)
  * percent 是0-1000的数字，如果500，则意味着一个周期内500ms高电平500ms低电平
  * 周期默认是1000ms也就是1S的时间，十路同时计数，计数到对应percent，变为低电平
  * 如果percent为0，则不打开pluse maker状态机
+ * 
+ * 20.1.17 做出如下修改，适配最新的硬件定义
+ * 第0层对应 0 5 两路加热片
+ * 第1层对应 1 6 两路 以此类推
+ * 为了不改变后层对此函数的调用逻辑，在这里对set 和 get做转接
  */
 static uint16_t pwm_maker_percent[]={0,0,0,0,0,0,0,0,0,0};
 static void set_pwm_maker_percent(uint8_t id , uint16_t percent){
-    pwm_maker_percent[id % 10] = percent;
+    
+    switch(id){
+        case 0:  pwm_maker_percent[0] = percent;break;
+        case 1:  pwm_maker_percent[5] = percent;break;
+        case 2:  pwm_maker_percent[1] = percent;break;  
+        case 3:  pwm_maker_percent[6] = percent;break;   
+        case 4:  pwm_maker_percent[2] = percent;break;
+        case 5:  pwm_maker_percent[7] = percent;break;
+        case 6:  pwm_maker_percent[3] = percent;break;   
+        case 7:  pwm_maker_percent[8] = percent;break;    
+        case 8:  pwm_maker_percent[4] = percent;break;  
+        case 9:  pwm_maker_percent[9] = percent;break;        
+        default : break;
+    }
 }
 uint16_t get_pwm_maker_percent(uint8_t id){
-    return pwm_maker_percent[id % 10];
+
+    switch(id){
+        case 0:  return pwm_maker_percent[0];
+        case 1:  return pwm_maker_percent[5];
+        case 2:  return pwm_maker_percent[1];  
+        case 3:  return pwm_maker_percent[6];   
+        case 4:  return pwm_maker_percent[2];
+        case 5:  return pwm_maker_percent[7];
+        case 6:  return pwm_maker_percent[3];   
+        case 7:  return pwm_maker_percent[8];    
+        case 8:  return pwm_maker_percent[4];  
+        case 9:  return pwm_maker_percent[9];        
+        default : return 0;
+    }
 }
 
 
 static void access_pwm_gpio_v(uint8_t id , bool sw){
+    uint8_t transfer_id=0;
+
+    switch(id){
+        case 0:  transfer_id = 0;break;
+        case 1:  transfer_id = 5;break;
+        case 2:  transfer_id = 1;break;  
+        case 3:  transfer_id = 6;break;   
+        case 4:  transfer_id = 2;break;
+        case 5:  transfer_id = 7;break;
+        case 6:  transfer_id = 3;break;   
+        case 7:  transfer_id = 8;break;    
+        case 8:  transfer_id = 4;break;  
+        case 9:  transfer_id = 9;break;        
+        default : break;
+    }
+
     if(sw){
-        GPIO_SetBits(PWM_PORT_LIST[id % 10] , PWM_PIN_LIST[id % 10]);
+        GPIO_SetBits(PWM_PORT_LIST[transfer_id % 10] , PWM_PIN_LIST[transfer_id % 10]);
     }else{
-        GPIO_ResetBits(PWM_PORT_LIST[id % 10 ] , PWM_PIN_LIST[id % 10]);
+        GPIO_ResetBits(PWM_PORT_LIST[transfer_id % 10 ] , PWM_PIN_LIST[transfer_id % 10]);
     }
 } 
 
@@ -214,7 +261,7 @@ void csp_pwm_handle(void)
     _PLUSE_MAKER_FLAG = false;
     
     for(i=0;i<10;i++){
-        if(pwm_maker_percent[i] != 0){
+        if(get_pwm_maker_percent(i) != 0){
 
             gpio_high_tick++;
             if(gpio_high_tick > 2)
